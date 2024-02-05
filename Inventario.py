@@ -2,6 +2,7 @@ import customtkinter as ctk
 
 class Inventario:
     def __init__(self, root):
+        from Dados_Empresa import dados_empresa_screen
         self.root = root
         self.root.title("Configurações de Inventario")
         self.root.geometry("300x200")
@@ -24,6 +25,7 @@ class Inventario:
         self.consulta.place(x= 130, y= 6)
         self.comando.place(x= 215, y= 6)
         
+        dados_empresa_screen(self, self.frame_bot)
 if __name__ == '__main__':
     root = ctk.CTk()
     app = Inventario(root)
