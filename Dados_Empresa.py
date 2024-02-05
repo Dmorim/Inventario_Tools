@@ -1,4 +1,4 @@
-def dados_empresa_screen(self, frame_bot):
+def Dados_Empresa_Screen(self, frame_bot):
     import customtkinter as ctk
     
     nome_empresa_label = ctk.CTkLabel(frame_bot, text= 'Empresa X', width= 20, height= 2, font= ('', 18, 'bold'))
@@ -10,6 +10,8 @@ def dados_empresa_screen(self, frame_bot):
     ie_text = ctk.CTkLabel(frame_bot, text= '00.000.000-00', width= 20, height= 2, font= ('', 12))
     regime_label = ctk.CTkLabel(frame_bot, text= 'Regime Tributário:', width= 20, height= 2, font= ('', 12))
     regime_text = ctk.CTkLabel(frame_bot, text= 'Simples Nacional', width= 20, height= 2, font= ('', 12))
+    fone_label = ctk.CTkLabel(frame_bot, text= 'Telefone:', width= 20, height= 2, font= ('', 12))
+    fone_text = ctk.CTkLabel(frame_bot, text= '000000-0000', width= 20, height= 2, font= ('', 12))
     
     nome_empresa_label.place(relx= 0.5, y= 15, anchor= 'center')
     razao_social_label.place(x= 6, y= 33)
@@ -20,3 +22,5 @@ def dados_empresa_screen(self, frame_bot):
     ie_text.place(x= 114, y= 66)
     regime_label.place(x= 6, y= 83)
     regime_text.place(x= 113, y= 83)
+    fone_label.place(x= 6, y= 100)
+    fone_text.place(x= 62, y= 100)
