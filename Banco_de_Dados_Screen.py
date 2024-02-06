@@ -1,5 +1,6 @@
 def Interface_Banco(self, root):
     import customtkinter as ctk
+    from Banco_de_Dados_Func import Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir
     Banco_Screen = ctk.CTkToplevel(root)
     Banco_Screen.title("Configurações de Banco de Dados")
     Banco_Screen.geometry("370x225")
@@ -25,10 +26,10 @@ def Interface_Banco(self, root):
     porta_entry = ctk.CTkEntry(frame_in, width= 115, font= ('', 12), fg_color = ('lightblue', 'silver'), text_color= 'black')
     caminho_bd_label = ctk.CTkLabel(frame_in, text= 'Caminho do banco de dados', width= 20, height= 2, font= ('', 12))
     caminho_bd_entry = ctk.CTkEntry(frame_in, width= 312, font= ('', 12), fg_color = ('lightblue', 'silver'), text_color= 'black')
-    caminho_bd_file_button = ctk.CTkButton(frame_in, width= 30, height= 24, text= '...', command= lambda: print('Caminho do Banco de Dados'))
+    caminho_bd_file_button = ctk.CTkButton(frame_in, width= 30, height= 24, text= '...', command= lambda: Caminho_Banco_Dir(Banco_Screen, entrys_list))
     caminho_fb_label = ctk.CTkLabel(frame_in, text= 'Caminho da FBClient', width= 20, height= 2, font= ('', 12))
     caminho_fb_entry = ctk.CTkEntry(frame_in, width= 312, font= ('', 12), fg_color = ('lightblue', 'silver'), text_color= 'black')
-    caminho_fb_file_button = ctk.CTkButton(frame_in, width= 30, height= 24, text= '...', command= lambda: print('Caminho do fbclient'))
+    caminho_fb_file_button = ctk.CTkButton(frame_in, width= 30, height= 24, text= '...', command= lambda: Caminho_Fb_Dir(Banco_Screen, entrys_list))
     
     serv_label.place(x= 8, y= 5)
     serv_entry.place(x= 6, y= 22)
@@ -40,4 +41,7 @@ def Interface_Banco(self, root):
     caminho_fb_label.place(x= 8, y= 115)
     caminho_fb_entry.place(x= 6, y= 132)
     caminho_fb_file_button.place(x= 322, y= 134)
+    
+    entrys_list = [serv_entry, porta_entry, caminho_bd_entry, caminho_fb_entry]
+    Set_Dados_Padrao(entrys_list)
     
