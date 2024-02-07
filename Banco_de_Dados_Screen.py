@@ -1,6 +1,6 @@
-def Interface_Banco(self, root):
+def Interface_Banco(self, root, entry_alter_list):
     import customtkinter as ctk
-    from Banco_de_Dados_Func import Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir
+    from Banco_de_Dados_Func import Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir, on_click_confirm
     Banco_Screen = ctk.CTkToplevel(root)
     Banco_Screen.title("Configurações de Banco de Dados")
     Banco_Screen.geometry("370x225")
@@ -13,7 +13,7 @@ def Interface_Banco(self, root):
     frame_in.pack(padx= 5, pady= 25)
     
     sel_banco_label = ctk.CTkLabel(Banco_Screen, text= 'Conexão com o Banco de Dados', width= 20, height= 2, font= ('', 14), text_color= 'silver')
-    confirm_button = ctk.CTkButton(Banco_Screen, width= 25, height= 7, text= 'Confirmar', command= lambda: print('Confirmar'), text_color= 'silver')
+    confirm_button = ctk.CTkButton(Banco_Screen, width= 25, height= 7, text= 'Confirmar', command= lambda: on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list), text_color= 'silver')
     cancel_button = ctk.CTkButton(Banco_Screen, width= 75, height= 7, text= 'Cancelar', command= lambda: print('Cancelar'), text_color= 'silver')    
     
     sel_banco_label.place(relx= 0.5, y= 9, anchor= 'center')
