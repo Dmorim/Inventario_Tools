@@ -22,16 +22,25 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list):
     for entry in entrys_list:
         if entry.get() == '':
             from tkinter import messagebox
-            messagebox.showerror('Erro', 'Preencha todos os campos')
+            messagebox.showerror('Erro', 'Preencha todos os campos', parent= Banco_Screen)
             return
         
     for name, var in zip(['host', 'port', 'database', 'fbclient'], entrys_list):
         Dados.banco_dados[name] = var.get()
+        
+    try:
+        Connect.fdb_conn()
+    except:
+        return
     
-    Connect.fdb_conn()
     Banco_Screen.destroy()
-    Connect.cursor.execute('SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI')
-    val_brut = Connect.cursor.fetchone()
+    
+    try:
+        Connect.cursor.execute('SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI', parent= Banco_Screen)
+        val_brut = Connect.cursor.fetchone()
+    except:
+        return
+    
     nome, rsocial, cnpj, cgf, codcrt, fone = val_brut
     if codcrt == '0':
         codcrt = 'Simples Nacional'
