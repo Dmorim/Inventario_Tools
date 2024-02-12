@@ -64,4 +64,5 @@ if __name__ == '__main__':
         root.mainloop()
     finally:
         from Inventario_Conn import Connect
-        Connect.conn.close()
+        if Connect.conn is not None:
+            Connect.conn.close()

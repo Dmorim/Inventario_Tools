@@ -14,7 +14,7 @@ def ven_get():
     try:
         Connect.cursor.execute("select sum(cast(vlrec as numeric (15,2))) as valor from in01fat where dtemi between '01.01.2023' and '31.12.2023' and emite = 'S' and cance <> 'S'")
         valrec = Connect.cursor.fetchone()[0]
-    except DatabaseError as e:
+    except (DatabaseError, TypeError) as e:
         from tkinter import messagebox
         messagebox.showerror('Erro', f'Erro ao acessar o banco de dados\n {e}')
         

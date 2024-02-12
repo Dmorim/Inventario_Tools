@@ -3,7 +3,7 @@ def hub_val_inv(self, Consulta_Screen):
     from Consultas_Val_Inv_Func import inv_get, copy_val
     from Consultas_Val_Screen import Consultas_Val_Screen
     
-    hub = Consultas_Val_Screen(Consulta_Screen)
+    hub = Consultas_Val_Screen(Consulta_Screen, 'Valor do Inventário')
     
     val_inv_label = ctk.CTkLabel(hub, text= 'Valor do Inventário:', width= 20, height= 2, font= ('', 16))
     val_inv_text = ctk.CTkLabel(hub, text= inv_get(), width= 20, height= 2, font= ('', 14))

@@ -12,7 +12,7 @@ def Caminho_Banco_Dir(Banco_Screen, entrys_list):
         
 def Caminho_Fb_Dir(Banco_Screen, entrys_list):
     from tkinter import filedialog
-    caminho = filedialog.askopenfilename(title= 'Caminho para o fbclient',parent= Banco_Screen, filetypes= [('Firebird Dll', '*.dll')], initialdir= 'C:\\Program Files\\Firebird\\Firebird_3_0')
+    caminho = filedialog.askopenfilename(title= 'Caminho para o fbclient',parent= Banco_Screen, filetypes= [('Firebird Dll', '*.dll')], initialdir= 'C:\\Program Files (x86)\\Firebird\\Firebird_3_0')
     if caminho:
         entrys_list[3].delete(0, 'end')
         entrys_list[3].insert(0, caminho)
