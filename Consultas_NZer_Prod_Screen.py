@@ -1,7 +1,7 @@
 def Prod_NZer_Screen(Consulta_Screen):    
     import customtkinter as ctk
     from Consultas_Val_Screen import Consultas_Val_Screen
-    from Consultas_ZCusto_Func import prod_get, copy_val
+    from Consultas_NZer_Prod_Func import prod_get, copy_val
     from Consultas_NZer_List_Screen import List_Treeview_Screen
     
     hub = Consultas_Val_Screen(Consulta_Screen, 'Produtos Não Zerados')
