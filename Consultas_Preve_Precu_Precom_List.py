@@ -31,7 +31,7 @@ def List_Treeview_Screen(parent):
     
 def Treeview_Select(treeview):
     from Inventario_Conn import Connect
-    query = "select cdpro, nmpro, saldo, precu from in01pro where precu = 0 and preve = 0 and vldia = 0"
+    query = "select cdpro, nmpro, saldo, precu from in01pro where precu = 0 and preve = 0 and vldia = 0 and saldo > 0"
     Connect.cursor.execute(query)
     rows = Connect.cursor.fetchall()
     Treeview_Insert(treeview, rows)

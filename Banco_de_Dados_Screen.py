@@ -14,7 +14,7 @@ def Interface_Banco(self, root, entry_alter_list):
     
     sel_banco_label = ctk.CTkLabel(Banco_Screen, text= 'Conexão com o Banco de Dados', width= 20, height= 2, font= ('', 14), text_color= 'silver')
     confirm_button = ctk.CTkButton(Banco_Screen, width= 25, height= 7, text= 'Confirmar', command= lambda: on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list), text_color= 'silver')
-    cancel_button = ctk.CTkButton(Banco_Screen, width= 75, height= 7, text= 'Cancelar', command= lambda: print('Cancelar'), text_color= 'silver')    
+    cancel_button = ctk.CTkButton(Banco_Screen, width= 75, height= 7, text= 'Cancelar', command= lambda: Banco_Screen.destroy(), text_color= 'silver')    
     
     sel_banco_label.place(relx= 0.5, y= 9, anchor= 'center')
     confirm_button.place(x= 298, y= 202)
