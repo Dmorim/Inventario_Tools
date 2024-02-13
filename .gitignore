@@ -159,3 +159,4 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 .vscode/launch.json
+output/INV Tools 0.0.2.exe

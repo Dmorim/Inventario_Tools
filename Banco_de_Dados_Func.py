@@ -12,13 +12,14 @@ def Caminho_Banco_Dir(Banco_Screen, entrys_list):
         
 def Caminho_Fb_Dir(Banco_Screen, entrys_list):
     from tkinter import filedialog
-    caminho = filedialog.askopenfilename(title= 'Caminho para o fbclient',parent= Banco_Screen, filetypes= [('Firebird Dll', '*.dll')], initialdir= 'C:\\Program Files\\Firebird\\Firebird_3_0')
+    caminho = filedialog.askopenfilename(title= 'Caminho para o fbclient',parent= Banco_Screen, filetypes= [('Firebird Dll', '*.dll')], initialdir= 'C:\\Program Files (x86)\\Firebird\\Firebird_3_0')
     if caminho:
         entrys_list[3].delete(0, 'end')
         entrys_list[3].insert(0, caminho)
         
 def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list):
     from Inventario_Conn import Dados, Connect
+    from fdb import DatabaseError
     for entry in entrys_list:
         if entry.get() == '':
             from tkinter import messagebox
@@ -30,15 +31,19 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list):
         
     try:
         Connect.fdb_conn()
-    except:
+    except DatabaseError as e:
+        from tkinter import messagebox
+        messagebox.showerror('Erro', f'Não foi possível conectar ao banco de dados\n {e}', parent= Banco_Screen)
         return
     
     Banco_Screen.destroy()
     
     try:
-        Connect.cursor.execute('SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI', parent= Banco_Screen)
+        Connect.cursor.execute('SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI')
         val_brut = Connect.cursor.fetchone()
-    except:
+    except DatabaseError as e:
+        from tkinter import messagebox
+        messagebox.showerror('Erro', f'Não foi possível buscar os dados\n {e}', parent= Banco_Screen)
         return
     
     nome, rsocial, cnpj, cgf, codcrt, fone = val_brut
