@@ -1,6 +1,7 @@
 def Comandos_Screen(self, parent):
     import customtkinter as ctk
     from Tk_Tooltip import ToolTip
+    from Comandos_Func import on_click_confirm, precu_porcent_entry_validate
     
     comando = ctk.CTkToplevel(parent)
     comando.geometry("820x272+150+135")
@@ -17,7 +18,7 @@ def Comandos_Screen(self, parent):
     frame_r.pack(side= 'right', anchor= 'ne')
     frame_l.pack(side= 'left', anchor= 'nw')
     
-    confirm_button = ctk.CTkButton(comando, text= 'Confirmar', width= 60, height= 26, command= lambda: comando.destroy())
+    confirm_button = ctk.CTkButton(comando, text= 'Confirmar', width= 60, height= 26, command= lambda: on_click_confirm(self, comando, checkbox_list, values_list))
     cancel_button = ctk.CTkButton(comando, text= 'Cancelar', width= 70, height= 26, command= lambda: comando.destroy())
     
     confirm_button.place(x= 747, y= 242)
@@ -28,10 +29,11 @@ def Comandos_Screen(self, parent):
     maior_menor_precu_preme = ['Maior', 'Menor']
     precu_precom_cusme_vend = ['Preço de Compra', 'Custo Médio', 'Preço de Venda * 0,65']
     
+    precu_porcent_vcmd = (comando.register(precu_porcent_entry_validate), '%P')
     
     com_precu_label = ctk.CTkLabel(frame_l, text= 'Comandos de Preço de Custo', font= ('verdana', 13, 'bold'))
     precu_porcent_chkbox = ctk.CTkCheckBox(frame_l, text= 'Preço de Custo por porcentagem ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
-    precu_porcent_entry = ctk.CTkEntry(frame_l, font= ('verdana', 12, 'bold'), width= 130, justify= 'center')
+    precu_porcent_entry = ctk.CTkEntry(frame_l, font= ('verdana', 12, 'bold'), width= 130, justify= 'center', validate= 'key', validatecommand= precu_porcent_vcmd)
     precu_arrednd_chkbox = ctk.CTkCheckBox(frame_l, text= 'Arredondar Preço de Custo ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
     precu_precomp_chkbox = ctk.CTkCheckBox(frame_l, text= 'Preço de Custo igual Preço de Compra ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
     precu_precomp_cbb = ctk.CTkComboBox(frame_l, font= ('verdana', 12, 'bold'), width= 120, state= 'readonly', values= maior_menor_precu_precom)
@@ -76,3 +78,10 @@ def Comandos_Screen(self, parent):
     quant_alto_chkbox.place(x= 5, y= 131)
     saldo_neg_chkbox.place(x= 5, y= 166)
     dtope_dtpro_chkbox.place(x= 5, y= 198)
+    
+    values_list = [precu_porcent_entry, precu_precomp_cbb, precu_preme_cbb, precu_igual_cbb]
+    checkbox_list = [precu_porcent_chkbox, precu_arrednd_chkbox, precu_precomp_chkbox, precu_preme_chkbox, precu_igual_chkbox, classi_pro_null_chkbox, saldo_zer_chkbox, ctrl_estq_chkbox, quant_alto_chkbox, saldo_neg_chkbox, dtope_dtpro_chkbox]
+    
+    precu_precomp_cbb.set('Maior')
+    precu_preme_cbb.set('Maior')
+    precu_igual_cbb.set('Preço de Compra')

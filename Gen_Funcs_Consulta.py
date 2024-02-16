@@ -14,5 +14,4 @@ def prod_get(query_input: str):
 def copy_val(val_ven_text):
     import pyperclip
     copy_text = val_ven_text.cget('text')
-    copy_text = 'R$ ' + copy_text
     pyperclip.copy(copy_text)
