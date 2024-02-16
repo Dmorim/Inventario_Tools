@@ -2,6 +2,7 @@ def Set_Dados_Padrao(entrys_list):
     entrys_list[0].insert(0, 'localhost')
     entrys_list[1].insert(0, '3050')
     entrys_list[3].insert(0, 'C:/Program Files (x86)/Firebird/Firebird_3_0/fbclient.dll')
+ 
     
 def Caminho_Banco_Dir(Banco_Screen, entrys_list):
     from tkinter import filedialog
