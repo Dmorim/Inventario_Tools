@@ -4,6 +4,7 @@ class Inventario:
     def __init__(self, root):
         from Banco_de_Dados_Screen import Interface_Banco
         from Consultas_Screen import Consulta_Total_Screen
+        from Comandos_Screen import Comandos_Screen
         
         ctk.set_appearance_mode("System")
         ctk.set_default_color_theme("dark-blue")
@@ -22,7 +23,7 @@ class Inventario:
         
         self.database = ctk.CTkButton(self.frame_top, text= 'Selecione o Banco de Dados', width= 100, height= 48, command= lambda: Interface_Banco(self, self.root, entry_alter_list))
         self.consulta = ctk.CTkButton(self.frame_top, text= 'Consultas', width= 80, height= 48, command= lambda: Consulta_Total_Screen(self, self.root))
-        self.comando = ctk.CTkButton(self.frame_top, text= 'Comandos', width= 60, height= 48, command= lambda: print('Comando'))
+        self.comando = ctk.CTkButton(self.frame_top, text= 'Comandos', width= 60, height= 48, command= lambda: Comandos_Screen(self, self.root))
         
         self.database._text_label.configure(wraplength= 100)
         

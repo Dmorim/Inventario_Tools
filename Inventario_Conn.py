@@ -29,3 +29,4 @@ class Connect:
             messagebox.showerror('Erro de Conexão', f'Não foi possível conectar ao banco de dados \n {e}')
             return
         cls.cursor = cls.conn.cursor()
+        
