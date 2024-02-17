@@ -15,3 +15,11 @@ def copy_val(val_ven_text):
     import pyperclip
     copy_text = val_ven_text.cget('text')
     pyperclip.copy(copy_text)
+    
+def event_button_consulta(self, event):
+    if self.consulta.cget('state') != 'disabled':
+        self.consulta.invoke()
+        
+def event_button_comando(self, event):
+    if self.comando.cget('state') != 'disabled':
+        self.comando.invoke()

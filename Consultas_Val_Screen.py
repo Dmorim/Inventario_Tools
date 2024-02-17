@@ -7,4 +7,5 @@ def Consultas_Val_Screen(parent, title: str):
     hub.resizable(False, False)
     hub.grab_set()
     hub.focus_set()
+    hub.bind("<Escape>", lambda e: hub.destroy())
     return hub

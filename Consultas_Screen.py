@@ -46,3 +46,5 @@ def Consulta_Total_Screen(self, root):
     quant_maior.place(relx= 0.5, y= 254, anchor= 'center')
     precu_maior_preve.place(relx= 0.5, y= 283, anchor= 'center')
     precuplus_zer_button.place(relx= 0.5, y= 313, anchor= 'center')
+    
+    Consulta_Screen.bind("<Escape>", lambda e: Consulta_Screen.destroy())

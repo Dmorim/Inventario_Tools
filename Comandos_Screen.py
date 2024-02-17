@@ -85,3 +85,5 @@ def Comandos_Screen(self, parent):
     precu_precomp_cbb.set('Maior')
     precu_preme_cbb.set('Maior')
     precu_igual_cbb.set('Preço de Compra')
+    
+    comando.bind("<Escape>", lambda e: comando.destroy())

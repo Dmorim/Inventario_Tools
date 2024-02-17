@@ -27,8 +27,11 @@ def ent_get():
     except DatabaseError as e:
         from tkinter import messagebox
         messagebox.showerror('Erro', f'Erro ao acessar o banco de dados\n {e}')
-        
-    valent = banco_codigo_valueform(valent)
+    
+    if valent != None:   
+        valent = banco_codigo_valueform(valent)
+    else:
+        valent = 'Não foi registrado entradas'
     return valent
     
 def copy_val(val_ven_text):
