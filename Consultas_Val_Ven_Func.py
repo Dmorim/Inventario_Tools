@@ -10,9 +10,15 @@ def banco_codigo_valueform(val):
 def ven_get():
     from Inventario_Conn import Connect
     from fdb import DatabaseError
+    query = """
+    select
+    sum(CAST(iif(F.EMITE = 'S' AND VLNOT > 0, F.VLNOT, iif(coalesce(F.VLNOT, 0) = 0, (COALESCE(F.VALNO, 0) - COALESCE(F.VALDE, 0) + COALESCE(F.ICANT, 0) + coalesce(F.VALFR, 0) + coalesce(F.valsg, 0) + coalesce(F.valip, 0) + coalesce(F.valst, 0)), F.VLNOT)) AS NUMERIC(14,2))) as valor
+    from in01fat f 
+    where F.FATUR <> '' AND (F.CANCE = 'N' OR F.CANCE IS NULL) AND F.VENDA <> 'R' and (F.VENDA <> 'X') and (F.DTEMI >= '01.01.2023') and (F.DTEMI <= '31.12.2023')
+    """
     
     try:
-        Connect.cursor.execute("select sum(cast(vlrec as numeric (15,2))) as valor from in01fat where dtemi between '01.01.2023' and '31.12.2023' and emite = 'S' and cance <> 'S'")
+        Connect.cursor.execute(query)
         valrec = Connect.cursor.fetchone()[0]
     except (DatabaseError, TypeError) as e:
         from tkinter import messagebox

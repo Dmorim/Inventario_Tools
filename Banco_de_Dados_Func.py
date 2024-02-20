@@ -1,16 +1,14 @@
 def Set_Dados_Padrao(entrys_list):
     entrys_list[0].insert(0, 'localhost')
-    entrys_list[1].insert(0, '3050')
+    entrys_list[1].insert(0, carregar_diretorio('Porta', entrys_list[1].get()) if carregar_diretorio('Porta', entrys_list[1].get()) is not None else '3050')
     entrys_list[3].insert(0, 'C:/Program Files (x86)/Firebird/Firebird_3_0/fbclient.dll')
- 
+    salvar_diretorio('Porta', entrys_list[1].get())  # Add this line to save the port in config.ini
+
 def salvar_diretorio(diretorio, last_dir):
     import configparser
     config = configparser.ConfigParser()
-    # Primeiro, leia o arquivo existente
     config.read('config.ini')
-    # Em seguida, adicione as novas informações
     config[diretorio] = {'last_dir': last_dir}
-    # Finalmente, escreva o arquivo novamente
     with open('config.ini', 'w') as configfile:
         config.write(configfile)
 
@@ -97,7 +95,6 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
     elif codcrt == '2':
         codcrt = 'Regime Normal'
     
-    from datetime import date
     max_data = max(datas) if datas else 'Sem emissões'
     if max_data != 'Sem emissões':
         max_data = max_data.strftime('%d/%m/%Y')
