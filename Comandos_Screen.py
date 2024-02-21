@@ -41,10 +41,13 @@ def Comandos_Screen(self, parent):
     precu_preme_cbb = ctk.CTkComboBox(frame_l, font= ('verdana', 12, 'bold'), width= 120, state= 'readonly', values= maior_menor_precu_preme)
     precu_igual_chkbox = ctk.CTkCheckBox(frame_l, text= 'Quando zerado preço de custo igual a ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
     precu_igual_cbb = ctk.CTkComboBox(frame_l, font= ('verdana', 12, 'bold'), width= 120, state= 'readonly', values= precu_precom_cusme_vend)
+    com_ger_chkbox = ctk.CTkCheckBox(frame_l, text= '', checkbox_height= 13, checkbox_width= 13)
+    com_ger_entry = ctk.CTkEntry(frame_l, font= ('verdana', 12, 'bold'), width= 378, justify= 'left')
     
     ToolTip(precu_porcent_chkbox, 'Multiplica o preço de Custo pelo numero informado', 700)
     ToolTip(precu_precomp_chkbox, 'Também executará o arredondamento no Preço de Custo', 700)
     ToolTip(precu_preme_chkbox, 'Também executará o arredondamento no Preço de Custo', 700)
+    ToolTip(com_ger_entry, 'Executará qualquer comando escrito', 700)
     
     com_precu_label.place(x= 22, y= 5)
     precu_porcent_chkbox.place(x= 5, y= 38)
@@ -56,6 +59,8 @@ def Comandos_Screen(self, parent):
     precu_preme_cbb.place(x= 280, y= 131)
     precu_igual_chkbox.place(x= 5, y= 168)
     precu_igual_cbb.place(x= 280, y= 166)
+    com_ger_chkbox.place(x= 5, y= 204)
+    com_ger_entry.place(x= 23, y= 202)
     
     #Itens do Frame Right
     
@@ -79,8 +84,8 @@ def Comandos_Screen(self, parent):
     saldo_neg_chkbox.place(x= 5, y= 166)
     dtope_dtpro_chkbox.place(x= 5, y= 198)
     
-    values_list = [precu_porcent_entry, precu_precomp_cbb, precu_preme_cbb, precu_igual_cbb]
-    checkbox_list = [precu_porcent_chkbox, precu_arrednd_chkbox, precu_precomp_chkbox, precu_preme_chkbox, precu_igual_chkbox, classi_pro_null_chkbox, saldo_zer_chkbox, ctrl_estq_chkbox, quant_alto_chkbox, saldo_neg_chkbox, dtope_dtpro_chkbox]
+    values_list = [precu_porcent_entry, precu_precomp_cbb, precu_preme_cbb, precu_igual_cbb, com_ger_entry]
+    checkbox_list = [precu_porcent_chkbox, precu_arrednd_chkbox, precu_precomp_chkbox, precu_preme_chkbox, precu_igual_chkbox, classi_pro_null_chkbox, saldo_zer_chkbox, ctrl_estq_chkbox, quant_alto_chkbox, saldo_neg_chkbox, dtope_dtpro_chkbox, com_ger_chkbox]
     
     precu_precomp_cbb.set('Maior')
     precu_preme_cbb.set('Maior')

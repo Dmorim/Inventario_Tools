@@ -2,8 +2,8 @@ def Comandos_Func(self, checkbox_List):
     self.comandos_query = {
         checkbox_List[0]: f'UPDATE IN01PRO SET PRECU = PRECU * {self.porcent_precu}',
         checkbox_List[1]: f'UPDATE IN01PRO SET PRECU = CAST(PRECU AS NUMERIC(15, 2))',
-        checkbox_List[2]: f'UPDATE IN01PRO SET PRECU = VLDIA WHERE PRECU {self.precu_vldia} VLDIA AND VLDIA > 0',
-        checkbox_List[3]: f'UPDATE IN01PRO SET PRECU = CUSME WHERE PRECU {self.precu_cusme} CUSME AND CUSME > 0',
+        checkbox_List[2]: f'UPDATE IN01PRO SET PRECU = VLDIA WHERE VLDIA {self.precu_vldia} VLDIA AND VLDIA > 0',
+        checkbox_List[3]: f'UPDATE IN01PRO SET PRECU = CUSME WHERE CUSME {self.precu_cusme} CUSME AND CUSME > 0',
         checkbox_List[4]: f'UPDATE IN01PRO SET PRECU = {self.precu_vldia_preve} WHERE (PRECU = 0 OR PRECU IS NULL) AND SALDO > 0 AND PREVE <> 0',
         checkbox_List[5]: f'UPDATE IN01PRO SET CLASSIFICACAO_PRODUTO = 00 WHERE CLASSIFICACAO_PRODUTO IS NULL',
         checkbox_List[6]: f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO BETWEEN 0.000001 AND 0.01',
@@ -11,6 +11,7 @@ def Comandos_Func(self, checkbox_List):
         checkbox_List[8]: f'UPDATE IN01LAN SET QUANT = 1 WHERE QUANT > 999999 OR VALOR > 999999',
         checkbox_List[9]: f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO < 0',
         checkbox_List[10]: f"UPDATE IN01LAN SET DTOPE = DTPRO WHERE VENDA = 'J' AND DTOPE <> DTPRO",
+        checkbox_List[11]: self.com_ger
     }
     
 def on_click_confirm(self, comando, checkbox_List, values_List):
@@ -38,6 +39,8 @@ def on_click_confirm(self, comando, checkbox_List, values_List):
         self.precu_vldia_preve = 'CUSME'
     else:
         self.precu_vldia_preve = 'PREVE - (PREVE * 0.65)'
+        
+    self.com_ger = values_List[4].get()
 
     Comandos_Func(self, checkbox_List)
     cond = messagebox.askyesno('Aviso', f'Os seguintes comandos serão executados {comandos_true(self)}\nDeseja continuar?', parent= comando)

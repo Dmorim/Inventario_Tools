@@ -6,20 +6,21 @@ class Inventario:
         from Consultas_Screen import Consulta_Total_Screen
         from Comandos_Screen import Comandos_Screen
         from Gen_Funcs_Consulta import event_button_comando, event_button_consulta
+        from Tk_Tooltip import ToolTip
         
         ctk.set_appearance_mode("System")
         ctk.set_default_color_theme("dark-blue")
         
         self.root = root
         self.root.title("Configurações de Inventario")
-        self.root.geometry("350x200")
+        self.root.geometry("390x200")
         self.root.resizable(False, False)
         self.root.focus()
         
-        self.frame_top = ctk.CTkFrame(self.root, width= 350, height= 60, border_width= 2, border_color= 'silver', corner_radius= 2)
+        self.frame_top = ctk.CTkFrame(self.root, width= 390, height= 60, border_width= 2, border_color= 'silver', corner_radius= 2)
         self.frame_top.pack_propagate(False)
         self.frame_top.pack()
-        self.frame_bot = ctk.CTkFrame(self.root, width= 350, height= 140, border_width= 2, border_color= 'silver', corner_radius= 5)
+        self.frame_bot = ctk.CTkFrame(self.root, width= 390, height= 140, border_width= 2, border_color= 'silver', corner_radius= 5)
         self.frame_bot.pack()
         
         self.database = ctk.CTkButton(self.frame_top, text= 'Selecione o Banco de Dados', width= 100, height= 48, command= lambda: Interface_Banco(self, self.root, entry_alter_list, button_list))
@@ -48,6 +49,9 @@ class Inventario:
         fone_text = ctk.CTkLabel(self.frame_bot, text= '', width= 20, height= 2, font= ('', 12))
         ult_emit = ctk.CTkLabel(self.frame_bot, text= 'Última Emissão:', width= 20, height= 2, font= ('', 12))
         ult_emit_text = ctk.CTkLabel(self.frame_bot, text= '', width= 20, height= 2, font= ('', 12))
+        credits = ctk.CTkLabel(self.frame_bot, text= 'Desenvolvido por: Daniel Amorim', width= 20, height= 2, font= ('', 11, 'italic'))
+        
+        ToolTip(credits, 'Com a ajuda de Cicero Romão nas consultas SQL', 700)
         
         entry_alter_list = [nome_empresa_label, razao_social_text, cnpj_text, ie_text, regime_text, fone_text, ult_emit_text]
         button_list = [self.consulta, self.comando]
@@ -65,6 +69,7 @@ class Inventario:
         fone_text.place(x= 62, y= 100)
         ult_emit.place(x= 6, y= 118)
         ult_emit_text.place(x= 100, y= 118)
+        credits.place(relx= 0.776, rely= 0.96, anchor= 's')
         
         self.root.bind('<F1>', lambda event: event_button_consulta(self, event))
         self.root.bind('<F2>', lambda event: event_button_comando(self, event))

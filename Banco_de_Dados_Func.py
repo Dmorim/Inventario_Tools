@@ -1,8 +1,8 @@
 def Set_Dados_Padrao(entrys_list):
+    porta = carregar_diretorio('Porta', 'last_dir')
     entrys_list[0].insert(0, 'localhost')
-    entrys_list[1].insert(0, carregar_diretorio('Porta', entrys_list[1].get()) if carregar_diretorio('Porta', entrys_list[1].get()) is not None else '3050')
+    entrys_list[1].insert(0, porta if porta else '3050')
     entrys_list[3].insert(0, 'C:/Program Files (x86)/Firebird/Firebird_3_0/fbclient.dll')
-    salvar_diretorio('Porta', entrys_list[1].get())  # Add this line to save the port in config.ini
 
 def salvar_diretorio(diretorio, last_dir):
     import configparser
@@ -52,17 +52,17 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
         
     try:
         Connect.fdb_conn()
-    except DatabaseError as e:
+    except Exception as e:
         from tkinter import messagebox
         messagebox.showerror('Erro', f'Não foi possível conectar ao banco de dados\n {e}', parent= Banco_Screen)
         return
     
-    Banco_Screen.destroy()
+    salvar_diretorio('Porta', entrys_list[1].get()) 
     
     try:
         Connect.cursor.execute('SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI')
         val_brut = Connect.cursor.fetchone()
-    except DatabaseError as e:
+    except Exception as e:
         from tkinter import messagebox
         messagebox.showerror('Erro', f'Não foi possível buscar os dados\n {e}', parent= Banco_Screen)
         return
@@ -101,10 +101,13 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
     
     val_list = [nome, rsocial, cnpj, cgf, codcrt, fone, max_data]
     
+    Banco_Screen.destroy()
     for label, val in zip(entry_alter_list, val_list):
         label.configure(text= val)
     
     for button in button_list:
         if button.cget('state') == 'disabled':
             button.configure(state = 'normal')
+            
+
     
