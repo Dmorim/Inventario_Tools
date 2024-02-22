@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 .vscode/launch.json
 output/INV Tools 0.0.2.exe
+Teste.py
