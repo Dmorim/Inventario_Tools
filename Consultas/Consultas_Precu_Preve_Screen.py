@@ -1,8 +1,8 @@
 def Precu_Preve_Screen(Consulta_Screen):    
     import customtkinter as ctk
-    from Consultas_Val_Screen import Consultas_Val_Screen
-    from Gen_Funcs_Consulta import prod_get, copy_val
-    from Consultas_Precu_Preve_List import List_Treeview_Screen
+    from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
+    from Consultas.Gen_Funcs_Consulta import prod_get, copy_val
+    from Consultas.Consultas_Precu_Preve_List import List_Treeview_Screen
     
     hub = Consultas_Val_Screen(Consulta_Screen, 'Produtos com Preço de Custo maior que o de venda')
     

@@ -1,6 +1,6 @@
 def Interface_Banco(self, root, entry_alter_list, button_list):
     import customtkinter as ctk
-    from Banco_de_Dados_Func import Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir, on_click_confirm
+    from Banco_de_Dados.Banco_de_Dados_Func import Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir, on_click_confirm
     Banco_Screen = ctk.CTkToplevel(root)
     Banco_Screen.title("Configurações de Banco de Dados")
     Banco_Screen.geometry("370x225")

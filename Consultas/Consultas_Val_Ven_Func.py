@@ -7,14 +7,14 @@ def banco_codigo_valueform(val):
     val = pri + ',' + prd
     return val
 
-def ven_get():
+def ven_get(self):
     from Inventario_Conn import Connect
     from fdb import DatabaseError
-    query = """
+    query = f"""
     select
     sum(CAST(iif(F.EMITE = 'S' AND VLNOT > 0, F.VLNOT, iif(coalesce(F.VLNOT, 0) = 0, (COALESCE(F.VALNO, 0) - COALESCE(F.VALDE, 0) + COALESCE(F.ICANT, 0) + coalesce(F.VALFR, 0) + coalesce(F.valsg, 0) + coalesce(F.valip, 0) + coalesce(F.valst, 0)), F.VLNOT)) AS NUMERIC(14,2))) as valor
     from in01fat f 
-    where F.FATUR <> '' AND (F.CANCE = 'N' OR F.CANCE IS NULL) AND F.VENDA <> 'R' and (F.VENDA <> 'X') and (F.DTEMI >= '01.01.2023') and (F.DTEMI <= '31.12.2023')
+    where F.FATUR <> '' AND (F.CANCE = 'N' OR F.CANCE IS NULL) AND F.VENDA <> 'R' and (F.VENDA <> 'X') and (F.DTEMI >= '{self.data_banco_inicial}') and (F.DTEMI <= '{self.data_banco_final}')
     """
     
     try:

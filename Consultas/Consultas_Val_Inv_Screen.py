@@ -1,7 +1,7 @@
-def hub_val_inv(self, Consulta_Screen):
+def hub_val_inv(Consulta_Screen):
     import customtkinter as ctk
-    from Consultas_Val_Inv_Func import inv_get, copy_val
-    from Consultas_Val_Screen import Consultas_Val_Screen
+    from Consultas.Consultas_Val_Inv_Func import inv_get, copy_val
+    from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
     
     hub = Consultas_Val_Screen(Consulta_Screen, 'Valor do Inventário')
     

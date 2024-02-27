@@ -1,7 +1,7 @@
 def Comandos_Screen(self, parent):
     import customtkinter as ctk
     from Tk_Tooltip import ToolTip
-    from Comandos_Func import on_click_confirm, precu_porcent_entry_validate
+    from Comandos.Comandos_Func import on_click_confirm, precu_porcent_entry_validate
     
     comando = ctk.CTkToplevel(parent)
     comando.geometry("820x272+150+135")
@@ -37,7 +37,7 @@ def Comandos_Screen(self, parent):
     precu_arrednd_chkbox = ctk.CTkCheckBox(frame_l, text= 'Arredondar Preço de Custo ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
     precu_precomp_chkbox = ctk.CTkCheckBox(frame_l, text= 'Preço de Custo igual Preço de Compra ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
     precu_precomp_cbb = ctk.CTkComboBox(frame_l, font= ('verdana', 12, 'bold'), width= 120, state= 'readonly', values= maior_menor_precu_precom)
-    precu_preme_chkbox = ctk.CTkCheckBox(frame_l, text= 'Preço de Custo igual Preço Médio ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
+    precu_preme_chkbox = ctk.CTkCheckBox(frame_l, text= 'Preço de Custo igual Custo Médio ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
     precu_preme_cbb = ctk.CTkComboBox(frame_l, font= ('verdana', 12, 'bold'), width= 120, state= 'readonly', values= maior_menor_precu_preme)
     precu_igual_chkbox = ctk.CTkCheckBox(frame_l, text= 'Quando zerado preço de custo igual a ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
     precu_igual_cbb = ctk.CTkComboBox(frame_l, font= ('verdana', 12, 'bold'), width= 120, state= 'readonly', values= precu_precom_cusme_vend)
@@ -45,8 +45,9 @@ def Comandos_Screen(self, parent):
     com_ger_entry = ctk.CTkEntry(frame_l, font= ('verdana', 12, 'bold'), width= 378, justify= 'left')
     
     ToolTip(precu_porcent_chkbox, 'Multiplica o preço de Custo pelo numero informado', 700)
-    ToolTip(precu_precomp_chkbox, 'Também executará o arredondamento no Preço de Custo', 700)
-    ToolTip(precu_preme_chkbox, 'Também executará o arredondamento no Preço de Custo', 700)
+    ToolTip(precu_precomp_chkbox, 'Deixa Preço de Custo igual a Preço de Compra quando o Preço de Compra for Maior/Menor. Também executará o arredondamento no Preço de Custo', 700)
+    ToolTip(precu_preme_chkbox, 'Deixa Preço de Custo igual a Custo Médio quando o Custo Médio for Maior/Menor. Também executará o arredondamento no Preço de Custo', 700)
+    ToolTip(precu_igual_chkbox, 'Deixa Preço de Custo igual a Preço de Compra, Custo Médio ou Preço de Venda * 0,65 quando o Preço de Custo for 0 e o saldo for 0', 700)
     ToolTip(com_ger_entry, 'Executará qualquer comando escrito', 700)
     
     com_precu_label.place(x= 22, y= 5)
@@ -72,8 +73,11 @@ def Comandos_Screen(self, parent):
     saldo_neg_chkbox = ctk.CTkCheckBox(frame_r, text= 'Zerar Saldo Negativo ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
     dtope_dtpro_chkbox = ctk.CTkCheckBox(frame_r, text= 'Deixar DTOPE igual DTPRO ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
     
+    ToolTip(classi_pro_null_chkbox, 'Deixa a classificação do produto 00 se ele estiver nulo', 700)
     ToolTip(saldo_zer_chkbox, 'Zerar o Saldo dos Produtos cuja o saldo está entre 0,001 e 0,000001', 700)
+    ToolTip(ctrl_estq_chkbox, 'Seta o campo Controla Estoque para S nos produtos que estão com Controla Estoque N', 700)
     ToolTip(quant_alto_chkbox, 'Deixa Quant 1 nos produtos da LAN que estão com a quantidade muito alta', 700)
+    ToolTip(saldo_neg_chkbox, 'Zera o saldo dos produtos que estão com saldo negativo', 700)
     ToolTip(dtope_dtpro_chkbox, 'Deixa a Data de Operação igual a Data do Produto em Ajuste de Estoque', 700)
     
     com_geral_label.place(x= 22, y= 5)

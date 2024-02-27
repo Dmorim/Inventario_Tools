@@ -1,14 +1,17 @@
 def Set_Dados_Padrao(entrys_list):
     porta = carregar_diretorio('Porta', 'last_dir')
+    fbclient = carregar_diretorio('FBClient', 'dir_banco')
     entrys_list[0].insert(0, 'localhost')
     entrys_list[1].insert(0, porta if porta else '3050')
-    entrys_list[3].insert(0, 'C:/Program Files (x86)/Firebird/Firebird_3_0/fbclient.dll')
+    entrys_list[3].insert(0, fbclient if fbclient else 'C:/Program Files/Firebird/Firebird_3_0/bin/fbclient.dll')
 
-def salvar_diretorio(diretorio, last_dir):
+def salvar_diretorio(diretorio, name: str, last_dir):
     import configparser
     config = configparser.ConfigParser()
     config.read('config.ini')
-    config[diretorio] = {'last_dir': last_dir}
+    if not config.has_section(diretorio):
+        config.add_section(diretorio)
+    config.set(diretorio, name, last_dir)
     with open('config.ini', 'w') as configfile:
         config.write(configfile)
 
@@ -26,7 +29,7 @@ def Caminho_Banco_Dir(self, Banco_Screen, entrys_list):
     if caminho:
         entrys_list[2].delete(0, 'end')
         entrys_list[2].insert(0, caminho)
-        salvar_diretorio('Banco', caminho[:caminho.rfind('/')])
+        salvar_diretorio('Banco', 'last_dir', caminho[:caminho.rfind('/')])
         
 def Caminho_Fb_Dir(self, Banco_Screen, entrys_list):
     from tkinter import filedialog
@@ -36,10 +39,10 @@ def Caminho_Fb_Dir(self, Banco_Screen, entrys_list):
     if caminho:
         entrys_list[3].delete(0, 'end')
         entrys_list[3].insert(0, caminho)
-        salvar_diretorio('FBClient', caminho[:caminho.rfind('/')])
+        salvar_diretorio('FBClient', 'last_dir', caminho[:caminho.rfind('/')])
         
 def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_list):
-    from Inventario_Conn import Dados, Connect
+    from Banco_de_Dados.Inventario_Conn import Dados, Connect
     from fdb import DatabaseError
     for entry in entrys_list:
         if entry.get() == '':
@@ -57,7 +60,8 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
         messagebox.showerror('Erro', f'Não foi possível conectar ao banco de dados\n {e}', parent= Banco_Screen)
         return
     
-    salvar_diretorio('Porta', entrys_list[1].get()) 
+    salvar_diretorio('Porta', 'last_dir', entrys_list[1].get()) 
+    salvar_diretorio('FBClient', 'dir_banco', entrys_list[3].get())
     
     try:
         Connect.cursor.execute('SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI')

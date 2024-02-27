@@ -7,7 +7,7 @@ def Comandos_Func(self, checkbox_List):
         checkbox_List[4]: f'UPDATE IN01PRO SET PRECU = {self.precu_vldia_preve} WHERE (PRECU = 0 OR PRECU IS NULL) AND SALDO > 0 AND PREVE <> 0',
         checkbox_List[5]: f'UPDATE IN01PRO SET CLASSIFICACAO_PRODUTO = 00 WHERE CLASSIFICACAO_PRODUTO IS NULL',
         checkbox_List[6]: f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO BETWEEN 0.000001 AND 0.01',
-        checkbox_List[7]: f"UPDATE IN01LAN SET CONTROLAESTOQUE = 'S' WHERE (CONTROLAESTOQUE IS NULL OR CONTROLAESTOQUE = 'N') AND DTPRO >= '01.01.2023'",
+        checkbox_List[7]: f"UPDATE IN01LAN SET CONTROLAESTOQUE = 'S' WHERE (CONTROLAESTOQUE IS NULL OR CONTROLAESTOQUE = 'N') AND DTPRO >= '{self.data_banco_inicial}'",
         checkbox_List[8]: f'UPDATE IN01LAN SET QUANT = 1 WHERE QUANT > 999999 OR VALOR > 999999',
         checkbox_List[9]: f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO < 0',
         checkbox_List[10]: f"UPDATE IN01LAN SET DTOPE = DTPRO WHERE VENDA = 'J' AND DTOPE <> DTPRO",
@@ -15,7 +15,7 @@ def Comandos_Func(self, checkbox_List):
     }
     
 def on_click_confirm(self, comando, checkbox_List, values_List):
-    from Inventario_Conn import Connect
+    from Banco_de_Dados.Inventario_Conn import Connect
     from tkinter import messagebox
     if values_List[0].get() != '':
         self.porcent_precu = values_List[0].get()
