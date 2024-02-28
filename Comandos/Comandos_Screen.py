@@ -1,12 +1,13 @@
 def Comandos_Screen(self, parent):
     import customtkinter as ctk
-    from Tk_Tooltip import ToolTip
+    from Outros.Tk_Tooltip import ToolTip
     from Comandos.Comandos_Func import on_click_confirm, precu_porcent_entry_validate
     
     comando = ctk.CTkToplevel(parent)
     comando.geometry("820x272+150+135")
     comando.title("Comandos")
     comando.resizable(False, False)
+    comando.transient(parent)
     comando.focus_set()
     comando.grab_set()
     

@@ -6,6 +6,7 @@ def List_Treeview_Screen(parent):
     toplevel.title('Lista de Produtos')
     toplevel.geometry("700x300")
     toplevel.resizable(False, False)
+    toplevel.transient(parent)
     toplevel.focus_set()
     toplevel.grab_set()
     
@@ -30,7 +31,7 @@ def List_Treeview_Screen(parent):
     Treeview_Select(treeview)
     
 def Treeview_Select(treeview):
-    from Inventario_Conn import Connect
+    from Banco_de_Dados.Inventario_Conn import Connect
     query = 'select cdpro, nmpro, saldo, precu from in01pro where saldo between 0.000001 and 0.01'
     Connect.cursor.execute(query)
     rows = Connect.cursor.fetchall()

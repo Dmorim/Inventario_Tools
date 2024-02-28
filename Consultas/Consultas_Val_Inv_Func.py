@@ -8,7 +8,7 @@ def banco_codigo_valueform(val):
     return val
 
 def inv_get():
-    from Inventario_Conn import Connect
+    from Banco_de_Dados.Inventario_Conn import Connect
     try:
         Connect.cursor.execute("select sum (cast(saldo * precu as numeric (15, 2))) as valor from in01pro where cast (saldo as numeric (15, 2)) > 0 and classificacao_produto in ('00','01','02','03','04','05','06')")
         val = Connect.cursor.fetchone()[0]

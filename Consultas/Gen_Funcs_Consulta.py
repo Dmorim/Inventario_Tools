@@ -1,5 +1,5 @@
 def prod_get(query_input: str):
-    from Inventario_Conn import Connect
+    from Banco_de_Dados.Inventario_Conn import Connect
     from fdb import DatabaseError
     
     try:

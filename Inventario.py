@@ -7,20 +7,26 @@ class Inventario:
         from Comandos.Comandos_Screen import Comandos_Screen
         from Consultas.Gen_Funcs_Consulta import event_button_comando, event_button_consulta
         from Configuracoes.Config_Screen import config_screen
-        from Datas_Config import date_treat, data_select_ini, data_select_fim
-        from Banco_Images import TelaInicial
+        from Tutorial.Tutorial_Screen import tutorial_screen
+        from Outros.Datas_Config import date_treat, data_select_ini, data_select_fim
+        from Outros.Banco_Images import TelaInicial
+        from Banco_de_Dados.Banco_de_Dados_Func import carregar_diretorio
         
         
         from tkcalendar import DateEntry
-        from Tk_Tooltip import ToolTip
+        from Outros.Tk_Tooltip import ToolTip
         import datetime
         
-        ctk.set_appearance_mode("System")
+        self.color_theme = carregar_diretorio('Configurações', 'Cor_do_tema')
+        if self.color_theme is None:
+            self.color_theme = 'System'
+        
+        ctk.set_appearance_mode(self.color_theme)
         ctk.set_default_color_theme("dark-blue")
         
         self.root = root
         self.root.title("Configurações de Inventario")
-        self.root.geometry("510x200")
+        self.root.geometry("510x200+80+60")
         self.root.resizable(False, False)
         self.root.focus()
         
@@ -33,8 +39,8 @@ class Inventario:
         self.ini_date = ctk.StringVar()
         self.end_date = ctk.StringVar()
         
-        
         gear_image = ctk.CTkImage(TelaInicial.gear_image_tela_inicial, size= (14, 14))
+        help_image = ctk.CTkImage(TelaInicial.help_image_tela_inicial, size= (14, 14))
         
         self.database = ctk.CTkButton(self.frame_top, text= 'Selecione o Banco de Dados', width= 100, height= 48, command= lambda: Interface_Banco(self, self.root, entry_alter_list, button_list))
         self.consulta = ctk.CTkButton(self.frame_top, text= 'Consultas (F1)', width= 80, height= 48, command= lambda: Consulta_Total_Screen(self, self.root), state= 'disabled')
@@ -43,7 +49,8 @@ class Inventario:
         self.dat_ini = DateEntry(self.frame_top, width= 12, background= 'darkblue', foreground= 'white', borderwidth= 2, textvariable= self.ini_date, date_pattern= 'dd/mm/yyyy')
         self.dat_fim_label = ctk.CTkLabel(self.frame_top, text= 'Data Final:', width= 10, height= 2, font= ('', 12))
         self.dat_fim = DateEntry(self.frame_top, width= 12, background= 'darkblue', foreground= 'white', borderwidth= 2, textvariable= self.end_date)
-        self.gear_btt = ctk.CTkButton(self.frame_top, text= '', width= 14, height= 14, image= gear_image, command= lambda: config_screen(self.root), fg_color= 'gray')
+        self.gear_btt = ctk.CTkButton(self.frame_top, text= '', width= 14, height= 14, image= gear_image, command= lambda: config_screen(self, self.root), fg_color= '#d04404')
+        self.help_btt = ctk.CTkButton(self.frame_top, text= '', width= 14, height= 14, image= help_image, fg_color= '#d04404', command= lambda: tutorial_screen(self.root))
         
         self.database._text_label.configure(wraplength= 100)
         self.consulta._text_label.configure(wraplength= 70)
@@ -57,6 +64,7 @@ class Inventario:
         self.dat_fim_label.place(x= 303, y= 35)
         self.dat_fim.place(x= 370, y= 32)
         self.gear_btt.place(x= 473, y= 6)
+        self.help_btt.place(x= 473, y= 32)
         
         nome_empresa_label = ctk.CTkLabel(self.frame_bot, text= '', width= 20, height= 2, font= ('', 18, 'bold'))
         razao_social_label = ctk.CTkLabel(self.frame_bot, text= 'Razão Social:', width= 20, height= 2, font= ('', 12))
@@ -107,7 +115,7 @@ class Inventario:
         fone_text.place(x= 62, y= 100)
         ult_emit.place(x= 6, y= 118)
         ult_emit_text.place(x= 100, y= 118)
-        credits.place(relx= 0.776, rely= 0.96, anchor= 's')
+        credits.place(relx= 0.83, rely= 0.96, anchor= 's')
         
         self.root.bind('<F1>', lambda event: event_button_consulta(self, event))
         self.root.bind('<F2>', lambda event: event_button_comando(self, event))

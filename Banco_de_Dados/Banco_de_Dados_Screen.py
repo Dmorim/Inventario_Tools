@@ -5,14 +5,15 @@ def Interface_Banco(self, root, entry_alter_list, button_list):
     Banco_Screen.title("Configurações de Banco de Dados")
     Banco_Screen.geometry("370x225")
     Banco_Screen.resizable(False, False)
-    Banco_Screen.focus()
+    Banco_Screen.transient(root)
+    Banco_Screen.focus_set()
     Banco_Screen.grab_set()
     
     frame_in = ctk.CTkFrame(Banco_Screen, width= 366, height= 180, border_width= 2, border_color= 'silver', corner_radius= 5)
     frame_in.pack_propagate(False)
     frame_in.pack(padx= 5, pady= 25)
     
-    sel_banco_label = ctk.CTkLabel(Banco_Screen, text= 'Conexão com o Banco de Dados', width= 20, height= 2, font= ('', 14), text_color= 'silver')
+    sel_banco_label = ctk.CTkLabel(Banco_Screen, text= 'Conexão com o Banco de Dados', width= 20, height= 2, font= ('', 14, 'bold'))
     confirm_button = ctk.CTkButton(Banco_Screen, width= 25, height= 7, text= 'Confirmar', command= lambda: on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_list), text_color= 'silver')
     cancel_button = ctk.CTkButton(Banco_Screen, width= 75, height= 7, text= 'Cancelar', command= lambda: Banco_Screen.destroy(), text_color= 'silver')    
     

@@ -8,7 +8,7 @@ def banco_codigo_valueform(val):
     return val
 
 def ven_get(self):
-    from Inventario_Conn import Connect
+    from Banco_de_Dados.Inventario_Conn import Connect
     from fdb import DatabaseError
     query = f"""
     select
