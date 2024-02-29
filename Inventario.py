@@ -46,9 +46,9 @@ class Inventario:
         self.consulta = ctk.CTkButton(self.frame_top, text= 'Consultas (F1)', width= 80, height= 48, command= lambda: Consulta_Total_Screen(self, self.root), state= 'disabled')
         self.comando = ctk.CTkButton(self.frame_top, text= 'Comandos (F2)', width= 60, height= 48, command= lambda: Comandos_Screen(self, self.root), state= 'disabled')
         self.dat_ini_label = ctk.CTkLabel(self.frame_top, text= 'Data Inicial:', width= 10, height= 2, font= ('', 12))
-        self.dat_ini = DateEntry(self.frame_top, width= 12, background= 'darkblue', foreground= 'white', borderwidth= 2, textvariable= self.ini_date, date_pattern= 'dd/mm/yyyy')
+        self.dat_ini = DateEntry(self.frame_top, width= 12, background= 'darkblue', foreground= 'white', borderwidth= 2, textvariable= self.ini_date, date_pattern= 'dd/mm/yyyy', firstweekday= 'sunday')
         self.dat_fim_label = ctk.CTkLabel(self.frame_top, text= 'Data Final:', width= 10, height= 2, font= ('', 12))
-        self.dat_fim = DateEntry(self.frame_top, width= 12, background= 'darkblue', foreground= 'white', borderwidth= 2, textvariable= self.end_date)
+        self.dat_fim = DateEntry(self.frame_top, width= 12, background= 'darkblue', foreground= 'white', borderwidth= 2, textvariable= self.end_date, date_pattern= 'dd/mm/yyyy', firstweekday= 'sunday')
         self.gear_btt = ctk.CTkButton(self.frame_top, text= '', width= 14, height= 14, image= gear_image, command= lambda: config_screen(self, self.root), fg_color= '#d04404')
         self.help_btt = ctk.CTkButton(self.frame_top, text= '', width= 14, height= 14, image= help_image, fg_color= '#d04404', command= lambda: tutorial_screen(self.root))
         

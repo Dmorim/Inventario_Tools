@@ -23,8 +23,10 @@ def ven_get(self):
     except (DatabaseError, TypeError) as e:
         from tkinter import messagebox
         messagebox.showerror('Erro', f'Erro ao acessar o banco de dados\n {e}')
-        
-    valrec = banco_codigo_valueform(valrec)
+    if valrec is not None:
+        valrec = banco_codigo_valueform(valrec)
+    else:
+        valrec = 'Não foi registrado vendas'
     return valrec
     
 def copy_val(val_ven_text):

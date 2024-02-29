@@ -19,11 +19,11 @@
   },
   {
    "optionDest": "icon_file",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/3246761_ghex_hex_software_technology_icon.ico"
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Outros/3246761_ghex_hex_software_technology_icon.ico"
   },
   {
    "optionDest": "name",
-   "value": "Inv Tools 1.3.0"
+   "value": "Inv Tools 1.5.0"
   },
   {
    "optionDest": "ascii",
@@ -74,122 +74,6 @@
    "value": false
   },
   {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Banco_de_Dados_Func.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Banco_de_Dados_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Comandos_Func.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Comandos_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Classi_Pro_List.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Classi_Pro_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Contr_Estq_List.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Contr_Estq_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_NZer_List_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_NZer_Prod_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Precu_Preve_List.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Precu_Preve_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Preve_Precu_Precom_List.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Preve_Precu_Precom_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Quant_Maior_List.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Quant_Maior_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Val_Ent_Func.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Val_Ent_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Val_Inv_Func.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Val_Inv_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Val_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Val_Ven_Func.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_Val_Ven_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_ZCusto_List_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas_ZCusto_Screen.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Gen_Funcs_Consulta.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Inventario_Conn.py;."
-  },
-  {
-   "optionDest": "datas",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Tk_Tooltip.py;."
-  },
-  {
    "optionDest": "collect_all",
    "value": "fdb"
   },
@@ -204,6 +88,42 @@
   {
    "optionDest": "collect_all",
    "value": "configparser"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Banco_de_Dados;Banco_de_Dados/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Comandos;Comandos/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Configuracoes;Configuracoes/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas;Consultas/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Outros;Outros/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Tutorial;Tutorial/"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "pillow"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "base64"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "io"
   }
  ],
  "nonPyinstallerOptions": {
