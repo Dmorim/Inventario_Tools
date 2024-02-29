@@ -16,7 +16,7 @@ def tutorial_screen(parent):
     tut_03_image = ''
     tut_04_image = ''
     
-    image_list = [tut_01_image, tut_02_image, tut_03_image, tut_04_image]
+    image_list = [tut_01_image, tut_02_image, tut_03_image, tut_04_image, '', '']
     
     image_frame = ctk.CTkFrame(tutorial, width= 390, height= 170, border_width= 2, border_color= 'silver', corner_radius= 5)
     text_frame = ctk.CTkFrame(tutorial, width= 390, height= 160, border_width= 2, border_color= 'silver', corner_radius= 5)
