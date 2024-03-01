@@ -33,7 +33,7 @@ def Consulta_Total_Screen(self, root):
     val_com_button = ctk.CTkButton(frame_l, text= 'Gerar valor das Compras', width= 380, height= 25, command= lambda: Val_Ent_Screen(self, Consulta_Screen), text_color= 'silver', font = ('', 15, 'bold'))
     ctrl_estoq = ctk.CTkButton(frame_l, text= 'Produtos com Controla Estoque = N', width= 380, height= 25, command= lambda: Contr_Estq_Screen(self, Consulta_Screen), text_color= 'silver', font = ('', 14, 'bold'))
     saldo_nzerado_button = ctk.CTkButton(frame_l, text= 'Produtos com Saldo Não Zerado', width= 380, height= 25, command= lambda: Prod_NZer_Screen(Consulta_Screen), text_color= 'silver', font = ('', 14, 'bold'))
-    dist_saldo_button = ctk.CTkButton(frame_l, text= 'Distorções de Saldo', width= 380, height= 25, command= lambda: dist_saldo_screen(Consulta_Screen), text_color= 'silver', font = ('', 14, 'bold'))
+    dist_saldo_button = ctk.CTkButton(frame_l, text= 'Distorções de Saldo', width= 380, height= 25, command= lambda: dist_saldo_screen(self, Consulta_Screen), text_color= 'silver', font = ('', 14, 'bold'))
     
     
     precu_zer_button = ctk.CTkButton(frame_r, text= 'Produtos com Preço de Custo Zerado', width= 380, height= 25, command= lambda: Prod_ZCusto_Screen(Consulta_Screen), text_color= 'silver', font = ('', 14, 'bold'))

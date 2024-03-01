@@ -2,17 +2,18 @@ def Comandos_Screen(self, parent):
     import customtkinter as ctk
     from Outros.Tk_Tooltip import ToolTip
     from Comandos.Comandos_Func import on_click_confirm, precu_porcent_entry_validate
+    from Comandos.Comandos_Dist_Saldo import on_click_dist_saldo
     
     comando = ctk.CTkToplevel(parent)
-    comando.geometry("820x272+150+135")
+    comando.geometry("820x292+150+135")
     comando.title("Comandos")
     comando.resizable(False, False)
     comando.transient(parent)
     comando.focus_set()
     comando.grab_set()
     
-    frame_l = ctk.CTkFrame(comando, width= 410, height= 240, border_width= 2, border_color= 'silver', corner_radius= 5)
-    frame_r = ctk.CTkFrame(comando, width= 410, height= 240, border_width= 2, border_color= 'silver', corner_radius= 5)
+    frame_l = ctk.CTkFrame(comando, width= 410, height= 260, border_width= 2, border_color= 'silver', corner_radius= 5)
+    frame_r = ctk.CTkFrame(comando, width= 410, height= 260, border_width= 2, border_color= 'silver', corner_radius= 5)
     frame_l.pack_propagate(False)
     frame_r.pack_propagate(False)
     
@@ -22,13 +23,14 @@ def Comandos_Screen(self, parent):
     confirm_button = ctk.CTkButton(comando, text= 'Confirmar', width= 60, height= 26, command= lambda: on_click_confirm(self, comando, checkbox_list, values_list))
     cancel_button = ctk.CTkButton(comando, text= 'Cancelar', width= 70, height= 26, command= lambda: comando.destroy())
     
-    confirm_button.place(x= 747, y= 242)
-    cancel_button.place(x= 671, y= 242)
+    confirm_button.place(x= 747, y= 262)
+    cancel_button.place(x= 671, y= 262)
     
     #Items do Frame Left
     maior_menor_precu_precom = ['Maior', 'Menor']
     maior_menor_precu_preme = ['Maior', 'Menor']
     precu_precom_cusme_vend = ['Preço de Compra', 'Custo Médio', 'Preço de Venda * 0,65']
+    dist_saldo = ['LAN = PRO', 'PRO = LAN']
     
     precu_porcent_vcmd = (comando.register(precu_porcent_entry_validate), '%P')
     
@@ -73,6 +75,7 @@ def Comandos_Screen(self, parent):
     quant_alto_chkbox = ctk.CTkCheckBox(frame_r, text= 'Corrigir Quantidade Excessivamente Alta ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
     saldo_neg_chkbox = ctk.CTkCheckBox(frame_r, text= 'Zerar Saldo Negativo ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
     dtope_dtpro_chkbox = ctk.CTkCheckBox(frame_r, text= 'Deixar DTOPE igual DTPRO ', font= ('verdana', 12, 'bold'), checkbox_height= 13, checkbox_width= 13)
+    dist_saldo_button = ctk.CTkButton(frame_r, text= 'Correção de Distorção de Saldo ', font= ('verdana', 12, 'bold'), width= 390, anchor= 'center', command= lambda: on_click_dist_saldo(self, comando))
     
     ToolTip(classi_pro_null_chkbox, 'Deixa a classificação do produto 00 se ele estiver nulo', 700)
     ToolTip(saldo_zer_chkbox, 'Zerar o Saldo dos Produtos cuja o saldo está entre 0,001 e 0,000001', 700)
@@ -80,6 +83,7 @@ def Comandos_Screen(self, parent):
     ToolTip(quant_alto_chkbox, 'Deixa Quant 1 nos produtos da LAN que estão com a quantidade muito alta', 700)
     ToolTip(saldo_neg_chkbox, 'Zera o saldo dos produtos que estão com saldo negativo', 700)
     ToolTip(dtope_dtpro_chkbox, 'Deixa a Data de Operação igual a Data do Produto em Ajuste de Estoque', 700)
+    ToolTip(dist_saldo_button, 'Corrige a distorção de saldo entre LAN e PRO\n É preciso ter gerado a lista de distorções antes de executar a função', 700)
     
     com_geral_label.place(x= 22, y= 5)
     classi_pro_null_chkbox.place(x= 5, y= 38)
@@ -88,6 +92,8 @@ def Comandos_Screen(self, parent):
     quant_alto_chkbox.place(x= 5, y= 131)
     saldo_neg_chkbox.place(x= 5, y= 166)
     dtope_dtpro_chkbox.place(x= 5, y= 198)
+    dist_saldo_button.place(x= 10, y= 226)
+
     
     values_list = [precu_porcent_entry, precu_precomp_cbb, precu_preme_cbb, precu_igual_cbb, com_ger_entry]
     checkbox_list = [precu_porcent_chkbox, precu_arrednd_chkbox, precu_precomp_chkbox, precu_preme_chkbox, precu_igual_chkbox, classi_pro_null_chkbox, saldo_zer_chkbox, ctrl_estq_chkbox, quant_alto_chkbox, saldo_neg_chkbox, dtope_dtpro_chkbox, com_ger_chkbox]
@@ -95,5 +101,12 @@ def Comandos_Screen(self, parent):
     precu_precomp_cbb.set('Maior')
     precu_preme_cbb.set('Maior')
     precu_igual_cbb.set('Preço de Compra')
+    
+    if hasattr(self, 'dist_saldo_list'):
+        if len(self.dist_saldo_list) == 0:
+            dist_saldo_button.configure(state= 'disabled')
+    else:
+        dist_saldo_button.configure(state= 'disabled')
+    
     
     comando.bind("<Escape>", lambda e: comando.destroy())

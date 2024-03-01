@@ -1,4 +1,4 @@
-def List_Treeview_Screen(parent):
+def List_Treeview_Screen(self, parent):
     import customtkinter as ctk
     from tkinter import ttk
     toplevel = ctk.CTkToplevel(parent)
@@ -27,20 +27,19 @@ def List_Treeview_Screen(parent):
     vsb.pack(side= 'right', fill= 'y')
     treeview.pack(fill= 'both', expand= True)
     
-    Treeview_Select(treeview)
+    Treeview_Select(self, treeview)
     
-def Treeview_Select(treeview):
+def Treeview_Select(self, treeview):
     from Banco_de_Dados.Inventario_Conn import Connect
-    list_treeview = []
+    self.dist_saldo_list = []
     query = "select l.cdpro, p.nmpro, sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) as saldo_lan, p.saldo as saldo_pro, iif(sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) <> p.saldo, 'S', 'N') as distorcao  from in01lan l left join in01pro p on l.cdpro = p.cdpro where p.classificacao_produto in ('00','01', '02', '03', '04', '05', '06') group by l.cdpro, p.saldo, p.nmpro"
     Connect.cursor.execute(query)
     rows = Connect.cursor.fetchall()
     for row in rows:
         cdpro, nmpro, saldo_lan, saldo_pro, distorcao = row
         if distorcao == 'S':
-            list_treeview.append([cdpro, nmpro, saldo_lan, saldo_pro])
-    
-    Treeview_Insert(treeview, list_treeview)
+            self.dist_saldo_list.append([cdpro, nmpro, saldo_lan, saldo_pro])
+    Treeview_Insert(treeview, self.dist_saldo_list)
     
 def Treeview_Insert(treeview, rows):
     for row in rows:

@@ -17,12 +17,13 @@ def Comandos_Func(self, checkbox_List):
 def on_click_confirm(self, comando, checkbox_List, values_List):
     from Banco_de_Dados.Inventario_Conn import Connect
     from tkinter import messagebox
+    
     if values_List[0].get() != '':
         self.porcent_precu = values_List[0].get()
         self.porcent_precu = self.porcent_precu.replace(',', '.')
     else:
         self.porcent_precu = 1
-    
+        
     if values_List[1].get() == 'Maior':
         self.precu_vldia = '>'
     else:
@@ -41,7 +42,7 @@ def on_click_confirm(self, comando, checkbox_List, values_List):
         self.precu_vldia_preve = 'PREVE - (PREVE * 0.65)'
         
     self.com_ger = values_List[4].get()
-
+    
     Comandos_Func(self, checkbox_List)
     cond = messagebox.askyesno('Aviso', f'Os seguintes comandos serão executados {comandos_true(self)}\nDeseja continuar?', parent= comando)
     if cond:
@@ -79,4 +80,3 @@ def precu_porcent_entry_validate(P):
         return int_part.isdigit() and dec_part.isdigit() and price >= 0 and len(dec_part) <= 11 and len(int_part) <= 9 # Aceita apenas valores positivos e centavos entre 0 e 9
     except ValueError:
         return False
-    
