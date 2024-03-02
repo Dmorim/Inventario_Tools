@@ -27,7 +27,7 @@ def List_Treeview_Screen(self, parent):
     vsb.pack(side= 'right', fill= 'y')
     treeview.pack(fill= 'both', expand= True)
     
-    Treeview_Select(self, treeview)
+    Treeview_Insert(treeview, self.dist_saldo_list)
     
 def Treeview_Select(self, treeview):
     from Banco_de_Dados.Inventario_Conn import Connect

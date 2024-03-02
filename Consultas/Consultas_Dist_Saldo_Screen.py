@@ -1,29 +1,41 @@
 def dist_saldo_screen(self, Consulta_Screen):
-    import customtkinter as ctk
-    from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
-    from Consultas.Gen_Funcs_Consulta import prod_get, copy_val
-    from Consultas.Consultas_Dist_Saldo_List import List_Treeview_Screen
+       import customtkinter as ctk
+       from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
+       from Consultas.Gen_Funcs_Consulta import prod_get, copy_val
+       from Consultas.Consultas_Dist_Saldo_List import List_Treeview_Screen
+       import threading
     
-    hub = Consultas_Val_Screen(Consulta_Screen, 'Saldo de Estoque')
-    
-    query = """
-    SELECT COUNT(IIF(saldo_lan <> p.saldo, 'S', NULL)) AS distorcao
-    FROM (
-    SELECT l.cdpro, 
-           SUM(IIF(l.TPMOV = 'S', l.quant, -l.quant)) AS saldo_lan
-    FROM in01lan l 
-    GROUP BY l.cdpro
-    ) AS subquery
-    LEFT JOIN in01pro p ON subquery.cdpro = p.cdpro
-    where p.classificacao_produto in ('00','01', '02', '03', '04', '05', '06')
-    """
-    
-    val_ven_label = ctk.CTkLabel(hub, text= 'Distorções de Saldo:', width= 20, height= 2, font= ('', 16))
-    val_ven_text = ctk.CTkLabel(hub, text= prod_get(query), width= 20, height= 2, font= ('', 14))
-    val_ven_button = ctk.CTkButton(hub, text= 'Copiar Valor', width= 15, height= 20, command= lambda: copy_val(val_ven_text))
-    listagem_buttn = ctk.CTkButton(hub, text= 'Listar Produtos', width= 15, height= 20, command= lambda: List_Treeview_Screen(self, hub))
-    
-    val_ven_label.place(relx= 0.5, y= 15, anchor= 'center')
-    val_ven_text.place(relx= 0.5, y= 40, anchor= 'center')
-    val_ven_button.place(relx= 0.8, y= 65, anchor= 'center')
-    listagem_buttn.place(relx= 0.24, y= 65, anchor= 'center')
+       hub = Consultas_Val_Screen(Consulta_Screen, 'Saldo de Estoque')             
+       execute_query(self)
+       
+       val_ven_label = ctk.CTkLabel(hub, text= 'Distorções de Saldo:', width= 20, height= 2, font= ('', 16))
+       val_ven_text = ctk.CTkLabel(hub, text= len(self.dist_saldo_list), width= 20, height= 2, font= ('', 14))
+       val_ven_button = ctk.CTkButton(hub, text= 'Copiar Valor', width= 15, height= 20, command= lambda: copy_val(val_ven_text))
+       listagem_buttn = ctk.CTkButton(hub, text= 'Listar Produtos', width= 15, height= 20, command= lambda: List_Treeview_Screen(self, hub))
+
+       val_ven_label.place(relx= 0.5, y= 15, anchor= 'center')
+       val_ven_text.place(relx= 0.5, y= 40, anchor= 'center')
+       val_ven_button.place(relx= 0.8, y= 65, anchor= 'center')
+       listagem_buttn.place(relx= 0.24, y= 65, anchor= 'center')
+       
+def execute_query(self):
+       from Banco_de_Dados.Inventario_Conn import Connect
+       query = """
+       select
+       l.cdpro,
+       p.nmpro,
+       sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) as saldo_lan,
+       p.saldo as saldo_pro,
+       iif(sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) <> p.saldo, 'S', 'N') as distorcao
+       from in01lan l
+       left join in01pro p on l.cdpro = p.cdpro
+       where p.classificacao_produto in ('00','01', '02', '03', '04', '05', '06') group by l.cdpro, p.saldo, p.nmpro
+       """
+       self.dist_saldo_list = []
+       Connect.cursor.execute(query)
+       rows = Connect.cursor.fetchall()
+       for row in rows:
+              cdpro, nmpro, saldo_lan, saldo_pro, distorcao = row
+              if distorcao == 'S':
+                     self.dist_saldo_list.append([cdpro, nmpro, saldo_lan, saldo_pro])
+                     

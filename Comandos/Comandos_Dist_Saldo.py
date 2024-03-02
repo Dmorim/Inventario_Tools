@@ -19,6 +19,7 @@ def on_click_dist_saldo(self, parent):
     cancel_button = ctk.CTkButton(distorcao, text= 'Cancelar', width= 75, height= 26, command= lambda: distorcao.destroy())
     
     val_list = [tipo_distorc_cbb, data_entry]
+    tipo_distorc_cbb.set('LAN = PRO')
     
     tipo_distorc_label.place(x= 5, y= 5)
     tipo_distorc_cbb.place(x= 5, y= 40)
