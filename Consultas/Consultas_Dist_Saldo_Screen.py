@@ -3,7 +3,6 @@ def dist_saldo_screen(self, Consulta_Screen):
        from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
        from Consultas.Gen_Funcs_Consulta import prod_get, copy_val
        from Consultas.Consultas_Dist_Saldo_List import List_Treeview_Screen
-       import threading
     
        hub = Consultas_Val_Screen(Consulta_Screen, 'Saldo de Estoque')             
        execute_query(self)
