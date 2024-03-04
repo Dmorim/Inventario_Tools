@@ -20,15 +20,17 @@ def dist_saldo_screen(self, Consulta_Screen):
 def execute_query(self):
        from Banco_de_Dados.Inventario_Conn import Connect
        query = """
-       select
-       l.cdpro,
+       select p.cdpro,
        p.nmpro,
        sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) as saldo_lan,
        p.saldo as saldo_pro,
-       iif(sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) <> p.saldo, 'S', 'N') as distorcao
-       from in01lan l
-       left join in01pro p on l.cdpro = p.cdpro
-       where p.classificacao_produto in ('00','01', '02', '03', '04', '05', '06') group by l.cdpro, p.saldo, p.nmpro
+       iif(sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) <> p.saldo, 'S', 'N') as distorcao 
+       from in01lan l left join in01pro p on l.cdpro = p.cdpro 
+       where coalesce(l.controlaestoque, 'S') = 'S'
+       and coalesce(l.cance,  'N') = 'N'
+       and classificacao_produto in ('00', '01', '02', '04', '05', '06')
+       and l.venda <> 'R'
+       group by p.cdpro, p.nmpro, p.saldo
        """
        self.dist_saldo_list = []
        Connect.cursor.execute(query)
