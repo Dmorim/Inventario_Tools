@@ -23,7 +23,7 @@
   },
   {
    "optionDest": "name",
-   "value": "Inv Tools 1.5.0"
+   "value": "Inv Tools 2.0.0"
   },
   {
    "optionDest": "ascii",
@@ -124,6 +124,14 @@
   {
    "optionDest": "collect_all",
    "value": "io"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "tkcalendar"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "datetime"
   }
  ],
  "nonPyinstallerOptions": {

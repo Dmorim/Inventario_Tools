@@ -19,18 +19,26 @@ def dist_saldo_screen(self, Consulta_Screen):
        
 def execute_query(self):
        from Banco_de_Dados.Inventario_Conn import Connect
-       query = """
+       query_casa_dec = "select valor from si01gp where ident = 'FORMATOSALDO'"
+       Connect.cursor.execute(query_casa_dec)
+       casa_dec = Connect.cursor.fetchone()[0]
+       casa_dec = casa_dec.split('.')[1]
+       casa_dec = len(casa_dec)
+       
+       query = f"""
        select p.cdpro,
        p.nmpro,
-       sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) as saldo_lan,
+       cast(sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) as numeric(15,{casa_dec})) as saldo_lan,
        p.saldo as saldo_pro,
-       iif(sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) <> p.saldo, 'S', 'N') as distorcao 
-       from in01lan l left join in01pro p on l.cdpro = p.cdpro 
+       iif(cast(sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) as numeric(15,{casa_dec})) <> cast(p.saldo as numeric (15,3)), 'S', 'N') as distorcao
+       from in01lan l left join in01pro p on l.cdpro = p.cdpro
+       left join in01com c on c.notfi = l.notfi and c.cdfrn = l.cdfrn and c.serie = l.serie
        where coalesce(l.controlaestoque, 'S') = 'S'
        and coalesce(l.cance,  'N') = 'N'
        and classificacao_produto in ('00', '01', '02', '04', '05', '06')
        and l.venda <> 'R'
-       group by p.cdpro, p.nmpro, p.saldo
+       and coalesce(c.alterarsaldo, 'S') = 'S'
+       group by p.cdpro, p.saldo, p.nmpro
        """
        self.dist_saldo_list = []
        Connect.cursor.execute(query)
