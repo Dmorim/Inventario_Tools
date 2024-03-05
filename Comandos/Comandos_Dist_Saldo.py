@@ -1,5 +1,6 @@
 def on_click_dist_saldo(self, parent):
     import customtkinter as ctk
+    from datetime import datetime
     from tkcalendar import DateEntry
     
     distorcao = ctk.CTkToplevel(parent)
@@ -20,6 +21,8 @@ def on_click_dist_saldo(self, parent):
     
     val_list = [tipo_distorc_cbb, data_entry]
     tipo_distorc_cbb.set('LAN = PRO')
+    today_date = datetime.now().strftime("%d/%m/%Y")
+    data_entry.set_date(today_date)
     
     tipo_distorc_label.place(x= 5, y= 5)
     tipo_distorc_cbb.place(x= 5, y= 40)
