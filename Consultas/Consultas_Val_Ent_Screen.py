@@ -1,5 +1,7 @@
 def Val_Ent_Screen(self, Consulta_Screen):    
     import customtkinter as ctk
+    
+    # Importa as funções que vão ser usadas na tela dos arquivos Consultas/Consultas_Val_Ent_Func e Consutlas/Consultas_Val_Screen
     from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
     from Consultas.Consultas_Val_Ent_Func import ent_get, copy_val
     
