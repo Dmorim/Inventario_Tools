@@ -1,5 +1,7 @@
 def hub_val_inv(Consulta_Screen):
     import customtkinter as ctk
+    
+    # Importa as funções que vão ser usadas na tela	 dos arquivos Consultas/Consultas_Val_Inv_Func e Consutlas/Consultas_Val_Screen
     from Consultas.Consultas_Val_Inv_Func import inv_get, copy_val
     from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
     

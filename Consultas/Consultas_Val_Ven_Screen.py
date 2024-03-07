@@ -1,8 +1,11 @@
 def Val_Ven_Screen(self, Consulta_Screen):    
     import customtkinter as ctk
+    
+    # Importa as funções e variáveis do arquivo Consultas/onsultas_Val_Screen, no entanto suas funções de query são buscadas em Consultas/Consultas.Consultas_Val_Ven_Func.py
     from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
     from Consultas.Consultas_Val_Ven_Func import ven_get, copy_val
     
+    # O resto do funcionamento é idêntico
     hub = Consultas_Val_Screen(Consulta_Screen, 'Valor das Vendas')
     
     val_ven_label = ctk.CTkLabel(hub, text= 'Valor das Vendas:', width= 20, height= 2, font= ('', 16))
