@@ -1,0 +1,141 @@
+{
+ "version": "auto-py-to-exe-configuration_v1",
+ "pyinstallerOptions": [
+  {
+   "optionDest": "noconfirm",
+   "value": true
+  },
+  {
+   "optionDest": "filenames",
+   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Inventario.py"
+  },
+  {
+   "optionDest": "onefile",
+   "value": true
+  },
+  {
+   "optionDest": "console",
+   "value": false
+  },
+  {
+   "optionDest": "icon_file",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Outros/3246761_ghex_hex_software_technology_icon.ico"
+  },
+  {
+   "optionDest": "name",
+   "value": "Inv Tools 2.0.0"
+  },
+  {
+   "optionDest": "ascii",
+   "value": false
+  },
+  {
+   "optionDest": "clean_build",
+   "value": false
+  },
+  {
+   "optionDest": "strip",
+   "value": false
+  },
+  {
+   "optionDest": "noupx",
+   "value": false
+  },
+  {
+   "optionDest": "disable_windowed_traceback",
+   "value": false
+  },
+  {
+   "optionDest": "embed_manifest",
+   "value": true
+  },
+  {
+   "optionDest": "uac_admin",
+   "value": false
+  },
+  {
+   "optionDest": "uac_uiaccess",
+   "value": false
+  },
+  {
+   "optionDest": "win_private_assemblies",
+   "value": false
+  },
+  {
+   "optionDest": "win_no_prefer_redirects",
+   "value": false
+  },
+  {
+   "optionDest": "bootloader_ignore_signals",
+   "value": false
+  },
+  {
+   "optionDest": "argv_emulation",
+   "value": false
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "fdb"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "customtkinter"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "pyperclip"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "configparser"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Banco_de_Dados;Banco_de_Dados/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Comandos;Comandos/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Configuracoes;Configuracoes/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas;Consultas/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Outros;Outros/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Tutorial;Tutorial/"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "pillow"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "base64"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "io"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "tkcalendar"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "datetime"
+  }
+ ],
+ "nonPyinstallerOptions": {
+  "increaseRecursionLimit": true,
+  "manualArguments": ""
+ }
+}
