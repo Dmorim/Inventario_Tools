@@ -41,19 +41,23 @@ def execute_query(self):
        
        # Executa a query que vai pegar os valores de saldo de lançamento e saldo de produto, arredonndo o valor do saldo de lançamento de acordo com a quantidade de casas decimais do sistema
        query = f"""
-       select p.cdpro,
+       SELECT
+       p.cdpro,
        p.nmpro,
-       cast(sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) as numeric(15,{casa_dec})) as saldo_lan,
-       p.saldo as saldo_pro,
-       iif(cast(sum(iif(l.TPMOV = 'S', l.quant, -l.quant)) as numeric(15,{casa_dec})) <> cast(p.saldo as numeric (15,3)), 'S', 'N') as distorcao
-       from in01lan l left join in01pro p on l.cdpro = p.cdpro
-       left join in01com c on c.notfi = l.notfi and c.cdfrn = l.cdfrn and c.serie = l.serie
-       where coalesce(l.controlaestoque, 'S') = 'S'
-       and coalesce(l.cance,  'N') = 'N'
-       and classificacao_produto in ('00', '01', '02', '04', '05', '06')
-       and l.venda <> 'R'
-       and coalesce(c.alterarsaldo, 'S') = 'S'
-       group by p.cdpro, p.saldo, p.nmpro
+       CAST(SUM(IIF(l.TPMOV = 'S', l.quant, -l.quant)) AS NUMERIC (15, {casa_dec})) AS saldo_lan,
+       p.saldo AS saldo_pro,
+       IIF(CAST(SUM(IIF(l.TPMOV = 'S', l.quant, -l.quant)) AS NUMERIC (15, {casa_dec})) <> CAST(p.saldo AS NUMERIC (15, {casa_dec})), 'S', 'N') AS distorcao
+       FROM in01lan l
+       LEFT JOIN in01pro p ON l.cdpro = p.cdpro
+       LEFT JOIN in01com c ON c.notfi = l.notfi AND c.cdfrn = l.cdfrn AND c.serie = l.serie
+       WHERE
+       (l.venda = 'J' OR l.venda <> 'J')
+       AND COALESCE(l.controlaestoque, 'S') = 'S'
+       AND COALESCE(l.cance, 'N') = 'N'
+       AND classificacao_produto IN ('00', '01', '02', '04', '05', '06')
+       AND l.venda <> 'R'
+       AND (COALESCE(c.alterarsaldo, 'S') = 'S' OR l.venda <> 'J')
+       GROUP BY p.cdpro, p.saldo, p.nmpro
        """
        
        self.dist_saldo_list = [] # Lista que vai armazenar os valores obtidos
