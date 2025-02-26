@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 .vscode/launch.json
 Teste.py
+config.ini
+config.ini
