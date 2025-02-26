@@ -7,7 +7,7 @@
   },
   {
    "optionDest": "filenames",
-   "value": "//192.168.254.9/temp/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Inventario.py"
+   "value": "C:/Users/Sup-12/Documents/GitHub/Inventario_Tools/Inventario.py"
   },
   {
    "optionDest": "onefile",
@@ -19,15 +19,11 @@
   },
   {
    "optionDest": "icon_file",
-   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Outros/3246761_ghex_hex_software_technology_icon.ico"
+   "value": "C:/Users/Sup-12/Documents/GitHub/Inventario_Tools/Outros/3246761_ghex_hex_software_technology_icon.ico"
   },
   {
    "optionDest": "name",
-   "value": "Inv Tools 2.0.0"
-  },
-  {
-   "optionDest": "ascii",
-   "value": false
+   "value": "Inv Tools 2.0.1"
   },
   {
    "optionDest": "clean_build",
@@ -46,10 +42,6 @@
    "value": false
   },
   {
-   "optionDest": "embed_manifest",
-   "value": true
-  },
-  {
    "optionDest": "uac_admin",
    "value": false
   },
@@ -58,19 +50,11 @@
    "value": false
   },
   {
-   "optionDest": "win_private_assemblies",
-   "value": false
-  },
-  {
-   "optionDest": "win_no_prefer_redirects",
+   "optionDest": "argv_emulation",
    "value": false
   },
   {
    "optionDest": "bootloader_ignore_signals",
-   "value": false
-  },
-  {
-   "optionDest": "argv_emulation",
    "value": false
   },
   {
@@ -91,27 +75,27 @@
   },
   {
    "optionDest": "datas",
-   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Banco_de_Dados;Banco_de_Dados/"
+   "value": "C:/Users/Sup-12/Documents/GitHub/Inventario_Tools/Banco_de_Dados;Banco_de_Dados/"
   },
   {
    "optionDest": "datas",
-   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Comandos;Comandos/"
+   "value": "C:/Users/Sup-12/Documents/GitHub/Inventario_Tools/Comandos;Comandos/"
   },
   {
    "optionDest": "datas",
-   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Configuracoes;Configuracoes/"
+   "value": "C:/Users/Sup-12/Documents/GitHub/Inventario_Tools/Configuracoes;Configuracoes/"
   },
   {
    "optionDest": "datas",
-   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Consultas;Consultas/"
+   "value": "C:/Users/Sup-12/Documents/GitHub/Inventario_Tools/Consultas;Consultas/"
   },
   {
    "optionDest": "datas",
-   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Outros;Outros/"
+   "value": "C:/Users/Sup-12/Documents/GitHub/Inventario_Tools/Outros;Outros/"
   },
   {
    "optionDest": "datas",
-   "value": "Z:/Daniel/Programas e Comandos/a/code/inventario/Inventario_Tools/Tutorial;Tutorial/"
+   "value": "C:/Users/Sup-12/Documents/GitHub/Inventario_Tools/Tutorial;Tutorial/"
   },
   {
    "optionDest": "collect_all",
@@ -132,6 +116,10 @@
   {
    "optionDest": "collect_all",
    "value": "datetime"
+  },
+  {
+   "optionDest": "collect_all",
+   "value": "ctypes"
   }
  ],
  "nonPyinstallerOptions": {
