@@ -5,15 +5,15 @@ import customtkinter as ctk
 class Inventario:
     def __init__(self, root):
         # Importações de outros arquivos do sistema segundo a Lógica: from [Pasta].[Arquivo] import [Classe ou Função]
-        from Banco_de_Dados.Banco_de_Dados_Screen import Interface_Banco
+        from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Screen import Interface_Banco
         from Consultas.Consultas_Screen import Consulta_Total_Screen
-        from Comandos.Comandos_Screen import Comandos_Screen
-        from Consultas.Gen_Funcs_Consulta import event_button_comando, event_button_consulta
+        from Comandos.Comandos_Gerais.Comandos_Screen import Comandos_Screen
+        from Consultas.Generics_Functions.Gen_Funcs_Consulta import event_button_comando, event_button_consulta
         from Configuracoes.Config_Screen import config_screen
         from Tutorial.Tutorial_Screen import tutorial_screen
         from Outros.Datas_Config import date_treat, data_select_ini, data_select_fim
         from Outros.Banco_Images import TelaInicial
-        from Banco_de_Dados.Banco_de_Dados_Func import carregar_diretorio
+        from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Func import carregar_diretorio
         from Outros.Tk_Tooltip import ToolTip
         
         # Importações de bibliotecas externas
@@ -151,6 +151,6 @@ if __name__ == '__main__':
         root.mainloop()
     finally:
         # Fechamento da conexão com o banco de dados
-        from Banco_de_Dados.Inventario_Conn import Connect
+        from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import Connect
         if Connect.conn is not None:
             Connect.conn.close()

@@ -162,3 +162,5 @@ cython_debug/
 Teste.py
 config.ini
 config.ini
+*.ini
+*.exe
