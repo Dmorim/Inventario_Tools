@@ -28,7 +28,7 @@ def on_click_confirm(self, comando, checkbox_List, values_List):
         # checkbox_List: lista de checkbox da aba comandos
         # values_List: lista de valores da aba comandos
     
-    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import Connect # Importar a classe Connect do arquivo Inventario_Conn
+    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados # Importar a classe Connect do arquivo Inventario_Conn
     from tkinter import messagebox # Importar a classe messagebox do tkinter
     
     if values_List[0].get() != '': # Verifica se o Entry de porcentagem foi preenchido

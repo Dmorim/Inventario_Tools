@@ -1,38 +1,67 @@
-import Thread_Manager.Gerenciador_Thread_BD as Gerenciador_Thread_BD
-
 import fdb
-
-# Classe para armazenar os dados de conexão informados pelo usuário
-
-
-class Dados:
-    banco_dados = {
-        'host': '',
-        'port': '',
-        'database': '',
-        'fbclient': ''
-    }
-
-# Classe para realizar a conexão com o banco de dados
+from Thread_Manager.Gerenciador_Thread_BD import GerenciadorThreadBD
 
 
-class Connect:
-    def __init__(self):
-        self.__thread_manager = Gerenciador_Thread_BD.GerenciadorThreadBD(
-            self._conectar)
+class ConfiguracaoBanco:
+    """Guarda os dados de conexão informados pelo usuário na tela."""
+    host = ''
+    port = ''
+    database = ''
+    fbclient = ''
 
-    def _conectar(self):
-        return fdb.connect(  # Cria a conexão
-            host=Dados.banco_dados['host'],  # Informa o host
-            port=int(Dados.banco_dados['port']),  # Informa a porta
-            # Informa o caminho do banco de dados
-            database=Dados.banco_dados['database'],
-            # Informa o caminho da fbclient
-            fb_library_name=Dados.banco_dados['fbclient'],
-            user='SYSDBA',  # Informa o usuário
-            password='masterkey',  # Informa a senha
+    @classmethod
+    def definir(cls, host, port, database, fbclient):
+        cls.host = host
+        cls.port = port
+        cls.database = database
+        cls.fbclient = fbclient
+
+
+class BancoDeDados:
+    """
+    Ponto único de acesso ao banco de dados.
+    Nunca é instanciada (sem __init__, sem BancoDeDados()) — todo
+    estado vive em atributos de classe, e os métodos são classmethods.
+    """
+    _gerenciador = None  # único pool da aplicação inteira
+
+    @classmethod
+    def conectar(cls):
+        """Cria o pool uma única vez. Chamadas seguintes reaproveitam."""
+        if cls._gerenciador is not None:
+            return cls._gerenciador  # idempotente — já existe, não recria
+
+        cls._gerenciador = GerenciadorThreadBD(cls._criar_conexao)
+        return cls._gerenciador
+
+    @staticmethod
+    def _criar_conexao():
+        return fdb.connect(
+            host=ConfiguracaoBanco.host,
+            port=int(ConfiguracaoBanco.port),
+            database=ConfiguracaoBanco.database,
+            fb_library_name=ConfiguracaoBanco.fbclient,
+            user='SYSDBA',
+            password='masterkey',
             charset='WIN1252'
         )
 
-    def gerenciador(self):
-        return self.__thread_manager
+    @classmethod
+    def gerenciador(cls):
+        """Acesso ao pool em qualquer parte do sistema."""
+        if cls._gerenciador is None:
+            raise RuntimeError(
+                'Banco ainda não conectado — chame BancoDeDados.conectar() primeiro.'
+            )
+        return cls._gerenciador
+
+    @classmethod
+    def executar(cls, funcao, *args, **kwargs):
+        """Atalho: evita escrever BancoDeDados.gerenciador().executar(...) toda vez."""
+        return cls.gerenciador().executar(funcao, *args, **kwargs)
+
+    @classmethod
+    def fechar(cls):
+        if cls._gerenciador is not None:
+            cls._gerenciador.fechar()
+            cls._gerenciador = None

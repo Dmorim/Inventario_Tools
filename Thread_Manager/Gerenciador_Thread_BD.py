@@ -11,7 +11,7 @@ class GerenciadorThreadBD:
         self.__pool = Queue()
         self._lock = threading.Lock()
 
-        for _ in self.__tamanho:
+        for _ in range(self.__tamanho):
             self.__pool.put(self.__conexao_banco())
 
         print(
@@ -59,3 +59,4 @@ class GerenciadorThreadBD:
             self.__conexao_banco = nova_conexao_banco
             for _ in range(self.__tamanho):
                 self.__pool.put(self.__conexao_banco())
+

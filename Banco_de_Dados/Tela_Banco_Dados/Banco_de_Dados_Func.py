@@ -1,6 +1,6 @@
 import ctypes
 from ctypes import wintypes
-import os
+
 
 
 def Set_Dados_Padrao(entrys_list):
@@ -102,9 +102,59 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
     # button_list: list -> Lista de botões que serão utilizados para habilitar ou desabilitar a interação do usuário com a tela
 
     # Importa as classes Dados e Connect do arquivo Inventario_Conn
-    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import Dados, Connect
+    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import ConfiguracaoBanco, BancoDeDados
 
     from fdb import DatabaseError  # Importa a exceção DatabaseError da biblioteca fdb
+
+    def _buscar_empresa(conexao):
+        # Função para buscar os dados da empresa no banco de dados
+        # Args:
+        # conexao: fdb.Connection -> Conexão com o banco de dados
+
+        cursor = conexao.cursor()  # Cria um cursor a partir da conexão
+        cursor.execute('SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI')  # Executa a consulta SQL para obter os dados da empresa
+        return cursor.fetchone()  # Retorna o primeiro resultado da consulta
+
+    def _buscar_ultima_emissao_nota_fiscal(conexao):
+        # Função para buscar a data da última emissão de Nota Fiscal, Cupom Fiscal e NFC-e no banco de dados
+        # Args:
+        # conexao: fdb.Connection -> Conexão com o banco de dados
+
+        cursor = conexao.cursor()  # Cria um cursor a partir da conexão
+        cursor.execute(
+            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'V' and EMITE = 'S' ORDER BY DTEMI DESC")  # Executa a consulta SQL para obter a data da última emissão de Nota Fiscal
+        return cursor.fetchone()  # Retorna o primeiro resultado da consulta
+    
+    def _buscar_ultima_emissao_nfce(conexao):
+        # Função para buscar a data da última emissão de Cupom Fiscal no banco de dados
+        # Args:
+        # conexao: fdb.Connection -> Conexão com o banco de dados
+
+        cursor = conexao.cursor()  # Cria um cursor a partir da conexão
+        cursor.execute(
+            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'A' and EMITE = 'S' ORDER BY DTEMI DESC")  # Executa a consulta SQL para obter a data da última emissão de Cupom Fiscal
+        return cursor.fetchone()  # Retorna o primeiro resultado da consulta
+    
+    def _buscar_ultima_emissao_cupom(conexao):
+        # Função para buscar a data da última emissão de NFC-e no banco de dados
+        # Args:
+        # conexao: fdb.Connection -> Conexão com o banco de dados
+
+        cursor = conexao.cursor()  # Cria um cursor a partir da conexão
+        cursor.execute(
+            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'W' and EMITE = 'S' ORDER BY DTEMI DESC")  # Executa a consulta SQL para obter a data da última emissão de NFC-e
+        return cursor.fetchone()  # Retorna o primeiro resultado da consulta
+    
+    def _obter_datas_emissoes():
+        # Função para obter as datas das últimas emissões de Nota Fiscal, Cupom Fiscal e NFC-e no banco de dados
+        # Args:
+        # conexao: fdb.Connection -> Conexão com o banco de dados
+
+        data_nota_fiscal = BancoDeDados.executar(_buscar_ultima_emissao_nota_fiscal)
+        data_nfce = BancoDeDados.executar(_buscar_ultima_emissao_nfce)
+        data_cupom = BancoDeDados.executar(_buscar_ultima_emissao_cupom)
+
+        return [data for data in [data_nota_fiscal, data_nfce, data_cupom] if data is not None]  # Retorna uma lista com as datas obtidas, filtrando os valores None
 
     # Verifica se todos os entrys foram preenchidos
     for entry in entrys_list:
@@ -114,18 +164,16 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
                 'Erro', 'Preencha todos os campos', parent=Banco_Screen)
             return
 
-    # Armazena os valores dos entrys na classe Dados do arquivo Inventario_Conn
-    for name, var in zip(['host', 'port', 'database', 'fbclient'], entrys_list):
-        if name == 'database':
-            Dados.banco_dados[name] = obter_caminho_curto_banco_dados(
-                var.get())
-            print(obter_caminho_curto_banco_dados(var.get()))
-        else:
-            Dados.banco_dados[name] = var.get()
+    ConfiguracaoBanco.definir(
+        host=entrys_list[0].get(),
+        port=entrys_list[1].get(),
+        database=obter_caminho_curto_banco_dados(entrys_list[2].get()),
+        fbclient=entrys_list[3].get()
+    )
 
     # Tenta realizar a conexão com o banco de dados
     try:
-        BD = Connect()
+        BancoDeDados.conectar()
         
     except Exception as e:
         # Caso ocorra um erro, exibe uma mensagem de erro
@@ -140,9 +188,7 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
 
     # Tenta buscar os dados da empresa no banco de dados
     try:
-        Connect.cursor.execute(
-            'SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI')
-        val_brut = Connect.cursor.fetchone()
+        val_brut = BancoDeDados.executar(_buscar_empresa)
     except Exception as e:
         # Mesmo Funcionamento do bloco try anterior
         from tkinter import messagebox
@@ -151,23 +197,7 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
         return
 
     try:
-        # Realiza 3 consultas no banco de dados para buscar a data da ultima emissão de Nota Fiscal, Cupom Fiscal e NFC-e, após obter salva o valor em uma lista
-        Connect.cursor.execute(
-            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'V' and EMITE = 'S' ORDER BY DTEMI DESC")
-        result = Connect.cursor.fetchone()
-        datas = [result[0]] if result is not None else []
-
-        Connect.cursor.execute(
-            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'A' and EMITE = 'S' ORDER BY DTEMI DESC")
-        result = Connect.cursor.fetchone()
-        if result is not None:
-            datas.append(result[0])
-
-        Connect.cursor.execute(
-            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'S' and EMITE = 'W' ORDER BY DTEMI DESC")
-        result = Connect.cursor.fetchone()
-        if result is not None:
-            datas.append(result[0])
+        datas = _obter_datas_emissoes()
 
     except DatabaseError as e:
         # Mesmo Funcionamento do bloco try anterior
