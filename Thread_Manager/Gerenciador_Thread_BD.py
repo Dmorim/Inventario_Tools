@@ -59,4 +59,5 @@ class GerenciadorThreadBD:
             self.__conexao_banco = nova_conexao_banco
             for _ in range(self.__tamanho):
                 self.__pool.put(self.__conexao_banco())
+        return self
 

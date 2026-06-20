@@ -2,7 +2,6 @@ import ctypes
 from ctypes import wintypes
 
 
-
 def Set_Dados_Padrao(entrys_list):
     # Função para preencher os entrys com os dados padrão
     # Args:
@@ -112,7 +111,9 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
         # conexao: fdb.Connection -> Conexão com o banco de dados
 
         cursor = conexao.cursor()  # Cria um cursor a partir da conexão
-        cursor.execute('SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI')  # Executa a consulta SQL para obter os dados da empresa
+        # Executa a consulta SQL para obter os dados da empresa
+        cursor.execute(
+            'SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI')
         return cursor.fetchone()  # Retorna o primeiro resultado da consulta
 
     def _buscar_ultima_emissao_nota_fiscal(conexao):
@@ -122,9 +123,10 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
 
         cursor = conexao.cursor()  # Cria um cursor a partir da conexão
         cursor.execute(
-            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'V' and EMITE = 'S' ORDER BY DTEMI DESC")  # Executa a consulta SQL para obter a data da última emissão de Nota Fiscal
+            # Executa a consulta SQL para obter a data da última emissão de Nota Fiscal
+            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'V' and EMITE = 'S' ORDER BY DTEMI DESC")
         return cursor.fetchone()  # Retorna o primeiro resultado da consulta
-    
+
     def _buscar_ultima_emissao_nfce(conexao):
         # Função para buscar a data da última emissão de Cupom Fiscal no banco de dados
         # Args:
@@ -132,9 +134,10 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
 
         cursor = conexao.cursor()  # Cria um cursor a partir da conexão
         cursor.execute(
-            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'A' and EMITE = 'S' ORDER BY DTEMI DESC")  # Executa a consulta SQL para obter a data da última emissão de Cupom Fiscal
+            # Executa a consulta SQL para obter a data da última emissão de Cupom Fiscal
+            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'A' and EMITE = 'S' ORDER BY DTEMI DESC")
         return cursor.fetchone()  # Retorna o primeiro resultado da consulta
-    
+
     def _buscar_ultima_emissao_cupom(conexao):
         # Função para buscar a data da última emissão de NFC-e no banco de dados
         # Args:
@@ -142,19 +145,22 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
 
         cursor = conexao.cursor()  # Cria um cursor a partir da conexão
         cursor.execute(
-            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'W' and EMITE = 'S' ORDER BY DTEMI DESC")  # Executa a consulta SQL para obter a data da última emissão de NFC-e
+            # Executa a consulta SQL para obter a data da última emissão de NFC-e
+            "SELECT FIRST 1 DTEMI FROM IN01FAT WHERE VENDA = 'W' and EMITE = 'S' ORDER BY DTEMI DESC")
         return cursor.fetchone()  # Retorna o primeiro resultado da consulta
-    
+
     def _obter_datas_emissoes():
         # Função para obter as datas das últimas emissões de Nota Fiscal, Cupom Fiscal e NFC-e no banco de dados
         # Args:
         # conexao: fdb.Connection -> Conexão com o banco de dados
 
-        data_nota_fiscal = BancoDeDados.executar(_buscar_ultima_emissao_nota_fiscal)
-        data_nfce = BancoDeDados.executar(_buscar_ultima_emissao_nfce)
-        data_cupom = BancoDeDados.executar(_buscar_ultima_emissao_cupom)
+        data_nota_fiscal = Gerenciador.executar(
+            _buscar_ultima_emissao_nota_fiscal)
+        data_nfce = Gerenciador.executar(_buscar_ultima_emissao_nfce)
+        data_cupom = Gerenciador.executar(_buscar_ultima_emissao_cupom)
 
-        return [data for data in [data_nota_fiscal, data_nfce, data_cupom] if data is not None]  # Retorna uma lista com as datas obtidas, filtrando os valores None
+        # Retorna uma lista com as datas obtidas, filtrando os valores None
+        return [data for data in [data_nota_fiscal, data_nfce, data_cupom] if data is not None]
 
     # Verifica se todos os entrys foram preenchidos
     for entry in entrys_list:
@@ -173,8 +179,14 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
 
     # Tenta realizar a conexão com o banco de dados
     try:
-        BancoDeDados.conectar()
-        
+        # Verifica se o gerenciador de conexões ainda não foi criado
+        if BancoDeDados.retorna_gerenciador() == None:
+            Gerenciador = BancoDeDados.conectar()  # Cria o gerenciador de conexões
+        else:
+            # Troca a conexão do gerenciador de conexões para a nova conexão criada
+            Gerenciador = BancoDeDados.retorna_gerenciador()
+            Gerenciador = Gerenciador.trocar_bd(BancoDeDados._criar_conexao)
+
     except Exception as e:
         # Caso ocorra um erro, exibe uma mensagem de erro
         from tkinter import messagebox
@@ -188,7 +200,7 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
 
     # Tenta buscar os dados da empresa no banco de dados
     try:
-        val_brut = BancoDeDados.executar(_buscar_empresa)
+        val_brut = Gerenciador.executar(_buscar_empresa)
     except Exception as e:
         # Mesmo Funcionamento do bloco try anterior
         from tkinter import messagebox
@@ -217,7 +229,7 @@ def on_click_confirm(self, entrys_list, Banco_Screen, entry_alter_list, button_l
         codcrt = 'Regime Normal'  # Converte o valor de codcrt para um valor mais legível
 
     # Verifica se a lista datas está vazia, se não estiver, pega a maior data, se estiver, retorna 'Sem emissões'
-    max_data = max(datas) if datas else 'Sem emissões'
+    max_data = max(datas)[0] if datas else 'Sem emissões'
     if max_data != 'Sem emissões':  # Verifica se max_data é diferente de 'Sem emissões'
         # Converte max_data para o formato 'dd/mm/aaaa'
         max_data = max_data.strftime('%d/%m/%Y')
