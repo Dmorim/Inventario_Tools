@@ -68,7 +68,7 @@ def execute_query(self):
     self.dist_saldo_list = []  # Lista que vai armazenar os valores obtidos
 
     # Pega os valores obtidos da query
-    rows = query_executor(query_selector(query))
+    rows = query_executor(query_selector, query)
 
     for row in rows:  # Trata os valores obtidos e armazena na lista
         # Desempacota os valores obtidos

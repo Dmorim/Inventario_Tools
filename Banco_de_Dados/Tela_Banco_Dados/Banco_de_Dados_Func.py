@@ -167,7 +167,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list):
         return
 
     # Desempacota os valores brutos dos dados da empresa obtidos do banco de dados
-    nome, rsocial, cnpj, cgf, codcrt, fone = val_brut
+    nome, rsocial, cnpj, cgf, codcrt, fone = val_brut[0]
     if codcrt == '0':
         codcrt = 'Simples Nacional'  # Converte o valor de codcrt para um valor mais legível
     elif codcrt == '1':
@@ -177,7 +177,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list):
         codcrt = 'Regime Normal'  # Converte o valor de codcrt para um valor mais legível
 
     # Verifica se a lista datas está vazia, se não estiver, pega a maior data, se estiver, retorna 'Sem emissões'
-    max_data = data if data is not None else 'Sem emissões'
+    max_data = data[0][0] if data and data[0][0] is not None else 'Sem emissões'
     if max_data != 'Sem emissões':  # Verifica se max_data é diferente de 'Sem emissões'
         # Converte max_data para o formato 'dd/mm/aaaa'
         max_data = max_data.strftime('%d/%m/%Y')

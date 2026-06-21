@@ -38,7 +38,7 @@ def ven_get():
 
     # Tenta executar a query no banco de dados
     try:
-        rows = query_executor(query_selector(query))
+        rows = query_executor(query_selector, query)
         valrec = rows[0][0] if rows else None
     except (DatabaseError, TypeError) as e:
         from tkinter import messagebox

@@ -42,7 +42,7 @@ def ent_get():
 
     # Tenta executar a query no banco de dados
     try:
-        valent = query_executor(query_selector(query))[0][0]
+        valent = query_executor(query_selector, query)[0][0]
     except DatabaseError as e:
         from tkinter import messagebox
         messagebox.showerror('Erro', f'Erro ao acessar o banco de dados\n {e}')

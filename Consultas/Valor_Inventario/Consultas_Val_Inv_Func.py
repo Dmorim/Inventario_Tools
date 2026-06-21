@@ -14,7 +14,7 @@ def inv_get():
     from Thread_Manager.Query_Operations import query_selector, query_executor
     try:
         query = "select sum (cast(saldo * precu as numeric (15, 2))) as valor from in01pro where cast (saldo as numeric (15, 2)) > 0 and classificacao_produto in ('00','01','02','03','04','05','06')"
-        val = query_executor(query_selector(query))[0][0]
+        val = query_executor(query_selector, query)[0][0]
     except:
         from tkinter import messagebox
         messagebox.showerror('Erro', 'Erro ao acessar o banco de dados')

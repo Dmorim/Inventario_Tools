@@ -11,8 +11,9 @@ def query_updater(conexao, query):
     cursor = conexao.cursor()
     cursor.execute(query)
     conexao.commit()
+    return
 
 
 def query_executor(funcao, query):
     gerenciador = BancoDeDados.gerenciador()
-    gerenciador.executar(funcao, query)
+    return gerenciador.executar(funcao, query)
