@@ -30,7 +30,7 @@ def on_click_confirm(self, comando, checkbox_List, values_List):
     # values_List: lista de valores da aba comandos
 
     # Importar a classe Connect do arquivo Inventario_Conn
-    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
+    from Thread_Manager.Query_Operations import query_executor, query_updater
     from tkinter import messagebox  # Importar a classe messagebox do tkinter
 
     if values_List[0].get() != '':  # Verifica se o Entry de porcentagem foi preenchido
@@ -79,10 +79,10 @@ def on_click_confirm(self, comando, checkbox_List, values_List):
         try:
             for key, value in self.comandos_query.items():  # Itera sobre os itens do dicionário de comandos
                 if key in checkbox_List and key.get() == 1:  # Verifica se a checkbox está marcada
-                    update_executor(value)  # Executa o comando
+                    query_executor(query_updater, value)  # Executa o comando
 # Verifica os casos especiais dos checkboxes 2, 3 e 4, onde alem de executar os comandos dele, também executa o comando do checkbox 1
                     if key == checkbox_List[2] or key == checkbox_List[3] or key == checkbox_List[4]:
-                        update_executor(self.comandos_query[checkbox_List[1]])
+                        query_executor(query_updater, self.comandos_query[checkbox_List[1]])
 
             comando.destroy()  # Fecha a janela
         except Exception as e:
@@ -120,22 +120,3 @@ def precu_porcent_entry_validate(P):
         return int_part.isdigit() and dec_part.isdigit() and price >= 0 and len(dec_part) <= 11 and len(int_part) <= 9
     except ValueError:
         return False
-
-
-def update_builder(conexao, query):
-    # Função que recebe uma conexão e uma query, executa a query e retorna o resultado
-    # Args:
-    # conexao: conexão com o banco de dados
-    # query: string com a query a ser executada
-
-    cursor = conexao.cursor()  # Cria um cursor
-    cursor.execute(query)  # Executa a query
-    cursor.commit()  # Commita a transação
-
-
-def update_executor(query):
-    # Importar a classe Connect do arquivo Inventario_Conn
-    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
-    gerenciador = BancoDeDados.gerenciador()  # Acessa o gerenciador de conexões
-    # Executa a função update_builder passando a query como argumento
-    gerenciador.executar(update_builder, query)

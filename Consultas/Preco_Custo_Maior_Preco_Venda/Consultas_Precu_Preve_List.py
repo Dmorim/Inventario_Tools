@@ -33,10 +33,9 @@ def List_Treeview_Screen(parent):
     Treeview_Select(treeview)
     
 def Treeview_Select(treeview):
-    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import Connect
+    from Thread_Manager.Query_Operations import query_selector, query_executor
     query = "select cdpro, nmpro, saldo, precu, preve from in01pro where precu > preve and saldo > 0 and preve > 0 order by cdpro asc"
-    Connect.cursor.execute(query)
-    rows = Connect.cursor.fetchall()
+    rows = query_executor(query_selector(query))
     Treeview_Insert(treeview, rows)
     
 def Treeview_Insert(treeview, rows):

@@ -2,7 +2,6 @@ def List_Treeview_Screen(parent):
     import customtkinter as ctk
     from tkinter import ttk
 
-    
     # Cria a janela toplevel como um Toplevel do parent
     toplevel = ctk.CTkToplevel(parent)
     toplevel.title('Lista de Produtos')
@@ -44,15 +43,13 @@ def Treeview_Select(treeview):
     # treeview: widget Treeview
 
     # Importa a classe Connect do módulo Inventario_Conn do pacote Banco_de_Dados
-    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
-    from Outros.Query_Select.Query_Select import query_selector
-    from Outros.Thread_Execute.Thread_Execute import query_executor
+    from Thread_Manager.Query_Operations import query_selector, query_executor
 
-   
     # Realiza a query buscando no banco de dados os campos que serão exibidos na Treeview
-    query = "select cdpro, nmpro, saldo, precu from in01pro where classificacao_produto is null or classificacao_produto = ''"
+    query = f"select cdpro, nmpro, saldo, precu from in01pro where classificacao_produto is null or classificacao_produto = ''"
     # Atribui a variável rows o resultado da consulta
-    rows = query_executor(query_selector, query)  # Executa a consulta usando o QueryExecutor e o QuerySelector
+    # Executa a consulta usando o QueryExecutor e o QuerySelector
+    rows = query_executor(query_selector, query)
     # Chama a função Treeview_Insert passando a Treeview e a variável rows como argumentos
     Treeview_Insert(treeview, rows)
 
@@ -65,4 +62,3 @@ def Treeview_Insert(treeview, rows):
 
     for row in rows:  # Loop que percorre a tupla rows
         treeview.insert('', 'end', values=row)  # Insere os valores na Treeview
-

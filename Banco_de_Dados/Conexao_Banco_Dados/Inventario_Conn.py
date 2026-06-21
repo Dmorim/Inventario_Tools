@@ -65,7 +65,7 @@ class BancoDeDados:
         if cls._gerenciador is not None:
             cls._gerenciador.fechar()
             cls._gerenciador = None
-            
+
     @classmethod
     def retorna_gerenciador(cls):
         return cls._gerenciador

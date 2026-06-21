@@ -102,40 +102,9 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list):
 
     # Importa as classes Dados e Connect do arquivo Inventario_Conn
     from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import ConfiguracaoBanco, BancoDeDados
+    from Thread_Manager.Query_Operations import query_executor, query_selector
 
     from fdb import DatabaseError  # Importa a exceção DatabaseError da biblioteca fdb
-
-    def _buscar_empresa(conexao):
-        # Função para buscar os dados da empresa no banco de dados
-        # Args:
-        # conexao: fdb.Connection -> Conexão com o banco de dados
-
-        cursor = conexao.cursor()  # Cria um cursor a partir da conexão
-        # Executa a consulta SQL para obter os dados da empresa
-        cursor.execute(
-            'SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI')
-        return cursor.fetchone()  # Retorna o primeiro resultado da consulta
-
-    def _buscar_ultima_emissao(conexao):
-        # Função para buscar a data da última emissão de Nota Fiscal, Cupom Fiscal ou NFC-e no banco de dados
-        # Args:
-        # conexao: fdb.Connection -> Conexão com o banco de dados
-
-        cursor = conexao.cursor()  # Cria um cursor a partir da conexão
-        # Executa a consulta SQL para obter a data da última emissão de Nota Fiscal, Cupom Fiscal ou NFC-e
-        cursor.execute(
-            "SELECT MAX(DTEMI) FROM IN01LAN WHERE VENDA IN ('V', 'A', 'W') AND TPMOV = 'N'")
-        return cursor.fetchone()  # Retorna o primeiro resultado da consulta
-
-    def _obter_data_emissoes():
-        # Função para obter as datas das últimas emissões de Nota Fiscal, Cupom Fiscal e NFC-e no banco de dados
-        # Args:
-        # conexao: fdb.Connection -> Conexão com o banco de dados
-
-        data_emissao = Gerenciador.executar(
-            _buscar_ultima_emissao)
-        # Retorna uma lista com as datas obtidas, filtrando os valores None
-        return data_emissao if data_emissao[0] is not None else []
 
     # Verifica se todos os entrys foram preenchidos
     for entry in entrys_list:
@@ -173,9 +142,13 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list):
     salvar_diretorio('Porta', 'last_dir', entrys_list[1].get())
     salvar_diretorio('FBClient', 'dir_banco', entrys_list[3].get())
 
+    query_propri = "SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI"
+    query_emissoes = "SELECT MAX(DTEMI) FROM IN01LAN WHERE VENDA IN ('V', 'A', 'W') AND TPMOV = 'N'"
+
     # Tenta buscar os dados da empresa no banco de dados
     try:
-        val_brut = Gerenciador.executar(_buscar_empresa)
+        # Atribui a variável val_brut o resultado da consulta dos dados da empresa
+        val_brut = query_executor(query_selector, query_propri)
     except Exception as e:
         # Mesmo Funcionamento do bloco try anterior
         from tkinter import messagebox
@@ -184,7 +157,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list):
         return
 
     try:
-        data = _obter_data_emissoes()
+        data = query_executor(query_selector, query_emissoes)
 
     except DatabaseError as e:
         # Mesmo Funcionamento do bloco try anterior
