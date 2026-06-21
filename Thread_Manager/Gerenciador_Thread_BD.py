@@ -30,7 +30,7 @@ class GerenciadorThreadBD:
                 if tentativa_conexao == tentativas:
                     raise TimeoutError(
                         "Não foi possível obter uma conexão do pool após várias tentativas.")
-                time.sleep(0.5)  # Espera um pouco antes de tentar novamente
+                time.sleep(0.01)  # Espera um pouco antes de tentar novamente
 
     def _devolver_conexao(self, conexao):
         try:
@@ -60,4 +60,3 @@ class GerenciadorThreadBD:
             for _ in range(self.__tamanho):
                 self.__pool.put(self.__conexao_banco())
         return self
-
