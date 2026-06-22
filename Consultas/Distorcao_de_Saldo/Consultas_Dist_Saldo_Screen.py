@@ -12,8 +12,8 @@ def dist_saldo_screen(self, Consulta_Screen):
     # Cria os labels e botões da tela
     val_ven_label = ctk.CTkLabel(
         hub, text='Distorções de Saldo:', width=20, height=2, font=('', 16))
-    val_ven_text = ctk.CTkLabel(hub, text=len(
-        self.dist_saldo_list), width=20, height=2, font=('', 14))
+    val_ven_text = ctk.CTkLabel(
+        hub, text='', width=20, height=2, font=('', 14))
 
     progress = ctk.CTkProgressBar(hub, mode='indeterminate', width=200)
 
@@ -34,7 +34,7 @@ def dist_saldo_screen(self, Consulta_Screen):
 
     progress.start()
 
-    def on_query_complete():
+    def on_query_complete(empty):
         progress.stop()
         progress.place_forget()
 
@@ -55,7 +55,7 @@ def dist_saldo_screen(self, Consulta_Screen):
         query_casa_dec = "select valor from si01gp where ident = 'FORMATOSALDO'"
 
         # Executa a query e pega o valor da quantidade de casas decimais
-        casa_dec = query_executor(query_selector(query_casa_dec))[0]
+        casa_dec = query_executor(query_selector, query_casa_dec)[0][0]
 
         # Separa a quantidade de casas decimais do valor obtido
         casa_dec = casa_dec.split('.')[1]
@@ -97,4 +97,4 @@ def dist_saldo_screen(self, Consulta_Screen):
                     [cdpro, nmpro, saldo_lan, saldo_pro])
 
     thread_execução(hub, execute_query, on_query_complete,
-                        on_query_error, self)
+                    on_query_error, self)

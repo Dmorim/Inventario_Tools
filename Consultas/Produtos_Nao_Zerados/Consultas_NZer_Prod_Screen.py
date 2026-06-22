@@ -12,7 +12,7 @@ def Prod_NZer_Screen(Consulta_Screen):
     val_ven_label = ctk.CTkLabel(hub, text= 'Produtos Não Zerados:', width= 20, height= 2, font= ('', 16))
     val_ven_text = ctk.CTkLabel(hub, text= "Gerando Quantidade...", width= 20, height= 2, font= ('', 14))
     val_ven_button = ctk.CTkButton(hub, text= 'Copiar Valor', width= 15, height= 20, command= lambda: copy_val(val_ven_text), state= 'disabled')
-    listagem_buttn = ctk.CTkButton(hub, text= 'Listar Produtos', width= 15, height= 20, command= lambda: List_Treeview_Screen(hub), state= 'disabled')
+    listagem_button = ctk.CTkButton(hub, text= 'Listar Produtos', width= 15, height= 20, command= lambda: List_Treeview_Screen(hub), state= 'disabled')
     
     val_ven_label.place(relx= 0.5, y= 15, anchor= 'center')
     val_ven_text.place(relx= 0.5, y= 40, anchor= 'center')
