@@ -1,4 +1,34 @@
 def List_Treeview_Screen(parent):
+
+    def Treeview_Select(treeview):
+        from Thread_Manager.Query_Operations import query_selector, query_executor
+        from Thread_Manager.Thread_Executor import thread_execução
+
+        query = (
+            "select cdpro, nmpro, saldo, precu from in01pro "
+            "where classificacao_produto is null or classificacao_produto = ''"
+        )
+
+        # Apenas a busca vai para a thread — não toca em nenhum widget aqui dentro
+        def buscar():
+            return query_executor(query_selector, query)
+
+        # O resultado chega aqui já na thread principal — seguro inserir no widget
+        def ao_terminar(rows):
+            Treeview_Insert(treeview, rows)
+
+        thread_execução(treeview, buscar, ao_terminar)
+
+    def Treeview_Insert(treeview, rows):
+        # Função que insere os valores obtidos do banco de dados na Treeview
+        # Args:
+        # treeview: widget Treeview
+        # rows: tupla com os valores obtidos do banco de dados
+
+        for row in rows:  # Loop que percorre a tupla rows
+            # Insere os valores na Treeview
+            treeview.insert('', 'end', values=row)
+
     import customtkinter as ctk
     from tkinter import ttk
 
@@ -33,32 +63,5 @@ def List_Treeview_Screen(parent):
     vsb.pack(side='right', fill='y')  # Posiciona a barra de rolagem vertical
     treeview.pack(fill='both', expand=True)  # Posiciona a Treeview
 
-    # Chama a função Treeview_Select passando a Treeview como argumento
+    # Chama a função para preencher a Treeview com os dados do banco de dados
     Treeview_Select(treeview)
-
-
-def Treeview_Select(treeview):
-    # Função que consulta no banco de dados os valores da lista
-    # Args:
-    # treeview: widget Treeview
-
-    # Importa a classe Connect do módulo Inventario_Conn do pacote Banco_de_Dados
-    from Thread_Manager.Query_Operations import query_selector, query_executor
-
-    # Realiza a query buscando no banco de dados os campos que serão exibidos na Treeview
-    query = f"select cdpro, nmpro, saldo, precu from in01pro where classificacao_produto is null or classificacao_produto = ''"
-    # Atribui a variável rows o resultado da consulta
-    # Executa a consulta usando o QueryExecutor e o QuerySelector
-    rows = query_executor(query_selector, query)
-    # Chama a função Treeview_Insert passando a Treeview e a variável rows como argumentos
-    Treeview_Insert(treeview, rows)
-
-
-def Treeview_Insert(treeview, rows):
-    # Função que insere os valores obtidos do banco de dados na Treeview
-    # Args:
-    # treeview: widget Treeview
-    # rows: tupla com os valores obtidos do banco de dados
-
-    for row in rows:  # Loop que percorre a tupla rows
-        treeview.insert('', 'end', values=row)  # Insere os valores na Treeview
