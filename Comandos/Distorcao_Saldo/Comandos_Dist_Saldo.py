@@ -9,6 +9,8 @@ def on_click_dist_saldo(self, parent):
     from datetime import datetime
     from tkcalendar import DateEntry
 
+    # Importação da função update_executor do arquivo Thread_Manager/Thread_Executor.py
+
     # Cria a janela distorcao como um Toplevel do parent
     distorcao = ctk.CTkToplevel(parent)
     distorcao.geometry("330x120+150+135")
@@ -63,6 +65,8 @@ def on_click_confirm_btt(self, parent, val_list):
     from datetime import datetime  # Importa a classe datetime
     from tkinter import messagebox  # Importa a classe messagebox do tkinter
 
+    from Thread_Manager.Query_Operations import query_updater, query_executor
+
     # Obtem os valores de tipo de distorção e data
     tp_distorc = val_list[0].get()
     data = val_list[1].get()
@@ -76,7 +80,7 @@ def on_click_confirm_btt(self, parent, val_list):
             query = f"UPDATE IN01PRO SET SALDO = {item[2]} WHERE CDPRO = {item[0]}"
 
             try:
-                update_executor(query)  # Executa a query
+                query_executor(query_updater, query)  # Executa a query
             except Exception as e:
                 # Cria uma messagebox informando que houve um erro ao executar a distorção
                 messagebox.showerror(
@@ -108,7 +112,7 @@ def on_click_confirm_btt(self, parent, val_list):
             query = f"INSERT INTO IN01LAN (NOTFI, CDPRO, VENDA, DTEMI, DTPRO, QUANT, TPMOV, HISTO, NMOPE, DTOPE, HISTORICO_AJUSTE) VALUES ('AJUSTE', '{item[0]}', 'J', '{data}', '{data}', '{quant}', '{tpmov}', 'AJUSTE DE ESTOQUE (DISTORÇÃO DE SALDO)', 'SISTECH', '{data}', 'AJUSTADO LANÇAMENTO {item[0]} - {nmpro}, DISTORÇÃO DE SALDO, AJUSTADO POR SISTECH')"
 
             try:
-                update_executor(query)  # Executa a query
+                query_executor(query_updater, query)  # Executa a query
             except Exception as e:
                 # Mesmo tratamento de erro da query anterior
                 messagebox.showerror(
@@ -119,35 +123,3 @@ def on_click_confirm_btt(self, parent, val_list):
         messagebox.showinfo(
             'Aviso', 'Distorção de Saldo executada com sucesso', parent=parent)
         parent.destroy()  # Fecha a janela de distorção de saldo
-
-
-def update_builder(conexao, query):
-    # Função para executar uma query de atualização no banco de dados
-    # Args:
-    # conexao: conexão com o banco de dados
-    # query: query a ser executada
-
-    cursor = conexao.cursor()  # Cria um cursor a partir da conexão
-
-    try:
-        cursor.execute(query)  # Executa a query
-        conexao.commit()  # Commita a transação
-    except Exception as e:
-        raise e  # Propaga a exceção para ser tratada pela função que chamou update_executor
-
-
-def update_executor(query):
-    # Função para executar uma query de atualização no banco de dados utilizando o gerenciador de conexões
-    # Args:
-    # query: query a ser executada
-
-    # Importar a classe Connect do arquivo Inventario_Conn
-    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
-    # Acessa o gerenciador de conexões do banco de dados
-    gerenciador = BancoDeDados.gerenciador()
-
-    try:
-        # Executa a função update_builder passando a query como argumento
-        gerenciador.executar(update_builder, query)
-    except Exception as e:
-        raise e  # Propaga a exceção para ser tratada pela função que chamou update_executor

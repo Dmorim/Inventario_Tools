@@ -1,4 +1,3 @@
-from Outros.Datas_Operacao import obter_data_vigencia
 from Thread_Manager.Query_Operations import query_selector, query_executor
 
 
@@ -13,7 +12,7 @@ def banco_codigo_valueform(val):
     return val
 
 
-def ent_get():
+def ent_get(self):
     # Função que executa a query de valor de entradas e retorna o valor obtido
     # Args:
     # self: Instância da classe que chama a função
@@ -26,8 +25,6 @@ def ent_get():
     # Criação da string com os cfops que serão excluidos da busca
     cfop_str = ', '.join(f"'{cfop}'" for cfop in cfop_list)
 
-    data_banco_inicial, data_banco_final = obter_data_vigencia()
-
     # Query que busca o valor de entradas, exclui os cfops da lista e busca somente as entradas entre as datas informadas
     query = f"""
     select cast(sum(((cast(LAN.valor AS numeric(14, 4)) - (cast(LAN.valor AS numeric(14, 4)) * CAST((LAN.despr/100) AS NUMERIC(14,4)))) * cast(LAN.quant AS numeric(14, 2))) + (LAN.valsub) + (((cast(LAN.valor AS numeric(14, 2)) - (cast(LAN.valor AS numeric(14, 2)) * CAST((LAN.despr/100) AS NUMERIC(14,4)))) * cast(LAN.quant AS numeric(14, 2))) * (cast(LAN.alipi_ent AS numeric(14, 2)) / 100))) as numeric (14,2))
@@ -36,7 +33,7 @@ def ent_get():
     ON (LAN.NOTFI = COM.NOTFI) AND (LAN.CDFRN = COM.CDFRN) AND (LAN.MODELONOTA = COM.MODELONOTA)
     where lan.venda = 'C'
     and lan.cfop not in ({cfop_str})
-    and com.dtcom between '{data_banco_inicial}' AND '{data_banco_final}'
+    and com.dtcom between '{self.data_banco_inicial}' AND '{self.data_banco_final}'
     and character_length(lan.cfop) = 5
     """
 

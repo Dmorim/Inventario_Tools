@@ -17,14 +17,14 @@ def thread_execução(master, func, callback, on_erro=None, *args, **kwargs):
 
     fila = queue.Queue()
 
-    def thread_target():
+    def thread_target(*args, **kwargs):
         try:
             result = func(*args, **kwargs)
             fila.put((True, result))
         except Exception as e:
             fila.put((False, e))
 
-    threading.Thread(target=thread_target, daemon=True).start()
+    threading.Thread(target=thread_target, args=args, kwargs=kwargs, daemon=True).start()
 
     def check_thread():
         try:

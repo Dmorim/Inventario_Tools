@@ -2,12 +2,11 @@ def prod_get(query_input: str):
     # Função que executa a query de valor de produto e retorna o valor obtido
     # Args:
         # query_input: Query que será executada no banco de dados
-    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import Connect # Importa a conexão com o banco de dados
     from fdb import DatabaseError # Importa a exceção que será usada para tratar erros no banco de dados
+    from Thread_Manager.Query_Operations import query_selector, query_executor # Importa as funções para executar a query no banco de dados
     
     try:
-        Connect.cursor.execute(query_input) # Executa a query
-        val = Connect.cursor.fetchone()[0] # Pega o  primeiro valor obtido
+        val = query_executor(query_selector, query_input)[0][0] # Executa a query e obtém o valor
     except DatabaseError as e:
         # Se ocorrer um erro ao acessar o banco de dados, mostra uma mensagem de erro
         from tkinter import messagebox

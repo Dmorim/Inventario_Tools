@@ -1,4 +1,4 @@
-def List_Treeview_Screen(parent):
+def List_Treeview_Screen(self, parent):
     import customtkinter as ctk
     from tkinter import ttk
 
@@ -30,16 +30,13 @@ def List_Treeview_Screen(parent):
     vsb.pack(side='right', fill='y')
     treeview.pack(fill='both', expand=True)
 
-    Treeview_Select(treeview)
+    Treeview_Select(self, treeview)
 
 
-def Treeview_Select(treeview):
+def Treeview_Select(self, treeview):
     from Thread_Manager.Query_Operations import query_selector, query_executor
-    from Outros.Datas_Operacao import obter_data_vigencia
 
-    data_atual, data_final = obter_data_vigencia()
-
-    query = f"select cdpro, notfi, saldo, tpmov, dtpro from in01lan where quant > 999999 and dtpro between '{data_atual}' and '{data_final}'"
+    query = f"select cdpro, notfi, saldo, tpmov, dtpro from in01lan where quant > 999999 and dtpro between '{self.data_banco_inicial}' and '{self.data_banco_final}'"
     rows = query_executor(query_selector, query)
     Treeview_Insert(treeview, rows)
 

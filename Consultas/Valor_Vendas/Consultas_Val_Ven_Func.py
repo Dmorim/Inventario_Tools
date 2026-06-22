@@ -14,7 +14,7 @@ def banco_codigo_valueform(val):
     return val  # Retorna o valor trabalhado
 
 
-def ven_get():
+def ven_get(self):
     # Função que executa a query de valor de vendas e retorna o valor obtido
     # Args:
     # self: Instância da classe que chama a função
@@ -23,17 +23,17 @@ def ven_get():
     from Thread_Manager.Query_Operations import query_selector, query_executor
     from fdb import DatabaseError  # Importa a exceção de erro de banco de dados
     # Importa a função que obtém as datas de vigência para a consulta
-    from Outros.Datas_Operacao import obter_data_vigencia
+    
 
     # Obtém as datas de vigência para a consulta
-    data_banco_inicial, data_banco_final = obter_data_vigencia()
+    
 
     # Query que executa a consulta no banco de dados
     query = f"""
     select
     sum(CAST(iif(F.EMITE = 'S' AND VLNOT > 0, F.VLNOT, iif(coalesce(F.VLNOT, 0) = 0, (COALESCE(F.VALNO, 0) - COALESCE(F.VALDE, 0) + COALESCE(F.ICANT, 0) + coalesce(F.VALFR, 0) + coalesce(F.valsg, 0) + coalesce(F.valip, 0) + coalesce(F.valst, 0)), F.VLNOT)) AS NUMERIC(14,2))) as valor
     from in01fat f
-    where F.FATUR <> '' AND (F.CANCE = 'N' OR F.CANCE IS NULL) AND F.VENDA <> 'R' and (F.VENDA <> 'X') and (F.DTEMI >= '{data_banco_inicial}') and (F.DTEMI <= '{data_banco_final}')
+    where F.FATUR <> '' AND (F.CANCE = 'N' OR F.CANCE IS NULL) AND F.VENDA <> 'R' and (F.VENDA <> 'X') and (F.DTEMI >= '{self.data_banco_inicial}') and (F.DTEMI <= '{self.data_banco_final}')
     """
 
     # Tenta executar a query no banco de dados
