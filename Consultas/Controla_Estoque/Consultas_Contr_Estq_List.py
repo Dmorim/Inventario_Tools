@@ -1,4 +1,23 @@
 def List_Treeview_Screen(parent):
+
+    def Treeview_Select(self, treeview):
+        from Thread_Manager.Query_Operations import query_selector, query_executor
+        from Thread_Manager.Thread_Executor import thread_execução
+
+        query = f"select cdpro, notfi, cfop, dtpro, dtope, controlaestoque from in01lan where controlaestoque = 'N' and dtpro between '{self.data_banco_inicial}' and '{self.data_banco_final}'"
+
+        def buscar():
+            return query_executor(query_selector, query)
+        
+        def ao_terminar(rows):
+            Treeview_Insert(treeview, rows)
+
+        thread_execução(treeview, buscar, ao_terminar)
+
+    def Treeview_Insert(treeview, rows):
+        for row in rows:
+            treeview.insert('', 'end', values=row)
+
     import customtkinter as ctk
     from tkinter import ttk
 
@@ -33,18 +52,3 @@ def List_Treeview_Screen(parent):
     treeview.pack(fill='both', expand=True)
 
     Treeview_Select(treeview)
-
-
-def Treeview_Select(treeview):
-    from Thread_Manager.Query_Operations import query_selector, query_executor
-    from Outros.Datas_Operacao import obter_data_vigencia
-    
-    data_atual, data_final = obter_data_vigencia()
-    query = f"select cdpro, notfi, cfop, dtpro, dtope, controlaestoque from in01lan where controlaestoque = 'N' and dtpro between '{data_atual}' and '{data_final}'"
-    rows = query_executor(query_selector, query)
-    Treeview_Insert(treeview, rows)
-
-
-def Treeview_Insert(treeview, rows):
-    for row in rows:
-        treeview.insert('', 'end', values=row)

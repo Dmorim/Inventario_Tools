@@ -51,50 +51,55 @@ def dist_saldo_screen(self, Consulta_Screen):
     def execute_query(self):
         from Thread_Manager.Query_Operations import query_selector, query_executor
 
-        # Pega a quantidade de casas decimais que o sistema está configurado
-        query_casa_dec = "select valor from si01gp where ident = 'FORMATOSALDO'"
-
-        # Executa a query e pega o valor da quantidade de casas decimais
-        casa_dec = query_executor(query_selector, query_casa_dec)[0][0]
-
-        # Separa a quantidade de casas decimais do valor obtido
-        casa_dec = casa_dec.split('.')[1]
-
-        # Pega o tamanho da string que representa a quantidade de casas decimais
-        casa_dec = len(casa_dec)
-
-        # Executa a query que vai pegar os valores de saldo de lançamento e saldo de produto, arredonndo o valor do saldo de lançamento de acordo com a quantidade de casas decimais do sistema
-        query = f"""
-        SELECT
-        p.cdpro,
-        p.nmpro,
-        CAST(SUM(IIF(l.TPMOV = 'S', l.quant, -l.quant)) AS NUMERIC (15, {casa_dec})) AS saldo_lan,
-        p.saldo AS saldo_pro,
-        IIF(CAST(SUM(IIF(l.TPMOV = 'S', l.quant, -l.quant)) AS NUMERIC (15, {casa_dec})) <> CAST(p.saldo AS NUMERIC (15, {casa_dec})), 'S', 'N') AS distorcao
-        FROM in01lan l
-        LEFT JOIN in01pro p ON l.cdpro = p.cdpro
-        LEFT JOIN in01com c ON c.notfi = l.notfi AND c.cdfrn = l.cdfrn AND c.serie = l.serie
-        WHERE
-        (l.venda = 'J' OR l.venda <> 'J')
-        AND COALESCE(l.controlaestoque, 'S') = 'S'
-        AND COALESCE(l.cance, 'N') = 'N'
-        AND classificacao_produto IN ('00', '01', '02', '04', '05', '06')
-        AND l.venda <> 'R'
-        AND (COALESCE(c.alterarsaldo, 'S') = 'S' OR l.venda <> 'J')
-        GROUP BY p.cdpro, p.saldo, p.nmpro
+        query = """
+            SELECT
+                p.cdpro,
+                p.nmpro,
+                CAST(
+                    SUM(IIF(l.TPMOV = 'S', l.quant, -l.quant))
+                    AS NUMERIC(15, (
+                        SELECT CHAR_LENGTH(SUBSTRING(valor FROM POSITION('.' IN valor) + 1))
+                        FROM si01gp
+                        WHERE ident = 'FORMATOSALDO'
+                    ))
+                ) AS saldo_lan,
+                p.saldo AS saldo_pro,
+                IIF(
+                    CAST(SUM(IIF(l.TPMOV = 'S', l.quant, -l.quant))
+                        AS NUMERIC(15, (
+                            SELECT CHAR_LENGTH(SUBSTRING(valor FROM POSITION('.' IN valor) + 1))
+                            FROM si01gp
+                            WHERE ident = 'FORMATOSALDO'
+                        ))
+                    ) <> CAST(p.saldo AS NUMERIC(15, (
+                        SELECT CHAR_LENGTH(SUBSTRING(valor FROM POSITION('.' IN valor) + 1))
+                        FROM si01gp
+                        WHERE ident = 'FORMATOSALDO'
+                    ))),
+                    'S', 'N'
+                ) AS distorcao
+            FROM in01lan l
+            LEFT JOIN in01pro p ON l.cdpro = p.cdpro
+            LEFT JOIN in01com c ON c.notfi = l.notfi
+                AND c.cdfrn = l.cdfrn
+                AND c.serie = l.serie
+            WHERE
+                (l.venda = 'J' OR l.venda <> 'J')
+                AND COALESCE(l.controlaestoque, 'S') = 'S'
+                AND COALESCE(l.cance, 'N') = 'N'
+                AND classificacao_produto IN ('00', '01', '02', '04', '05', '06')
+                AND l.venda <> 'R'
+                AND (COALESCE(c.alterarsaldo, 'S') = 'S' OR l.venda <> 'J')
+            GROUP BY p.cdpro, p.saldo, p.nmpro
         """
 
-        self.dist_saldo_list = []  # Lista que vai armazenar os valores obtidos
-
-        # Pega os valores obtidos da query
         rows = query_executor(query_selector, query)
 
-        for row in rows:  # Trata os valores obtidos e armazena na lista
-            # Desempacota os valores obtidos
-            cdpro, nmpro, saldo_lan, saldo_pro, distorcao = row
-            if distorcao == 'S':  # Se a distorção for S, armazena os valores na lista
-                self.dist_saldo_list.append(
-                    [cdpro, nmpro, saldo_lan, saldo_pro])
+        self.dist_saldo_list = [
+            [cdpro, nmpro, saldo_lan, saldo_pro]
+            for cdpro, nmpro, saldo_lan, saldo_pro, distorcao in rows
+            if distorcao == 'S'
+        ]
 
     thread_execução(hub, execute_query, on_query_complete,
                     on_query_error, self)
