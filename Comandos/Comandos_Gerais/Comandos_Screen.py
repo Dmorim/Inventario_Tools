@@ -29,15 +29,17 @@ def Comandos_Screen(self, parent):
     frame_l.pack(side='left', anchor='nw')
 
     # Criação dos botões confirmar e cancelar
+    status_label = ctk.CTkLabel(comando, text='', width=400, height=14,
+                                font=('verdana', 11), text_color='gray')
     confirm_button = ctk.CTkButton(comando, text='Confirmar', width=60, height=26, command=lambda: on_click_confirm(
-        self, comando, checkbox_list, values_list, confirm_button))
+        self, comando, checkbox_list, values_list, confirm_button, status_label))
     cancel_button = ctk.CTkButton(
         comando, text='Cancelar', width=70, height=26, command=lambda: comando.destroy())
 
     # Posicionamento dos botões confirmar e cancelar
     confirm_button.place(x=747, y=262)
     cancel_button.place(x=671, y=262)
-
+    status_label.place(x=10, y=262)
     # Armazenamento de valores para os combobox
     maior_menor_precu_precom = ['Maior', 'Menor']
     maior_menor_precu_preme = ['Maior', 'Menor']

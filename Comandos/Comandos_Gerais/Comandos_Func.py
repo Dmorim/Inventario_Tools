@@ -21,7 +21,7 @@ def Comandos_Func(self, checkbox_List):
     }
 
 
-def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button):
+def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, status_label):
     # Função chamada ao apertar o botão de confirmar, itera sobre os itens da combobox e executa os comandos marcados
     # Args:
     # self: objeto da classe
@@ -30,24 +30,72 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button):
     # values_List: lista de valores da aba comandos
 
     def executa_comandos():
-        for key, value in self.comandos_query.items():  # Itera sobre os itens do dicionário de comandos
-            if key in checkbox_List and key.get() == 1:  # Verifica se a checkbox está marcada
-                query_executor(query_updater, value)  # Executa o comando
-                # Verifica os casos especiais dos checkboxes 2, 3 e 4, onde alem de executar os comandos dele, também executa o comando do checkbox 1
-                if key == checkbox_List[2] or key == checkbox_List[3] or key == checkbox_List[4]:
-                    query_executor(
-                        query_updater, self.comandos_query[checkbox_List[1]])
+        resultados = []
+        for i, (nome, query) in enumerate(operacoes):
+            idx = i
+            n   = nome
+            comando.after(0, lambda i=idx, n=n: status_label.configure(
+                text=f'Executando {i + 1} de {total}: {n}'))
+            query_executor(query_updater, query)
+            resultados.append(nome)
+        return resultados
 
     def update_finalizado(_):
-        messagebox.showinfo(
-            'Aviso', 'Comandos executados com sucesso', parent=comando)
-        comando.destroy()  # Fecha a janela
+        status_label.configure(text=f'{total} comando(s) executado(s) com sucesso.')
+        messagebox.showinfo('Aviso', 'Comandos executados com sucesso', parent=comando)
+        comando.destroy()
 
     def update_erro(erro):
-        messagebox.showerror(
-            'Erro', f'Ocorreu um erro ao executar os comandos\n{erro}', parent=comando)
-        # Habilita o botão de confirmar novamente
-        confirm_button.configure(state='normal')
+        confirm_button.configure(state='normal', text='Confirmar')
+        status_label.configure(text='Erro ao executar os comandos.')
+        messagebox.showerror('Erro', f'Erro ao executar os comandos\n{erro}', parent=comando)
+
+    def _montar_operacoes(self, checkbox_List) -> list:
+        """
+        Retorna uma lista de (nome_legível, query) para cada checkbox marcada,
+        na ordem correta — respeitando a dependência do arredondamento.
+        """
+        nomes = [
+            'Preço de Custo por Porcentagem',
+            'Arredondar Preço de Custo',
+            'Preço de Custo = Preço de Compra',
+            'Preço de Custo = Custo Médio',
+            'Preço de Custo zerado',
+            'Corrigir Classificação Nula',
+            'Zerar Produtos Não Zerados',
+            "Setar Controla Estoque 'S'",
+            'Corrigir Quantidade Alta',
+            'Zerar Saldo Negativo',
+            'DTOPE igual DTPRO',
+            'Comando Geral',
+        ]
+
+        operacoes = []
+        arredondamento_adicionado = False
+        query_arredond = self.comandos_query[checkbox_List[1]]
+
+        for i, (key, query) in enumerate(self.comandos_query.items()):
+            if key not in checkbox_List or key.get() != 1:
+                continue
+
+            nome = nomes[checkbox_List.index(key)]
+
+            if key == checkbox_List[1]:
+                # Arredondamento marcado diretamente — só adiciona se ainda não foi
+                if not arredondamento_adicionado:
+                    operacoes.append((nome, query))
+                    arredondamento_adicionado = True
+            else:
+                operacoes.append((nome, query))
+
+                # Checkboxes 2, 3 e 4 disparam arredondamento após si mesmos
+                if key in (checkbox_List[2], checkbox_List[3], checkbox_List[4]):
+                    if not arredondamento_adicionado:
+                        operacoes.append(('Arredondar Preço de Custo', query_arredond))
+                        arredondamento_adicionado = True
+
+        return operacoes
+
 
     # Importar a classe Connect do arquivo Inventario_Conn
     from Thread_Manager.Query_Operations import query_executor, query_updater
@@ -83,6 +131,15 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button):
         return
 
     confirm_button.configure(state='disabled')
+    
+    # Monta a lista de operações marcadas, na ordem certa
+    operacoes = _montar_operacoes(self, checkbox_List)
+    total = len(operacoes)
+
+    if total == 0:
+        return
+
+    confirm_button.configure(state='disabled', text='Executando...')
 
     thread_execução(comando, executa_comandos, update_finalizado, update_erro)
 
