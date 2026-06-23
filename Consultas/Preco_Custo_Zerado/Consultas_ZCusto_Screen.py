@@ -1,14 +1,17 @@
-def Prod_ZCusto_Screen(Consulta_Screen):
+def Prod_ZCusto_Screen(Consulta_Screen, consulta_button):
     import customtkinter as ctk
     from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
     from Consultas.Generics_Functions.Gen_Funcs_Consulta import prod_get, copy_val
     from Consultas.Preco_Custo_Zerado.Consultas_ZCusto_List_Screen import List_Treeview_Screen
     from Thread_Manager.Thread_Executor import thread_execução
 
+    # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
+    consulta_button.configure(state='disabled')
+
     query = 'select count (*) from in01pro where (precu = 0 or (precu is null) or (precu < 0)) and preve > 0 and saldo > 0'
 
     hub = Consultas_Val_Screen(
-        Consulta_Screen, 'Produtos com Preço de Custo zerado')
+        Consulta_Screen, 'Produtos com Preço de Custo zerado', consulta_button)
 
     val_ven_label = ctk.CTkLabel(
         hub, text='Produtos com Precu = 0:', width=20, height=2, font=('', 16))
@@ -17,7 +20,7 @@ def Prod_ZCusto_Screen(Consulta_Screen):
     val_ven_button = ctk.CTkButton(hub, text='Copiar Valor', width=15,
                                    height=20, command=lambda: copy_val(val_ven_text), state='disabled')
     listagem_button = ctk.CTkButton(hub, text='Listar Produtos', width=15,
-                                   height=20, command=lambda: List_Treeview_Screen(hub), state='disabled')
+                                    height=20, command=lambda: List_Treeview_Screen(hub), state='disabled')
 
     val_ven_label.place(relx=0.5, y=15, anchor='center')
     val_ven_text.place(relx=0.5, y=40, anchor='center')

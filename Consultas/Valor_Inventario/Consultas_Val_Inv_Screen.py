@@ -1,12 +1,14 @@
-def hub_val_inv(Consulta_Screen):
+def hub_val_inv(Consulta_Screen, consulta_button):
     import customtkinter as ctk
 
     # Importa as funções que vão ser usadas na tela	 dos arquivos Consultas/Consultas_Val_Inv_Func e Consutlas/Consultas_Val_Screen
     from Consultas.Valor_Inventario.Consultas_Val_Inv_Func import inv_get, copy_val
     from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
     from Thread_Manager.Thread_Executor import thread_execução
+    
+    consulta_button.configure(state='disabled')  # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
 
-    hub = Consultas_Val_Screen(Consulta_Screen, 'Valor do Inventário')
+    hub = Consultas_Val_Screen(Consulta_Screen, 'Valor do Inventário', consulta_button)
 
     val_inv_label = ctk.CTkLabel(
         hub, text='Valor do Inventário:', width=20, height=2, font=('', 16))

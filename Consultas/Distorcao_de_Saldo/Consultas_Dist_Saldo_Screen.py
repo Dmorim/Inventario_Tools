@@ -1,4 +1,4 @@
-def dist_saldo_screen(self, Consulta_Screen):
+def dist_saldo_screen(self, Consulta_Screen, consulta_button):
     import customtkinter as ctk
 
     # Importa as funções que vão ser usadas na tela dos arquivos Consultas/Consultas_Val_Screen, Consutlas/Gen_Funcs_Consulta e Consultas/Consultas_Dist_Saldo_List
@@ -7,7 +7,11 @@ def dist_saldo_screen(self, Consulta_Screen):
     from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_List import List_Treeview_Screen
     from Thread_Manager.Thread_Executor import thread_execução
 
-    hub = Consultas_Val_Screen(Consulta_Screen, 'Saldo de Estoque')
+    # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
+    consulta_button.configure(state='disabled')
+
+    hub = Consultas_Val_Screen(
+        Consulta_Screen, 'Saldo de Estoque', consulta_button)
 
     # Cria os labels e botões da tela
     val_ven_label = ctk.CTkLabel(
@@ -21,15 +25,15 @@ def dist_saldo_screen(self, Consulta_Screen):
     # Função que executa a query e trata os valores obtidos
 
     val_ven_button = ctk.CTkButton(
-        hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_ven_text))
-    listagem_buttn = ctk.CTkButton(hub, text='Listar Produtos', width=15,
-                                   height=20, command=lambda: List_Treeview_Screen(self, hub))
+        hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_ven_text), state='disabled')
+    listagem_button = ctk.CTkButton(hub, text='Listar Produtos', width=15,
+                                    height=20, command=lambda: List_Treeview_Screen(self, hub), state='disabled')
 
     # Posiciona os labels e botões na tela
     val_ven_label.place(relx=0.5, y=15, anchor='center')
     val_ven_text.place(relx=0.5, y=40, anchor='center')
     val_ven_button.place(relx=0.8, y=65, anchor='center')
-    listagem_buttn.place(relx=0.24, y=65, anchor='center')
+    listagem_button.place(relx=0.24, y=65, anchor='center')
     progress.place(relx=0.5, y=40, anchor='center')
 
     progress.start()
@@ -40,7 +44,7 @@ def dist_saldo_screen(self, Consulta_Screen):
 
         val_ven_text.configure(text=len(self.dist_saldo_list))
         val_ven_button.configure(state='normal')
-        listagem_buttn.configure(state='normal')
+        listagem_button.configure(state='normal')
 
     def on_query_error(error):
         progress.stop()

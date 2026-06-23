@@ -1,14 +1,17 @@
-def Preve_Precu_Precom_Screen(Consulta_Screen):
+def Preve_Precu_Precom_Screen(Consulta_Screen, consulta_button):
     import customtkinter as ctk
     from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
     from Consultas.Generics_Functions.Gen_Funcs_Consulta import prod_get, copy_val
     from Consultas.Preco_Custo_Compra_Zerado.Consultas_Preve_Precu_Precom_List import List_Treeview_Screen
     from Thread_Manager.Thread_Executor import thread_execução
 
+    # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
+    consulta_button.configure(state='disabled')
+
     query = 'select count (*) from in01pro where precu = 0 and preve = 0 and vldia = 0 and saldo > 0'
 
     hub = Consultas_Val_Screen(
-        Consulta_Screen, 'Produtos com Preço de Custo, Venda e Compra zerados')
+        Consulta_Screen, 'Produtos com Preço de Custo, Venda e Compra zerados', consulta_button)
 
     val_ven_label = ctk.CTkLabel(
         hub, text='Produtos em que Precu, Preve e Precom = 0:', width=20, height=2, font=('', 12))

@@ -1,13 +1,17 @@
-def Contr_Estq_Screen(self, Consulta_Screen):
+def Contr_Estq_Screen(self, Consulta_Screen, consulta_button):
     import customtkinter as ctk
     from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
     from Consultas.Generics_Functions.Gen_Funcs_Consulta import prod_get, copy_val
     from Consultas.Controla_Estoque.Consultas_Contr_Estq_List import List_Treeview_Screen
     from Thread_Manager.Thread_Executor import thread_execução
 
+    # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
+    consulta_button.configure(state='disabled')
+
     query = f"select count (*) from in01lan where controlaestoque = 'N' and dtpro between '{self.data_banco_inicial}' and '{self.data_banco_final}'"
 
-    hub = Consultas_Val_Screen(Consulta_Screen, 'Produtos Controla Estoque')
+    hub = Consultas_Val_Screen(
+        Consulta_Screen, 'Produtos Controla Estoque', consulta_button)
 
     val_ven_label = ctk.CTkLabel(
         hub, text='Produtos com Controla Estoque = N', width=20, height=2, font=('', 13))
@@ -16,7 +20,7 @@ def Contr_Estq_Screen(self, Consulta_Screen):
     val_ven_button = ctk.CTkButton(
         hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_ven_text), state='disabled')
     listagem_buttn = ctk.CTkButton(
-        hub, text='Listar Produtos', width=15, height=20, command=lambda: List_Treeview_Screen(self,hub), state='disabled')
+        hub, text='Listar Produtos', width=15, height=20, command=lambda: List_Treeview_Screen(self, hub), state='disabled')
 
     val_ven_label.place(relx=0.5, y=15, anchor='center')
     val_ven_text.place(relx=0.5, y=40, anchor='center')

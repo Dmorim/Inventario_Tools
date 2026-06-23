@@ -31,3 +31,12 @@ def event_button_comando(self, event):
 
     if self.comando.cget('state') != 'disabled':
         self.comando.invoke()
+
+
+def event_screen_close(screen, event, button):
+    # Função que simula o fechamento da tela
+    # Args:
+    # screen: Instância da tela que chama a função
+    # event: Evento que chama a função
+    button.configure(state='normal')
+    screen.destroy()

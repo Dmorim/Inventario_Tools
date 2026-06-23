@@ -1,4 +1,4 @@
-def Classi_Pro_Screen(Consulta_Screen):
+def Classi_Pro_Screen(Consulta_Screen, consulta_button):
     import customtkinter as ctk
 
     # Importa as funções e variáveis do arquivo Consultas_Val_Screen e Gen_Funcs_Consulta. Bem como a função List_Treeview_Screen para criação da tela de lista
@@ -7,12 +7,15 @@ def Classi_Pro_Screen(Consulta_Screen):
     from Consultas.Classificação_Do_Produto.Consultas_Classi_Pro_List import List_Treeview_Screen
     from Thread_Manager.Thread_Executor import thread_execução
 
+    # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
+    consulta_button.configure(state='disabled')
+
     # Query para contar os produtos sem classificação do produto
     query = "select count (*) from in01pro where classificacao_produto is null or classificacao_produto = ''"
 
     # Cria a tela de consulta com base na função Consultas_Val_Screen
     hub = Consultas_Val_Screen(
-        Consulta_Screen, 'Produtos sem Classificação do Produto')
+        Consulta_Screen, 'Produtos sem Classificação do Produto', consulta_button)
 
     # Cria os labels e botões da tela de consulta
     val_ven_label = ctk.CTkLabel(
