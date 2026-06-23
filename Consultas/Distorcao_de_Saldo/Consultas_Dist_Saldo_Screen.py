@@ -52,45 +52,65 @@ def dist_saldo_screen(self, Consulta_Screen):
         from Thread_Manager.Query_Operations import query_selector, query_executor
 
         query = """
-            SELECT
-                p.cdpro,
-                p.nmpro,
-                CAST(
-                    SUM(IIF(l.TPMOV = 'S', l.quant, -l.quant))
-                    AS NUMERIC(15, (
-                        SELECT CHAR_LENGTH(SUBSTRING(valor FROM POSITION('.' IN valor) + 1))
-                        FROM si01gp
-                        WHERE ident = 'FORMATOSALDO'
-                    ))
-                ) AS saldo_lan,
-                p.saldo AS saldo_pro,
-                IIF(
-                    CAST(SUM(IIF(l.TPMOV = 'S', l.quant, -l.quant))
-                        AS NUMERIC(15, (
-                            SELECT CHAR_LENGTH(SUBSTRING(valor FROM POSITION('.' IN valor) + 1))
-                            FROM si01gp
-                            WHERE ident = 'FORMATOSALDO'
-                        ))
-                    ) <> CAST(p.saldo AS NUMERIC(15, (
-                        SELECT CHAR_LENGTH(SUBSTRING(valor FROM POSITION('.' IN valor) + 1))
-                        FROM si01gp
-                        WHERE ident = 'FORMATOSALDO'
-                    ))),
-                    'S', 'N'
-                ) AS distorcao
-            FROM in01lan l
-            LEFT JOIN in01pro p ON l.cdpro = p.cdpro
-            LEFT JOIN in01com c ON c.notfi = l.notfi
-                AND c.cdfrn = l.cdfrn
-                AND c.serie = l.serie
-            WHERE
-                (l.venda = 'J' OR l.venda <> 'J')
-                AND COALESCE(l.controlaestoque, 'S') = 'S'
-                AND COALESCE(l.cance, 'N') = 'N'
-                AND classificacao_produto IN ('00', '01', '02', '04', '05', '06')
-                AND l.venda <> 'R'
-                AND (COALESCE(c.alterarsaldo, 'S') = 'S' OR l.venda <> 'J')
-            GROUP BY p.cdpro, p.saldo, p.nmpro
+            EXECUTE BLOCK
+            RETURNS (
+                cdpro VARCHAR(50),
+                nmpro VARCHAR(255),
+                saldo_lan NUMERIC(15,4),
+                saldo_pro NUMERIC(15,4),
+                distorcao CHAR(1)
+            )
+            AS
+            DECLARE VARIABLE formatosaldo INTEGER;
+            BEGIN
+
+                SELECT CAST(
+                        CHAR_LENGTH(
+                            SUBSTRING(valor FROM POSITION('.' IN valor) + 1)
+                        ) AS INTEGER
+                    )
+                FROM si01gp
+                WHERE ident = 'FORMATOSALDO'
+                INTO :formatosaldo;
+
+                FOR
+                    SELECT
+                        p.cdpro,
+                        p.nmpro,
+                        SUM(IIF(l.tpmov = 'S', l.quant, -l.quant)) AS saldo_lan,
+                        p.saldo AS saldo_pro,
+                        IIF(
+                            ROUND(SUM(IIF(l.tpmov = 'S', l.quant, -l.quant)), :formatosaldo) <>
+                            ROUND(p.saldo, :formatosaldo),
+                            'S',
+                            'N'
+                        ) AS distorcao
+                    FROM in01lan l
+                    LEFT JOIN in01pro p
+                        ON l.cdpro = p.cdpro
+                    LEFT JOIN in01com c
+                        ON c.notfi = l.notfi
+                    AND c.cdfrn = l.cdfrn
+                    AND c.serie = l.serie
+                    WHERE
+                        COALESCE(l.controlaestoque, 'S') = 'S'
+                        AND COALESCE(l.cance, 'N') = 'N'
+                        AND classificacao_produto IN ('00', '01', '02', '04', '05', '06')
+                        AND l.venda <> 'R'
+                        AND (COALESCE(c.alterarsaldo, 'S') = 'S' OR l.venda <> 'J')
+                    GROUP BY
+                        p.cdpro,
+                        p.nmpro,
+                        p.saldo
+                    INTO
+                        :cdpro,
+                        :nmpro,
+                        :saldo_lan,
+                        :saldo_pro,
+                        :distorcao
+                DO
+                    SUSPEND;
+            END
         """
 
         rows = query_executor(query_selector, query)

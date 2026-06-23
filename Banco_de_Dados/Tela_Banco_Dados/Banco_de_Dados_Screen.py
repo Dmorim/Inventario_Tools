@@ -22,15 +22,18 @@ def Interface_Banco(self, root, entry_alter_list, button_list):
     frame_in.pack(padx=5, pady=25)
 
     # Cria os widgets da tela Banco_Screen
+    status_label = ctk.CTkLabel(
+        Banco_Screen, text='', width=200, height=14, font=('', 11), text_color='gray')
     sel_banco_label = ctk.CTkLabel(
         Banco_Screen, text='Conexão com o Banco de Dados', width=20, height=2, font=('', 14, 'bold'))
     confirm_button = ctk.CTkButton(Banco_Screen, width=25, height=7, text='Confirmar', command=lambda: on_click_confirm(
-        entrys_list, Banco_Screen, entry_alter_list, button_list), text_color='silver')
+        entrys_list, Banco_Screen, entry_alter_list, button_list, confirm_button, status_label), text_color='silver')
     cancel_button = ctk.CTkButton(Banco_Screen, width=75, height=7, text='Cancelar',
                                   command=lambda: Banco_Screen.destroy(), text_color='silver')
 
     # Posiciona os widgets na tela Banco_Screen
     sel_banco_label.place(relx=0.5, y=9, anchor='center')
+    status_label.place(relx=0.25, y=218, anchor='center')
     confirm_button.place(x=298, y=202)
     cancel_button.place(x=218, y=202)
 

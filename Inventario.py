@@ -124,7 +124,7 @@ class Inventario:
                                width=20, height=2, font=('', 11, 'italic'))
 
         # Criação de um tooltip para o label de créditos
-        ToolTip(credits, 'Com a ajuda de Cicero Romão nas consultas SQL', 700)
+        ToolTip(credits, 'Com a ajuda de Cicero Romão (RIP) nas consultas SQL', 700)
 
         # Definição das datas inicial e final como o primeiro e último dia do ano passado
         ano_atual = datetime.datetime.now().year

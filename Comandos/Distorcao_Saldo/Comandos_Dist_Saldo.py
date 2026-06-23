@@ -32,7 +32,7 @@ def on_click_dist_saldo(self, parent):
 
     # Criação dos botões confirmar e cancelar
     confirm_button = ctk.CTkButton(distorcao, text='Confirmar', width=60, height=26,
-                                   command=lambda: on_click_confirm_btt(self, distorcao, val_list))
+                                   command=lambda: on_click_confirm_btt(self, distorcao, val_list, confirm_button))
     cancel_button = ctk.CTkButton(
         distorcao, text='Cancelar', width=75, height=26, command=lambda: distorcao.destroy())
 
@@ -55,7 +55,7 @@ def on_click_dist_saldo(self, parent):
     cancel_button.place(x=175, y=90)
 
 
-def on_click_confirm_btt(self, parent, val_list):
+def on_click_confirm_btt(self, parent, val_list, confirm_button):
     # Função chamada ao apertar o botão de confirmar, executa a distorção de saldo
     # Args:
     # self: objeto da classe
@@ -66,60 +66,40 @@ def on_click_confirm_btt(self, parent, val_list):
     from tkinter import messagebox  # Importa a classe messagebox do tkinter
 
     from Thread_Manager.Query_Operations import query_updater, query_executor
+    from Thread_Manager.Thread_Executor import thread_execução
 
-    # Obtem os valores de tipo de distorção e data
-    tp_distorc = val_list[0].get()
-    data = val_list[1].get()
-    data = datetime.strptime(data, "%d/%m/%Y")
-    # Formata a data para o formato do banco de dados
-    data = data.strftime("%d.%m.%Y")
-
-    if tp_distorc == 'PRO = LAN':  # Verifica se a distorção é PRO = LAN
-        for item in self.dist_saldo_list:  # Para cada item na lista de distorção de saldo
-            # Cria a query de distorção de saldo, deixando o saldo do produto igual ao saldo do lançamento, onde o código do produto é informado na lista
-            query = f"UPDATE IN01PRO SET SALDO = {item[2]} WHERE CDPRO = {item[0]}"
-
-            try:
+    def executa_distorcao():
+        tp_distorc = val_list[0].get()
+        if tp_distorc == 'PRO = LAN':  # Verifica se a distorção é PRO = LAN
+            for item in self.dist_saldo_list:  # Para cada item na lista de distorção de saldo
+                # Cria a query de distorção de saldo, deixando o saldo do produto igual ao saldo do lançamento, onde o código do produto é informado na lista
+                query = f"UPDATE IN01PRO SET SALDO = {item[2]} WHERE CDPRO = {item[0]}"
                 query_executor(query_updater, query)  # Executa a query
-            except Exception as e:
-                # Cria uma messagebox informando que houve um erro ao executar a distorção
-                messagebox.showerror(
-                    'Erro', f'Erro ao executar a distorção\n{e}', parent=parent)
-                return
+        else:
+            for item in self.dist_saldo_list:  # Para cada item na lista de distorção de saldo"
+                # Define o tipo de movimento como N se o saldo do produto for maior que o saldo do lançamento, caso contrário, define como S
+                tpmov = 'N' if item[2] > item[3] else 'S'
+                quant = abs(item[2] - item[3])
+                data = datetime.strptime(
+                    val_list[1].get(), "%d/%m/%Y").strftime("%d.%m.%Y")
+                nmpro = item[1].replace("'", "")
+                # Cria a query de distorção de saldo, inserindo um novo lançamento no banco de dados
+                query = f"INSERT INTO IN01LAN (NOTFI, CDPRO, VENDA, DTEMI, DTPRO, QUANT, TPMOV, HISTO, NMOPE, DTOPE, HISTORICO_AJUSTE) VALUES ('AJUSTE', '{item[0]}', 'J', '{data}', '{data}', '{quant}', '{tpmov}', 'AJUSTE DE ESTOQUE (DISTORÇÃO DE SALDO)', 'SISTECH', '{data}', 'AJUSTADO LANÇAMENTO {item[0]} - {nmpro}, DISTORÇÃO DE SALDO, AJUSTADO POR SISTECH')"
 
-        # Cria uma messagebox informando que a distorção foi executada com sucesso
-        messagebox.showinfo(
-            'Aviso', 'Distorção de Saldo executada com sucesso', parent=parent)
-        parent.destroy()
-
-    else:
-        # Caso a distorção seja LAN = PRO
-        for item in self.dist_saldo_list:  # Para cada item na lista de distorção de saldo"
-            # Verifica se o saldo do lançamento é maior ou menor que o saldo do produto
-            if item[2] > item[3]:
-                tpmov = 'N'  # Se for maior, o tipo de movimento é N, categorizando uma saída
-                quant = item[2] - item[3]
-
-            if item[2] < item[3]:
-                tpmov = 'S'  # Se for menor, o tipo de movimento é S, categorizando uma entrada
-                quant = item[3] - item[2]
-
-            nmpro = item[1]  # Preenche a variável nmpro com o nome do produto
-            # Remove as aspas simples do nome do produto para evitar erro na query
-            nmpro = nmpro.replace("'", "")
-
-            # Cria a query de distorção de saldo, inserindo um novo lançamento no banco de dados
-            query = f"INSERT INTO IN01LAN (NOTFI, CDPRO, VENDA, DTEMI, DTPRO, QUANT, TPMOV, HISTO, NMOPE, DTOPE, HISTORICO_AJUSTE) VALUES ('AJUSTE', '{item[0]}', 'J', '{data}', '{data}', '{quant}', '{tpmov}', 'AJUSTE DE ESTOQUE (DISTORÇÃO DE SALDO)', 'SISTECH', '{data}', 'AJUSTADO LANÇAMENTO {item[0]} - {nmpro}, DISTORÇÃO DE SALDO, AJUSTADO POR SISTECH')"
-
-            try:
                 query_executor(query_updater, query)  # Executa a query
-            except Exception as e:
-                # Mesmo tratamento de erro da query anterior
-                messagebox.showerror(
-                    'Erro', f'Erro ao executar a distorção\n{e}', parent=parent)
-                return
 
-        # Cria uma messagebox informando que a distorção foi executada com sucesso
+    def update_finalizado(_):
         messagebox.showinfo(
             'Aviso', 'Distorção de Saldo executada com sucesso', parent=parent)
         parent.destroy()  # Fecha a janela de distorção de saldo
+
+    def update_erro(erro):
+        messagebox.showerror(
+            'Erro', f'Ocorreu um erro ao executar a distorção de saldo\n{erro}', parent=parent)
+        # Habilita o botão de confirmar novamente
+        confirm_button.configure(state='normal')
+
+    # Desabilita o botão de confirmar para evitar múltiplos cliques
+    confirm_button.configure(state='disabled')
+
+    thread_execução(parent, executa_distorcao, update_finalizado, update_erro)

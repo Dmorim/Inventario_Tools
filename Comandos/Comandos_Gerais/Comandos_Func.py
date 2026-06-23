@@ -21,7 +21,7 @@ def Comandos_Func(self, checkbox_List):
     }
 
 
-def on_click_confirm(self, comando, checkbox_List, values_List):
+def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button):
     # Função chamada ao apertar o botão de confirmar, itera sobre os itens da combobox e executa os comandos marcados
     # Args:
     # self: objeto da classe
@@ -29,69 +29,62 @@ def on_click_confirm(self, comando, checkbox_List, values_List):
     # checkbox_List: lista de checkbox da aba comandos
     # values_List: lista de valores da aba comandos
 
+    def executa_comandos():
+        for key, value in self.comandos_query.items():  # Itera sobre os itens do dicionário de comandos
+            if key in checkbox_List and key.get() == 1:  # Verifica se a checkbox está marcada
+                query_executor(query_updater, value)  # Executa o comando
+                # Verifica os casos especiais dos checkboxes 2, 3 e 4, onde alem de executar os comandos dele, também executa o comando do checkbox 1
+                if key == checkbox_List[2] or key == checkbox_List[3] or key == checkbox_List[4]:
+                    query_executor(
+                        query_updater, self.comandos_query[checkbox_List[1]])
+
+    def update_finalizado(_):
+        messagebox.showinfo(
+            'Aviso', 'Comandos executados com sucesso', parent=comando)
+        comando.destroy()  # Fecha a janela
+
+    def update_erro(erro):
+        messagebox.showerror(
+            'Erro', f'Ocorreu um erro ao executar os comandos\n{erro}', parent=comando)
+        # Habilita o botão de confirmar novamente
+        confirm_button.configure(state='normal')
+
     # Importar a classe Connect do arquivo Inventario_Conn
     from Thread_Manager.Query_Operations import query_executor, query_updater
+    from Thread_Manager.Thread_Executor import thread_execução
     from tkinter import messagebox  # Importar a classe messagebox do tkinter
 
     if values_List[0].get() != '':  # Verifica se o Entry de porcentagem foi preenchido
         # Preenche a variável porcent_precu com o valor do Entry
-        self.porcent_precu = values_List[0].get()
-        self.porcent_precu = self.porcent_precu.replace(
-            ',', '.')  # Substitui a virgula por ponto
+        self.porcent_precu = values_List[0].get().replace(
+            ',', '.')  # Substitui a vírgula por ponto
     else:
         self.porcent_precu = 1  # Caso o Entry esteja vazio, a porcentagem é 1
 
-    # Verifica o valor da combobox que seta o preço de custo igual com o preço de compra
-    if values_List[1].get() == 'Maior':
-        self.precu_vldia = '>'  # Se for maior, a variável precu_vldia recebe '>'
-    else:
-        self.precu_vldia = '<'  # Se for menor, a variável precu_vldia recebe '<'
-
-    # Verifica o valor da combobox que seta o preço de custo igual com o custo médio
-    if values_List[2].get() == 'Maior':
-        self.precu_cusme = '>'  # Se for maior, a variável precu_cusme recebe '>'
-    else:
-        self.precu_cusme = '<'  # Se for menor, a variável precu_cusme recebe '<'
+    self.precu_vldia = '>' if values_List[1].get() == 'Maior' else '<'
+    self.precu_cusme = '>' if values_List[2].get() == 'Maior' else '<'
 
     # Verifica o valor da combobox que seta o preço de custo igual com o preço de compra, ou custo médio ou preço de venda * 0,65 se o saldo estiver zerado
     if values_List[3].get() == 'Preço de Compra':
-        # Se for preço de compra, a variável precu_vldia_preve recebe 'VLDIA'
         self.precu_vldia_preve = 'VLDIA'
     elif values_List[3].get() == 'Custo Médio':
-        # Se for custo médio, a variável precu_vldia_preve recebe 'CUSME'
         self.precu_vldia_preve = 'CUSME'
     else:
-        # Se for preço de venda * 0,65, a variável precu_vldia_preve recebe 'PREVE - (PREVE * 0.65)'
         self.precu_vldia_preve = 'PREVE - (PREVE * 0.65)'
 
-    # Preenche a variável com_ger com o valor do Entry
     self.com_ger = values_List[4].get()
 
     # Chama a função Comandos_Func para criar os dicionários de comandos
     Comandos_Func(self, checkbox_List)
 
     # Cria uma messagebox para confirmar a execução dos comandos, a messagem irá contar uma lista com otodos os comandos marcados pelo usuário.
-    cond = messagebox.askyesno(
-        'Aviso', f'Os seguintes comandos serão executados:\n{comandos_true(self)}\nDeseja continuar?', parent=comando)
-    if cond:
-        # Caso o usuário confirme o messagebox:
-
-        try:
-            for key, value in self.comandos_query.items():  # Itera sobre os itens do dicionário de comandos
-                if key in checkbox_List and key.get() == 1:  # Verifica se a checkbox está marcada
-                    query_executor(query_updater, value)  # Executa o comando
-# Verifica os casos especiais dos checkboxes 2, 3 e 4, onde alem de executar os comandos dele, também executa o comando do checkbox 1
-                    if key == checkbox_List[2] or key == checkbox_List[3] or key == checkbox_List[4]:
-                        query_executor(query_updater, self.comandos_query[checkbox_List[1]])
-
-            comando.destroy()  # Fecha a janela
-        except Exception as e:
-            # Caso ocorra um erro, uma messagebox é criada com a mensagem de erro
-            messagebox.showerror(
-                'Erro', f'Erro ao executar os comandos\n{e}', parent=comando)
-            return
-    else:
+    if not messagebox.askyesno(
+            'Aviso', f'Os seguintes comandos serão executados:\n{comandos_true(self)}\nDeseja continuar?', parent=comando):
         return
+
+    confirm_button.configure(state='disabled')
+
+    thread_execução(comando, executa_comandos, update_finalizado, update_erro)
 
 
 def comandos_true(self) -> str:
