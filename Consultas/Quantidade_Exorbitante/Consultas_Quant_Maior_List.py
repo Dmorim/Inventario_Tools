@@ -2,6 +2,24 @@ def List_Treeview_Screen(self, parent):
     import customtkinter as ctk
     from tkinter import ttk
 
+    def Treeview_Select(self, treeview):
+        from Thread_Manager.Query_Operations import query_selector, query_executor
+        from Thread_Manager.Thread_Executor import thread_execução
+
+        query = f"select cdpro, notfi, saldo, tpmov, dtpro from in01lan where quant > 999999 and dtpro between '{self.data_banco_inicial}' and '{self.data_banco_final}'"
+        
+        def buscar():
+            return query_executor(query_selector, query)
+        
+        def ao_terminar(rows):
+            Treeview_Insert(treeview, rows)
+        
+        thread_execução(treeview, buscar, ao_terminar)
+
+    def Treeview_Insert(treeview, rows):
+        for row in rows:
+            treeview.insert('', 'end', values=row)
+
     toplevel = ctk.CTkToplevel(parent)
     toplevel.title('Lista de Produtos')
     toplevel.geometry("700x300")
@@ -31,16 +49,3 @@ def List_Treeview_Screen(self, parent):
     treeview.pack(fill='both', expand=True)
 
     Treeview_Select(self, treeview)
-
-
-def Treeview_Select(self, treeview):
-    from Thread_Manager.Query_Operations import query_selector, query_executor
-
-    query = f"select cdpro, notfi, saldo, tpmov, dtpro from in01lan where quant > 999999 and dtpro between '{self.data_banco_inicial}' and '{self.data_banco_final}'"
-    rows = query_executor(query_selector, query)
-    Treeview_Insert(treeview, rows)
-
-
-def Treeview_Insert(treeview, rows):
-    for row in rows:
-        treeview.insert('', 'end', values=row)

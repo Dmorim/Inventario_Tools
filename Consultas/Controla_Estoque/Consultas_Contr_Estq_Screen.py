@@ -16,7 +16,7 @@ def Contr_Estq_Screen(self, Consulta_Screen):
     val_ven_button = ctk.CTkButton(
         hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_ven_text), state='disabled')
     listagem_buttn = ctk.CTkButton(
-        hub, text='Listar Produtos', width=15, height=20, command=lambda: List_Treeview_Screen(hub), state='disabled')
+        hub, text='Listar Produtos', width=15, height=20, command=lambda: List_Treeview_Screen(self,hub), state='disabled')
 
     val_ven_label.place(relx=0.5, y=15, anchor='center')
     val_ven_text.place(relx=0.5, y=40, anchor='center')

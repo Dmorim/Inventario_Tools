@@ -1,4 +1,4 @@
-def List_Treeview_Screen(parent):
+def List_Treeview_Screen(self, parent):
 
     def Treeview_Select(self, treeview):
         from Thread_Manager.Query_Operations import query_selector, query_executor
@@ -51,4 +51,4 @@ def List_Treeview_Screen(parent):
     vsb.pack(side='right', fill='y')
     treeview.pack(fill='both', expand=True)
 
-    Treeview_Select(treeview)
+    Treeview_Select(self, treeview)
