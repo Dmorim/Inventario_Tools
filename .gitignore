@@ -164,3 +164,4 @@ config.ini
 config.ini
 *.ini
 *.exe
+*.env
