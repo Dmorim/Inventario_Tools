@@ -15,7 +15,7 @@ class Inventario:
         from Outros.Datas_Config import date_treat, data_select_ini, data_select_fim
         from Outros.Banco_Images import TelaInicial
         from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Func import carregar_diretorio
-        from Outros.Tk_Tooltip import ToolTip
+        from Interface_Tools.Tk_Tooltip import ToolTip
 
         # Importações de bibliotecas externas
         from tkcalendar import DateEntry

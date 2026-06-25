@@ -240,7 +240,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
         status_label, 'Conectando ao banco de dados')
 
     query_propri = "SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI"
-    query_emissoes = "SELECT MAX(DTEMI) FROM IN01LAN WHERE VENDA IN ('V', 'A', 'W') AND TPMOV = 'N'"
+    query_emissoes = "SELECT MAX(DTEMI) FROM IN01LAN WHERE VENDA IN ('V', 'A', 'W', 'D') AND TPMOV = 'N' AND EMITE = 'S' AND CANCE <> 'S'"
 
     thread_execução(Banco_Screen, executa_conexao,
                     ao_conectar, ao_conectar_erro)
