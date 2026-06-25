@@ -4,7 +4,7 @@ def theme_def(cbb_entry):
         # cbb_entry: combobox do tema
     
     from customtkinter import set_appearance_mode # Importa a função set_appearance_mode do customtkinter
-    from Banco_de_Dados.Banco_de_Dados_Func import salvar_diretorio # Importa a função salvar_diretorio do Banco_de_Dados_Func
+    from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Func import salvar_diretorio # Importa a função salvar_diretorio do Banco_de_Dados_Func
     
     theme = cbb_entry.get() # Obtem o valor do combobox
     if theme == 'Claro': # Se o valor for claro, define o tema como claro
