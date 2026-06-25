@@ -162,3 +162,4 @@ cython_debug/
 Teste.py
 config.ini
 config.ini
+*.env
