@@ -2,7 +2,7 @@ def Consulta_Total_Screen(self, root):
     import customtkinter as ctk
 
     # Importação de todas as telas de consultas + ToolTip
-    from Outros.Tk_Tooltip import ToolTip
+    from Interface_Tools.Tk_Tooltip import ToolTip
     from Consultas.Valor_Inventario.Consultas_Val_Inv_Screen import hub_val_inv
     from Consultas.Valor_Vendas.Consultas_Val_Ven_Screen import Val_Ven_Screen
     from Consultas.Valor_Entradas.Consultas_Val_Ent_Screen import Val_Ent_Screen

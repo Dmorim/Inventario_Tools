@@ -30,25 +30,33 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
     # values_List: lista de valores da aba comandos
 
     def executa_comandos():
+        progress_bar.create_screen()
+        progress_bar.atualizar_status('Executando comandos')
         resultados = []
         for i, (nome, query) in enumerate(operacoes):
             idx = i
-            n   = nome
+            n = nome
             comando.after(0, lambda i=idx, n=n: status_label.configure(
                 text=f'Executando {i + 1} de {total}: {n}'))
             query_executor(query_updater, query)
             resultados.append(nome)
         return resultados
+    
 
     def update_finalizado(_):
-        status_label.configure(text=f'{total} comando(s) executado(s) com sucesso.')
-        messagebox.showinfo('Aviso', 'Comandos executados com sucesso', parent=comando)
+        progress_bar.finalizar()
+        status_label.configure(
+            text=f'{total} comando(s) executado(s) com sucesso.')
+        messagebox.showinfo(
+            'Aviso', 'Comandos executados com sucesso', parent=comando)
         comando.destroy()
 
     def update_erro(erro):
+        progress_bar.finalizar()
         confirm_button.configure(state='normal', text='Confirmar')
         status_label.configure(text='Erro ao executar os comandos.')
-        messagebox.showerror('Erro', f'Erro ao executar os comandos\n{erro}', parent=comando)
+        messagebox.showerror(
+            'Erro', f'Erro ao executar os comandos\n{erro}', parent=comando)
 
     def _montar_operacoes(self, checkbox_List) -> list:
         """
@@ -91,15 +99,32 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
                 # Checkboxes 2, 3 e 4 disparam arredondamento após si mesmos
                 if key in (checkbox_List[2], checkbox_List[3], checkbox_List[4]):
                     if not arredondamento_adicionado:
-                        operacoes.append(('Arredondar Preço de Custo', query_arredond))
+                        operacoes.append(
+                            ('Arredondar Preço de Custo', query_arredond))
                         arredondamento_adicionado = True
 
         return operacoes
+    
+    def centraliza_tela():
+        comando.update_idletasks()
 
+        janela_w = 400
+        janela_h = 130
+
+        widget_x = comando.winfo_rootx()
+        widget_y = comando.winfo_rooty()
+        widget_w = comando.winfo_width()
+        widget_h = comando.winfo_height()
+
+        x = widget_x + (widget_w - janela_w) // 2
+        y = widget_y + (widget_h - janela_h) // 2
+        
+        return x,y
 
     # Importar a classe Connect do arquivo Inventario_Conn
     from Thread_Manager.Query_Operations import query_executor, query_updater
     from Thread_Manager.Thread_Executor import thread_execução
+    from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
     from tkinter import messagebox  # Importar a classe messagebox do tkinter
 
     if values_List[0].get() != '':  # Verifica se o Entry de porcentagem foi preenchido
@@ -131,7 +156,10 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
         return
 
     confirm_button.configure(state='disabled')
-    
+    progress_x, progress_y = centraliza_tela()
+    progress_bar = ProgressBarHandler(
+        comando, 'Aguarde', x=progress_x, y=progress_y)
+
     # Monta a lista de operações marcadas, na ordem certa
     operacoes = _montar_operacoes(self, checkbox_List)
     total = len(operacoes)

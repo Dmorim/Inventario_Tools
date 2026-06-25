@@ -123,10 +123,21 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
     from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import ConfiguracaoBanco, BancoDeDados
     from Thread_Manager.Query_Operations import query_executor, query_selector
     from Thread_Manager.Thread_Executor import thread_execução
+    from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 
-    from fdb import DatabaseError  # Importa a exceção DatabaseError da biblioteca fdb
+    from tkinter import messagebox  # Importa a função messagebox da biblioteca tkinter
+
+    def centraliza_tela():
+        # Calcula a posição central da tela para o progress bar
+        screen_width = Banco_Screen.winfo_screenwidth()
+        screen_height = Banco_Screen.winfo_screenheight()
+        progress_x = (screen_width // 2) - (Banco_Screen.winfo_width() // 2)
+        progress_y = (screen_height // 2) - (Banco_Screen.winfo_height() // 2)
+        return progress_x, progress_y
 
     def executa_conexao():
+        progress_bar.create_screen()
+        progress_bar.atualizar_status("Conectando ao banco de dados...")
         if BancoDeDados.retorna_gerenciador() is not None:
             BancoDeDados.fechar()  # Cria o gerenciador de conexões
 
@@ -141,6 +152,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
 
     def ao_conectar_erro(erro):
         parar_animacao('Erro ao conectar ao banco de dados')  # Para a animação
+        progress_bar.finalizar()
         confirm_button.configure(state='normal')
         messagebox.showerror(
             'Erro', f'Não foi possível conectar ao banco de dados\n {erro}', parent=Banco_Screen)
@@ -169,6 +181,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
                 '%d/%m/%Y') if datas and datas[0][0] is not None else 'Sem emissões'
 
             val_list = [nome, rsocial, cnpj, cgf, codcrt, fone, max_data]
+            progress_bar.finalizar()
             Banco_Screen.destroy()
 
             for label, val in zip(entry_alter_list, val_list):
@@ -188,6 +201,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
                 status_label, 'Buscando datas de emissão')
             if 'datas' in resultados:
                 parar_emissoes[0]('Datas de emissão obtidas')
+                progress_bar.atualizar_status("Datas de emissão obtidas")
                 finalizar()
 
         def falha_propri(erro):
@@ -204,6 +218,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
             if 'propri' in resultados:
                 if parar_emissoes[0]:
                     parar_emissoes[0]('Datas de emissão obtidas')
+                    progress_bar.atualizar_status("Datas de emissão obtidas")
                 finalizar()
 
         def falha_datas(erro):
@@ -232,6 +247,10 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
         database=obter_caminho_curto_banco_dados(entrys_list[2].get()),
         fbclient=entrys_list[3].get()
     )
+    
+    progress_x, progress_y = centraliza_tela()
+    progress_bar = ProgressBarHandler(
+            Banco_Screen, "Aguarde", x=progress_x, y=progress_y)
 
     # Desabilita o botão de confirmar para evitar múltiplos cliques
     confirm_button.configure(state='disabled')
@@ -240,7 +259,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
         status_label, 'Conectando ao banco de dados')
 
     query_propri = "SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI"
-    query_emissoes = "SELECT MAX(DTEMI) FROM IN01LAN WHERE VENDA IN ('V', 'A', 'W', 'D') AND TPMOV = 'N' AND EMITE = 'S' AND CANCE <> 'S'"
+    query_emissoes = "SELECT MAX(L.DTEMI) FROM IN01LAN L LEFT JOIN IN01FAT F ON L.NOTFI = F.FATUR WHERE L.VENDA IN ('V', 'A', 'W', 'D') AND F.EMITE = 'S' AND F.CANCE <> 'S'"
 
     thread_execução(Banco_Screen, executa_conexao,
                     ao_conectar, ao_conectar_erro)

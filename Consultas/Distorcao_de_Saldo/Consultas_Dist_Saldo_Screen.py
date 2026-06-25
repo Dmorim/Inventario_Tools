@@ -1,4 +1,13 @@
 def dist_saldo_screen(self, Consulta_Screen, consulta_button):
+    def centraliza_tela():
+        # Calcula a posição central da tela para o progress bar
+        screen_width = Consulta_Screen.winfo_screenwidth()
+        screen_height = Consulta_Screen.winfo_screenheight()
+        progress_x = (screen_width // 2) - (Consulta_Screen.winfo_width() // 2)
+        progress_y = (screen_height // 2) - \
+            (Consulta_Screen.winfo_height() // 2)
+        return progress_x, progress_y
+
     import customtkinter as ctk
 
     # Importa as funções que vão ser usadas na tela dos arquivos Consultas/Consultas_Val_Screen, Consutlas/Gen_Funcs_Consulta e Consultas/Consultas_Dist_Saldo_List
@@ -6,20 +15,22 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button):
     from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
     from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_List import List_Treeview_Screen
     from Thread_Manager.Thread_Executor import thread_execução
+    from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 
     # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
     consulta_button.configure(state='disabled')
+    progress_x, progress_y = centraliza_tela()
 
     hub = Consultas_Val_Screen(
         Consulta_Screen, 'Saldo de Estoque', consulta_button)
+    progress_bar = ProgressBarHandler(
+        hub, "Aguarde", x=progress_x, y=progress_y)
 
     # Cria os labels e botões da tela
     val_ven_label = ctk.CTkLabel(
         hub, text='Distorções de Saldo:', width=20, height=2, font=('', 16))
     val_ven_text = ctk.CTkLabel(
         hub, text='', width=20, height=2, font=('', 14))
-
-    progress = ctk.CTkProgressBar(hub, mode='indeterminate', width=200)
 
     # Diferente de outras consultas, aqui tanto a query quanto a função que vai tratar os valores da consulta estão no mesmo arquivo
     # Função que executa a query e trata os valores obtidos
@@ -34,21 +45,18 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button):
     val_ven_text.place(relx=0.5, y=40, anchor='center')
     val_ven_button.place(relx=0.8, y=65, anchor='center')
     listagem_button.place(relx=0.24, y=65, anchor='center')
-    progress.place(relx=0.5, y=40, anchor='center')
 
-    progress.start()
+    progress_bar.create_screen()
+    progress_bar.atualizar_status("Consultando distorções de saldo...")
 
     def on_query_complete(empty):
-        progress.stop()
-        progress.place_forget()
-
+        progress_bar.finalizar()
         val_ven_text.configure(text=len(self.dist_saldo_list))
         val_ven_button.configure(state='normal')
         listagem_button.configure(state='normal')
 
     def on_query_error(error):
-        progress.stop()
-        progress.place_forget()
+        progress_bar.finalizar()
         val_ven_text.configure(text="Erro ao gerar consulta")
         print(f"Erro ao executar consulta: {error}")
 

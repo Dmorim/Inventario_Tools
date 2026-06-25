@@ -3,7 +3,7 @@ from random import randint
 
 
 class ProgressBarHandler:
-    def __init__(self, parent, title: str, width: int = 300, height: int = 100, x: int = 200, y: int = 150):
+    def __init__(self, parent, title: str, width: int = 400, height: int = 130, x: int = 200, y: int = 150):
         self.parent = parent
         self.title = title
         self.width = width
@@ -26,6 +26,9 @@ class ProgressBarHandler:
                           'Na aba de comandos, existe um campo vazio para digitar um comando personalizado',
                           'Cuidado ao encontrar Talyta no caminho para a empresa, você pode ter uma surpresa desagradável',
                           'Na dúvida, ligue 22 ou 24',
+                          'Se sua impressora não funcionar, veja com Fábio, digo Çávio, quer dizer Sasa...',
+                          'O silêncio marca a ausência de Clea',
+                          'Exsqueça o inventário',
                           'Uma vez o sábio Romão disse: "Sei o que é isso não" ao ver uma tela de erro do GP',
                           'Com certeza alguém achou que todas as dicas seriam úteis',
                           'Procure o criador do aplicativo caso tenha alguma dúvida, ninguém é tão inteligente quanto ele',
