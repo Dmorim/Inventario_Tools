@@ -1,0 +1,81 @@
+from customtkinter import CTkToplevel
+
+
+class ContainerManager:
+    def init(self):
+        pass
+
+    def __create_dict_containers(self, widget: CTkToplevel):
+        if not hasattr(self, 'containers'):
+            self.containers = {}
+
+        self.containers[widget] = {"x": widget.winfo_x(), "y": widget.winfo_y(
+        ), "width": widget.winfo_width(), "height": widget.winfo_height()}
+
+    def __get_screen_geometry(self, widget: CTkToplevel):
+        return {
+            "width": widget.winfo_screenwidth(),
+            "height": widget.winfo_screenheight(),
+        }
+
+    def _add_container(self, widget: CTkToplevel):
+        self.__create_dict_containers(widget)
+
+    def _remover_container(self, widget: CTkToplevel):
+        if hasattr(self, 'containers') and widget in self.containers:
+            del self.containers[widget]
+
+    def _get_usable_geometry(self, widget: CTkToplevel):
+        screen_geometry = self.__get_screen_geometry(widget)
+        return {
+            "width": screen_geometry["width"] * 0.8,
+            "height": screen_geometry["height"] * 0.8,
+        }
+
+    def _put_widget_position_within_screen(self, widget: CTkToplevel):
+        widget.update_idletasks()
+
+        usable_geometry = self._get_usable_geometry(widget)
+        screen_width = widget.winfo_screenwidth()
+        screen_height = widget.winfo_screenheight()
+        widget_width = 250
+        widget_height = 80
+
+        usable_width = min(screen_width, int(usable_geometry["width"]))
+        usable_height = min(screen_height, int(usable_geometry["height"]))
+        max_x = max(0, usable_width - widget_width)
+        max_y = max(0, usable_height - widget_height)
+
+        containers = getattr(self, "containers", {})
+
+        def position_is_available(x, y):
+            for container, geometry in containers.items():
+                if container is widget:
+                    continue
+
+                overlaps = (
+                    x < geometry["x"] + geometry["width"]
+                    and x + widget_width > geometry["x"]
+                    and y < geometry["y"] + geometry["height"]
+                    and y + widget_height > geometry["y"]
+                )
+                if overlaps:
+                    return False
+
+            return True
+
+        step_x = max(1, widget_width)
+        step_y = max(1, widget_height)
+
+        for y in range(0, max_y + 1, step_y):
+            for x in range(0, max_x + 1, step_x):
+                if position_is_available(x, y):
+                    return f"+{x}+{y}"
+
+        raise RuntimeError("Não há espaço disponível para posicionar o widget")
+
+    def posicionar_container(self, widget: CTkToplevel) -> str:
+        position = self._put_widget_position_within_screen(widget)
+        widget.geometry(f'250x80{position}')
+        self._add_container(widget)
+        return position

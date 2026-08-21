@@ -1,0 +1,5 @@
+customtkinter
+tkcalendar
+Pillow
+fdb
+pyperclip
