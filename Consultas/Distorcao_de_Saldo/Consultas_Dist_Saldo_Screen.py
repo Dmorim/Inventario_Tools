@@ -69,8 +69,7 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button):
                 cdpro VARCHAR(50),
                 nmpro VARCHAR(255),
                 saldo_lan NUMERIC(15,4),
-                saldo_pro NUMERIC(15,4),
-                distorcao CHAR(1)
+                saldo_pro NUMERIC(15,4)
             )
             AS
             DECLARE VARIABLE formatosaldo INTEGER;
@@ -87,39 +86,42 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button):
 
                 FOR
                     SELECT
-                        p.cdpro,
-                        p.nmpro,
-                        SUM(IIF(l.tpmov = 'S', l.quant, -l.quant)) AS saldo_lan,
-                        p.saldo AS saldo_pro,
-                        IIF(
-                            ROUND(SUM(IIF(l.tpmov = 'S', l.quant, -l.quant)), :formatosaldo) <>
-                            ROUND(p.saldo, :formatosaldo),
-                            'S',
-                            'N'
-                        ) AS distorcao
-                    FROM in01lan l
-                    LEFT JOIN in01pro p
-                        ON l.cdpro = p.cdpro
-                    LEFT JOIN in01com c
-                        ON c.notfi = l.notfi
-                    AND c.cdfrn = l.cdfrn
-                    AND c.serie = l.serie
+                        x.cdpro,
+                        x.nmpro,
+                        x.saldo_lan,
+                        x.saldo_pro
+                    FROM (
+                        SELECT
+                            p.cdpro,
+                            p.nmpro,
+                            SUM(IIF(l.tpmov = 'S', l.quant, -l.quant)) AS saldo_lan,
+                            p.saldo AS saldo_pro
+                        FROM in01lan l
+                        LEFT JOIN in01pro p
+                            ON l.cdpro = p.cdpro
+                        LEFT JOIN in01com c
+                            ON c.notfi = l.notfi
+                        AND c.cdfrn = l.cdfrn
+                        AND c.serie = l.serie
+                        WHERE
+                            COALESCE(l.controlaestoque, 'S') = 'S'
+                            AND COALESCE(l.cance, 'N') = 'N'
+                            AND classificacao_produto IN ('00', '01', '02', '04', '05', '06')
+                            AND l.venda <> 'R'
+                            AND (COALESCE(c.alterarsaldo, 'S') = 'S' OR l.venda <> 'J')
+                        GROUP BY
+                            p.cdpro,
+                            p.nmpro,
+                            p.saldo
+                    ) x
                     WHERE
-                        COALESCE(l.controlaestoque, 'S') = 'S'
-                        AND COALESCE(l.cance, 'N') = 'N'
-                        AND classificacao_produto IN ('00', '01', '02', '04', '05', '06')
-                        AND l.venda <> 'R'
-                        AND (COALESCE(c.alterarsaldo, 'S') = 'S' OR l.venda <> 'J')
-                    GROUP BY
-                        p.cdpro,
-                        p.nmpro,
-                        p.saldo
+                        ROUND(x.saldo_lan, :formatosaldo) <>
+                        ROUND(x.saldo_pro, :formatosaldo)
                     INTO
                         :cdpro,
                         :nmpro,
                         :saldo_lan,
-                        :saldo_pro,
-                        :distorcao
+                        :saldo_pro
                 DO
                     SUSPEND;
             END
@@ -129,8 +131,7 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button):
 
         self.dist_saldo_list = [
             [cdpro, nmpro, saldo_lan, saldo_pro]
-            for cdpro, nmpro, saldo_lan, saldo_pro, distorcao in rows
-            if distorcao == 'S'
+            for cdpro, nmpro, saldo_lan, saldo_pro in rows
         ]
 
     thread_execução(hub, execute_query, on_query_complete,
