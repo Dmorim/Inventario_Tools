@@ -2,13 +2,10 @@ from customtkinter import CTkToplevel
 
 
 class ContainerManager:
-    def init(self):
-        pass
+    def __init__(self):
+        self.containers = {}
 
-    def __create_dict_containers(self, widget: CTkToplevel):
-        if not hasattr(self, 'containers'):
-            self.containers = {}
-
+    def _add_container(self, widget: CTkToplevel):
         self.containers[widget] = {"x": widget.winfo_x(), "y": widget.winfo_y(
         ), "width": widget.winfo_width(), "height": widget.winfo_height()}
 
@@ -18,19 +15,25 @@ class ContainerManager:
             "height": widget.winfo_screenheight(),
         }
 
-    def _add_container(self, widget: CTkToplevel):
-        self.__create_dict_containers(widget)
-
     def _remover_container(self, widget: CTkToplevel):
-        if hasattr(self, 'containers') and widget in self.containers:
+        if widget in self.containers:
             del self.containers[widget]
 
     def _get_usable_geometry(self, widget: CTkToplevel):
         screen_geometry = self.__get_screen_geometry(widget)
         return {
-            "width": screen_geometry["width"] * 0.8,
-            "height": screen_geometry["height"] * 0.8,
+            "width": screen_geometry["width"] * 0.70,
+            "height": screen_geometry["height"] * 0.70,
         }
+
+    def _update_container_geometry(self):
+        for container in self.containers:
+            self.containers[container] = {
+                "x": container.winfo_x(),
+                "y": container.winfo_y(),
+                "width": container.winfo_width(),
+                "height": container.winfo_height(),
+            }
 
     def _put_widget_position_within_screen(self, widget: CTkToplevel):
         widget.update_idletasks()
@@ -48,10 +51,10 @@ class ContainerManager:
         min_pos_y = 0 + (screen_width - usable_width) // 2
         max_pos_y = screen_height - (screen_width - usable_width) // 2
 
-        containers = getattr(self, "containers", {})
+        self._update_container_geometry()
 
         def position_is_available(x, y):
-            for container, geometry in containers.items():
+            for container, geometry in self.containers.items():
                 if container is widget:
                     continue
 
@@ -66,11 +69,11 @@ class ContainerManager:
 
             return True
 
-        step_x = max(1, widget_width)
-        step_y = max(1, widget_height)
+        step_x = max(1, widget_width)+10
+        step_y = max(1, widget_height)+35
 
-        for y in range(min_pos_y, max_pos_y + 1, step_y):
-            for x in range(min_pos_x, max_pos_x + 1, step_x):
+        for x in range(min_pos_x, max_pos_x + 1, step_x):
+            for y in range(min_pos_y, max_pos_y + 1, step_y):
                 if position_is_available(x, y):
                     return f"+{x}+{y}"
 

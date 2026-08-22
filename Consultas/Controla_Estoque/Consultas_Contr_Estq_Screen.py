@@ -1,4 +1,7 @@
-def Contr_Estq_Screen(self, Consulta_Screen, consulta_button):
+from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
+
+
+def Contr_Estq_Screen(self, Consulta_Screen, consulta_button, container_manager: ContainerManager):
     import customtkinter as ctk
     from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
     from Consultas.Generics_Functions.Gen_Funcs_Consulta import prod_get, copy_val
@@ -11,7 +14,7 @@ def Contr_Estq_Screen(self, Consulta_Screen, consulta_button):
     query = f"select count (*) from in01lan where controlaestoque = 'N' and dtpro between '{self.data_banco_inicial}' and '{self.data_banco_final}'"
 
     hub = Consultas_Val_Screen(
-        Consulta_Screen, 'Produtos Controla Estoque', consulta_button)
+        Consulta_Screen, 'Produtos Controla Estoque', consulta_button, container_manager)
 
     val_ven_label = ctk.CTkLabel(
         hub, text='Produtos com Controla Estoque = N', width=20, height=2, font=('', 13))

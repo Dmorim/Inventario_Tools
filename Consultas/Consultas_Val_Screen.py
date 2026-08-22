@@ -1,9 +1,11 @@
-def Consultas_Val_Screen(parent, title: str, parent_button):
+from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
+
+
+def Consultas_Val_Screen(parent, title: str, parent_button, container_manager: ContainerManager):
     import customtkinter as ctk
     from Consultas.Generics_Functions.Gen_Funcs_Consulta import event_screen_close
-    from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
 
-    cm = ContainerManager()
+    cm = container_manager
 
     hub = ctk.CTkToplevel(parent)
     hub.title(title)
