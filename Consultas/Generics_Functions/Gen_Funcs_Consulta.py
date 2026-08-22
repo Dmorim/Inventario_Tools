@@ -33,10 +33,14 @@ def event_button_comando(self, event):
         self.comando.invoke()
 
 
-def event_screen_close(screen, event, button):
+def event_screen_close(screen, event, button, container_manager):
     # Função que simula o fechamento da tela
     # Args:
     # screen: Instância da tela que chama a função
     # event: Evento que chama a função
+    # button: Botão que chama a função
+    # container_manager: Gerenciador de containers
+
     button.configure(state='normal')
+    container_manager.remover_container(screen)
     screen.destroy()

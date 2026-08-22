@@ -22,8 +22,8 @@ class ContainerManager:
     def _get_usable_geometry(self, widget: CTkToplevel):
         screen_geometry = self.__get_screen_geometry(widget)
         return {
-            "width": screen_geometry["width"] * 0.70,
-            "height": screen_geometry["height"] * 0.70,
+            "width": screen_geometry["width"] * 0.8,
+            "height": screen_geometry["height"] * 0.5,
         }
 
     def _update_container_geometry(self):
@@ -46,10 +46,10 @@ class ContainerManager:
 
         usable_width = min(screen_width, int(usable_geometry["width"]))
         usable_height = min(screen_height, int(usable_geometry["height"]))
-        min_pos_x = 0 + (screen_height - usable_height) // 2
-        max_pos_x = screen_width - (screen_height - usable_height) // 2
-        min_pos_y = 0 + (screen_width - usable_width) // 2
-        max_pos_y = screen_height - (screen_width - usable_width) // 2
+        min_pos_x = 0 + (screen_width - usable_width) // 2
+        max_pos_x = screen_width - (screen_width - usable_width) // 2
+        min_pos_y = 0 + (screen_height - usable_height) // 2
+        max_pos_y = screen_height - (screen_height - usable_height) // 2
 
         self._update_container_geometry()
 
@@ -69,8 +69,8 @@ class ContainerManager:
 
             return True
 
-        step_x = max(1, widget_width)+10
-        step_y = max(1, widget_height)+35
+        step_x = int(max(1, widget_width)+(widget_width * 0.01))
+        step_y = int(max(1, widget_height)+(widget_height * 0.41))
 
         for x in range(min_pos_x, max_pos_x + 1, step_x):
             for y in range(min_pos_y, max_pos_y + 1, step_y):
@@ -84,3 +84,6 @@ class ContainerManager:
         widget.geometry(f'250x80{position}')
         self._add_container(widget)
         return position
+
+    def remover_container(self, widget: CTkToplevel):
+        self._remover_container(widget)
