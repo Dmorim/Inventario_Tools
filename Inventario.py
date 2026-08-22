@@ -61,7 +61,7 @@ class Inventario:
         self.database = ctk.CTkButton(self.frame_top, text='Selecione o Banco de Dados', width=100,
                                       height=48, command=lambda: Interface_Banco(self, self.root, entry_alter_list, button_list))
         self.consulta = ctk.CTkButton(self.frame_top, text='Consultas (F1)', width=80, height=48,
-                                      command=lambda: Consulta_Total_Screen(self, self.root), state='disabled')
+                                      command=lambda: Consulta_Total_Screen(self, self.root), state='normal')
         self.comando = ctk.CTkButton(self.frame_top, text='Comandos (F2)', width=60,
                                      height=48, command=lambda: Comandos_Screen(self, self.root), state='disabled')
         self.dat_ini_label = ctk.CTkLabel(

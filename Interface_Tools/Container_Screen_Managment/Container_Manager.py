@@ -43,8 +43,10 @@ class ContainerManager:
 
         usable_width = min(screen_width, int(usable_geometry["width"]))
         usable_height = min(screen_height, int(usable_geometry["height"]))
-        max_x = max(0, usable_width - widget_width)
-        max_y = max(0, usable_height - widget_height)
+        min_pos_x = 0 + (screen_height - usable_height) // 2
+        max_pos_x = screen_width - (screen_height - usable_height) // 2
+        min_pos_y = 0 + (screen_width - usable_width) // 2
+        max_pos_y = screen_height - (screen_width - usable_width) // 2
 
         containers = getattr(self, "containers", {})
 
@@ -67,8 +69,8 @@ class ContainerManager:
         step_x = max(1, widget_width)
         step_y = max(1, widget_height)
 
-        for y in range(0, max_y + 1, step_y):
-            for x in range(0, max_x + 1, step_x):
+        for y in range(min_pos_y, max_pos_y + 1, step_y):
+            for x in range(min_pos_x, max_pos_x + 1, step_x):
                 if position_is_available(x, y):
                     return f"+{x}+{y}"
 
