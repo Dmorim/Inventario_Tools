@@ -51,6 +51,9 @@ class Inventario:
         self.ini_date = ctk.StringVar()
         self.end_date = ctk.StringVar()
 
+        # StringVar para armazenar a data selecionada no DateEntry
+        self.data_setada = ctk.IntVar(value=0)
+
         # Variáveis responsáveis por armazenar as imagens usadas na tela
         gear_image = ctk.CTkImage(
             TelaInicial.gear_image_tela_inicial, size=(14, 14))
@@ -64,14 +67,21 @@ class Inventario:
                                       command=lambda: Consulta_Total_Screen(self, self.root), state='normal')
         self.comando = ctk.CTkButton(self.frame_top, text='Comandos (F2)', width=60,
                                      height=48, command=lambda: Comandos_Screen(self, self.root), state='disabled')
-        self.dat_ini_label = ctk.CTkLabel(
-            self.frame_top, text='Data Inicial:', width=10, height=2, font=('', 12))
-        self.dat_ini = DateEntry(self.frame_top, width=12, background='darkblue', foreground='white',
-                                 borderwidth=2, textvariable=self.ini_date, date_pattern='dd/mm/yyyy', firstweekday='sunday')
-        self.dat_fim_label = ctk.CTkLabel(
-            self.frame_top, text='Data Final:', width=10, height=2, font=('', 12))
-        self.dat_fim = DateEntry(self.frame_top, width=12, background='darkblue', foreground='white',
-                                 borderwidth=2, textvariable=self.end_date, date_pattern='dd/mm/yyyy', firstweekday='sunday')
+        self.radio_ano = ctk.CTkRadioButton(
+            self.frame_top, text='Inv. Anual', variable=self.data_setada, radiobutton_height=14, radiobutton_width=14, height=10, corner_radius=55, font=('', 11, 'bold'), border_width_checked=10, hover_color='lightblue', value=1)
+        self.radio_mes = ctk.CTkRadioButton(
+            self.frame_top, text='Inv. Mensal', variable=self.data_setada, radiobutton_height=14, radiobutton_width=14, height=10, corner_radius=55, font=('', 11, 'bold'), border_width_checked=10, hover_color='lightblue', value=2)
+        self.radio_personalizado = ctk.CTkRadioButton(
+            self.frame_top, text='Escolha...', variable=self.data_setada, radiobutton_height=14, radiobutton_width=14, height=10, corner_radius=55, font=('', 11, 'bold'), border_width_checked=10, hover_color='lightblue', value=3)
+
+        # self.dat_ini_label = ctk.CTkLabel(
+        #     self.frame_top, text='Data Inicial:', width=10, height=2, font=('', 12))
+        # self.dat_ini = DateEntry(self.frame_top, width=12, background='darkblue', foreground='white',
+        #                          borderwidth=2, textvariable=self.ini_date, date_pattern='dd/mm/yyyy', firstweekday='sunday')
+        # self.dat_fim_label = ctk.CTkLabel(
+        #     self.frame_top, text='Data Final:', width=10, height=2, font=('', 12))
+        # self.dat_fim = DateEntry(self.frame_top, width=12, background='darkblue', foreground='white',
+        #                          borderwidth=2, textvariable=self.end_date, date_pattern='dd/mm/yyyy', firstweekday='sunday')
         self.gear_btt = ctk.CTkButton(self.frame_top, text='', width=14, height=14, image=gear_image,
                                       command=lambda: config_screen(self, self.root), fg_color='#d04404')
         self.help_btt = ctk.CTkButton(self.frame_top, text='', width=14, height=14,
@@ -86,10 +96,14 @@ class Inventario:
         self.database.place(x=8, y=6)
         self.consulta.place(x=125, y=6)
         self.comando.place(x=215, y=6)
-        self.dat_ini_label.place(x=300, y=9)
-        self.dat_ini.place(x=370, y=6)
-        self.dat_fim_label.place(x=303, y=35)
-        self.dat_fim.place(x=370, y=32)
+        # self.dat_ini_label.place(x=300, y=9)
+        # self.dat_ini.place(x=370, y=6)
+        # self.dat_fim_label.place(x=303, y=35)
+        # self.dat_fim.place(x=370, y=32)
+
+        self.radio_ano.place(x=295, y=5)
+        self.radio_mes.place(x=295, y=22)
+        self.radio_personalizado.place(x=295, y=40)
         self.gear_btt.place(x=473, y=6)
         self.help_btt.place(x=473, y=32)
 
@@ -138,10 +152,10 @@ class Inventario:
         ultimo_dia_str = ultimo_dia.strftime('%d/%m/%Y')
 
         # Setar as datas
-        self.dat_ini.set_date(primeiro_dia_str)
-        self.dat_fim.set_date(ultimo_dia_str)
-        self.data_banco_inicial = primeiro_dia.strftime('%d.%m.%Y')
-        self.data_banco_final = ultimo_dia.strftime('%d.%m.%Y')
+        # self.dat_ini.set_date(primeiro_dia_str)
+        # self.dat_fim.set_date(ultimo_dia_str)
+        # self.data_banco_inicial = primeiro_dia.strftime('%d.%m.%Y')
+        # self.data_banco_final = ultimo_dia.strftime('%d.%m.%Y')
 
         # Lista de widgets que serão utilizados
         entry_alter_list = [nome_empresa_label, razao_social_text,
@@ -174,10 +188,10 @@ class Inventario:
             "write", lambda *args: date_treat(self, self.ini_date, 'Inicial'))
         self.end_date.trace_add(
             "write", lambda *args: date_treat(self, self.end_date, 'Final'))
-        self.dat_ini.bind("<<DateEntrySelected>>",
-                          lambda event: data_select_ini(self, self.ini_date))
-        self.dat_fim.bind("<<DateEntrySelected>>",
-                          lambda event: data_select_fim(self, self.end_date))
+        # self.dat_ini.bind("<<DateEntrySelected>>",
+        #                   lambda event: data_select_ini(self, self.ini_date))
+        # self.dat_fim.bind("<<DateEntrySelected>>",
+        #                   lambda event: data_select_fim(self, self.end_date))
 
 
 # Condição usada caso o sistema seja executado diretamente, sem ser importado por outro arquivo
