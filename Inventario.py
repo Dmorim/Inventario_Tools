@@ -73,6 +73,8 @@ class Inventario:
             self.frame_top, text='Inv. Mensal', variable=self.data_setada, radiobutton_height=14, radiobutton_width=14, height=10, corner_radius=55, font=('', 11, 'bold'), border_width_checked=10, hover_color='lightblue', value=2)
         self.radio_personalizado = ctk.CTkRadioButton(
             self.frame_top, text='Escolha...', variable=self.data_setada, radiobutton_height=14, radiobutton_width=14, height=10, corner_radius=55, font=('', 11, 'bold'), border_width_checked=10, hover_color='lightblue', value=3)
+        self.ano_combo = ctk.CTkComboBox(self.frame_top, values=[str(ano) for ano in range(datetime.datetime.now().year - 5, datetime.datetime.now().year)],
+                                         width=70, height=13, font=('', 12), state='readonly')
 
         # self.dat_ini_label = ctk.CTkLabel(
         #     self.frame_top, text='Data Inicial:', width=10, height=2, font=('', 12))
@@ -104,6 +106,7 @@ class Inventario:
         self.radio_ano.place(x=295, y=5)
         self.radio_mes.place(x=295, y=22)
         self.radio_personalizado.place(x=295, y=40)
+        self.ano_combo.place(x=385, y=4)
         self.gear_btt.place(x=473, y=6)
         self.help_btt.place(x=473, y=32)
 
