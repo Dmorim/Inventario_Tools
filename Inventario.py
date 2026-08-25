@@ -7,8 +7,6 @@ class Inventario:
     def __init__(self, root):
         # Importações de outros arquivos do sistema segundo a Lógica: from [Pasta].[Arquivo] import [Classe ou Função]
         from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Screen import Interface_Banco
-        from Consultas.Consultas_Screen import Consulta_Total_Screen
-        from Comandos.Comandos_Gerais.Comandos_Screen import Comandos_Screen
         from Consultas.Generics_Functions.Gen_Funcs_Consulta import event_button_comando, event_button_consulta
         from Configuracoes.Config_Screen import config_screen
         from Tutorial.Tutorial_Screen import tutorial_screen
@@ -52,7 +50,7 @@ class Inventario:
         self.end_date = ctk.StringVar()
 
         # StringVar para armazenar a data selecionada no DateEntry
-        self.data_setada = ctk.IntVar(value=0)
+        
 
         # Variáveis responsáveis por armazenar as imagens usadas na tela
         gear_image = ctk.CTkImage(

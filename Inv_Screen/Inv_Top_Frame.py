@@ -1,14 +1,22 @@
-from customtkinter import CTkFrame, CTkButton, CTkLabel, CTkRadioButton, CTkComboBox
+from customtkinter import CTkFrame, CTkButton, CTkLabel, CTkRadioButton, CTkComboBox, IntVar
+import datetime
+
+from Consultas.Consultas_Screen import Consulta_Total_Screen
+from Comandos.Comandos_Gerais.Comandos_Screen import Comandos_Screen
+from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Screen import Interface_Banco
 
 
 def _create_command_buttons(master):
+    
+    data_setada = IntVar(value=0)
+    
     # Criação dos widgets da tela do frame top, composto por botões, labels e DateEntries
     database = CTkButton(master, text='Selecione o Banco de Dados', width=100,
-                         height=48, command=lambda: Interface_Banco(self, root, entry_alter_list, button_list))
+                         height=48, command=lambda: Interface_Banco(master, root, entry_alter_list, button_list))
     consulta = CTkButton(master, text='Consultas (F1)', width=80, height=48,
-                         command=lambda: Consulta_Total_Screen(self, root), state='normal')
+                         command=lambda: Consulta_Total_Screen(master, root), state='normal')
     comando = CTkButton(master, text='Comandos (F2)', width=60,
-                        height=48, command=lambda: Comandos_Screen(self, root), state='disabled')
+                        height=48, command=lambda: Comandos_Screen(master, root), state='disabled')
     radio_ano = CTkRadioButton(
         master, text='Inv. Anual', variable=data_setada, radiobutton_height=14, radiobutton_width=14, height=10, corner_radius=55, font=('', 11, 'bold'), border_width_checked=10, hover_color='lightblue', value=1)
     radio_mes = CTkRadioButton(
