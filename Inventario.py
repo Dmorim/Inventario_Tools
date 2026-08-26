@@ -8,8 +8,6 @@ class Inventario:
         # Importações de outros arquivos do sistema segundo a Lógica: from [Pasta].[Arquivo] import [Classe ou Função]
         from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Screen import Interface_Banco
         from Consultas.Generics_Functions.Gen_Funcs_Consulta import event_button_comando, event_button_consulta
-        from Configuracoes.Config_Screen import config_screen
-        from Tutorial.Tutorial_Screen import tutorial_screen
         from Outros.Datas_Config import date_treat, data_select_ini, data_select_fim
         from Outros.Banco_Images import TelaInicial
         from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Func import carregar_diretorio
@@ -53,10 +51,6 @@ class Inventario:
         
 
         # Variáveis responsáveis por armazenar as imagens usadas na tela
-        gear_image = ctk.CTkImage(
-            TelaInicial.gear_image_tela_inicial, size=(14, 14))
-        help_image = ctk.CTkImage(
-            TelaInicial.help_image_tela_inicial, size=(14, 14))
 
         # Criação de um tooltip para o label de créditos
         ToolTip(credits, 'Com a ajuda de Cicero Romão (RIP) nas consultas SQL', 700)
@@ -79,9 +73,7 @@ class Inventario:
         # self.data_banco_final = ultimo_dia.strftime('%d.%m.%Y')
 
         # Lista de widgets que serão utilizados
-        entry_alter_list = [nome_empresa_label, razao_social_text,
-                            cnpj_text, ie_text, regime_text, fone_text, ult_emit_text]
-        button_list = [self.consulta, self.comando]
+        
 
         # Binds de eventos utilizados na tela
         self.root.bind(

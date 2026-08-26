@@ -1,18 +1,25 @@
-from customtkinter import CTkFrame, CTkButton, CTkLabel, CTkRadioButton, CTkComboBox, IntVar
+from customtkinter import CTkFrame, CTkButton, CTkLabel, CTkRadioButton, CTkComboBox, IntVar, CTkImage
 import datetime
 
 from Consultas.Consultas_Screen import Consulta_Total_Screen
 from Comandos.Comandos_Gerais.Comandos_Screen import Comandos_Screen
 from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Screen import Interface_Banco
+from Configuracoes.Config_Screen import config_screen
+from Tutorial.Tutorial_Screen import tutorial_screen
+from Outros.Banco_Images import TelaInicial
 
 
-def _create_command_buttons(app_self, master):
+def _create_command_buttons(app_self, master, entrys_list: list):
 
     data_setada = IntVar(value=0)
+    gear_image = CTkImage(
+        TelaInicial.gear_image_tela_inicial, size=(14, 14))
+    help_image = CTkImage(
+        TelaInicial.help_image_tela_inicial, size=(14, 14))
 
     # Criação dos widgets da tela do frame top, composto por botões, labels e DateEntries
     database = CTkButton(master, text='Selecione o Banco de Dados', width=100,
-                         height=48, command=lambda: Interface_Banco(app_self, master, entry_alter_list, button_list))
+                         height=48, command=lambda: Interface_Banco(app_self, master, entrys_list, button_list))
     consulta = CTkButton(master, text='Consultas (F1)', width=80, height=48,
                          command=lambda: Consulta_Total_Screen(app_self, master), state='disabled')
     comando = CTkButton(master, text='Comandos (F2)', width=60,
@@ -62,9 +69,11 @@ def _create_command_buttons(app_self, master):
     gear_btt.place(x=473, y=6)
     help_btt.place(x=473, y=32)
 
+    button_list = [consulta, comando]
 
-def criar_top_frame(app_self, master, *args, **kwargs):
+
+def criar_top_frame(app_self, master, entry_list: list, *args, **kwargs):
     top_frame = CTkFrame(master, *args, **kwargs)
     top_frame.pack()
-    _create_command_buttons(app_self, top_frame)
+    _create_command_buttons(app_self, top_frame, entry_list)
     return top_frame
