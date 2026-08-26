@@ -7,6 +7,7 @@ class Inventario:
     def __init__(self, root):
         # Importações de outros arquivos do sistema segundo a Lógica: from [Pasta].[Arquivo] import [Classe ou Função]
         from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Screen import Interface_Banco
+        from Inv_Screen.Inv_Top_Frame import criar_top_frame
         from Consultas.Generics_Functions.Gen_Funcs_Consulta import event_button_comando, event_button_consulta
         from Outros.Datas_Config import date_treat, data_select_ini, data_select_fim
         from Outros.Banco_Images import TelaInicial
@@ -29,31 +30,24 @@ class Inventario:
         self.root = root
         self.root.title("Configurações de Inventario")  # Título da janela
         # Tamanho e posição da janela no seguinte formato "LarguraxAltura+PosiçãoX+PosiçãoY"
-        self.root.geometry("510x200+80+60")
+        self.root.geometry("530x200+80+60")
         # Impede que a janela seja redimensionada
         self.root.resizable(False, False)
         self.root.focus_set()  # Foca na janela
 
+        entry_alter_list = []
+
         # Cria-se dois frames, um superior(top) e outro inferior(bot), onde serão inseridos os widgets
-        self.frame_top = ctk.CTkFrame(
-            self.root, width=510, height=60, border_width=2, border_color='silver', corner_radius=2)
-        self.frame_top.pack_propagate(False)
-        self.frame_top.pack()
-        self.frame_bot = ctk.CTkFrame(
-            self.root, width=510, height=140, border_width=2, border_color='silver', corner_radius=5)
-        self.frame_bot.pack()
+        self.frame_top = criar_top_frame(self, root, entry_alter_list, width=530,
+                                         height=60, border_width=2, border_color='silver', corner_radius=2)
 
         # StringVars para armazenar as datas inicial e final
         self.ini_date = ctk.StringVar()
         self.end_date = ctk.StringVar()
 
         # StringVar para armazenar a data selecionada no DateEntry
-        
 
         # Variáveis responsáveis por armazenar as imagens usadas na tela
-
-        # Criação de um tooltip para o label de créditos
-        ToolTip(credits, 'Com a ajuda de Cicero Romão (RIP) nas consultas SQL', 700)
 
         # Definição das datas inicial e final como o primeiro e último dia do ano passado
         ano_atual = datetime.datetime.now().year
@@ -73,14 +67,13 @@ class Inventario:
         # self.data_banco_final = ultimo_dia.strftime('%d.%m.%Y')
 
         # Lista de widgets que serão utilizados
-        
 
         # Binds de eventos utilizados na tela
         self.root.bind(
             '<F1>', lambda event: event_button_consulta(self, event))
         self.root.bind('<F2>', lambda event: event_button_comando(self, event))
-        self.root.bind('<Control-b>', lambda event: Interface_Banco(self,
-                       self.root, entry_alter_list, button_list))
+        # self.root.bind('<Control-b>', lambda event: Interface_Banco(self,
+        #                self.root, entry_alter_list, button_list))
         self.ini_date.trace_add(
             "write", lambda *args: date_treat(self, self.ini_date, 'Inicial'))
         self.end_date.trace_add(

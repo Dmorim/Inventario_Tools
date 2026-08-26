@@ -45,6 +45,9 @@ def t():
     ult_emit_text.place(x=100, y=118)
     credits.place(relx=0.83, rely=0.96, anchor='s')
 
+    # Criação de um tooltip para o label de créditos
+    ToolTip(credits, 'Com a ajuda de Cicero Romão (RIP) nas consultas SQL', 700)
+
 
 def criar_bot_frame(master, *args, **kwargs):
     bot_frame = CTkFrame(master, *args, **kwargs)

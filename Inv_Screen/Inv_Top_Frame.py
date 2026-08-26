@@ -54,20 +54,20 @@ def _create_command_buttons(app_self, master, entrys_list: list):
     comando._text_label.configure(wraplength=70)
 
     # Posicionamento dos widgets na tela
-    database.place(x=8, y=6)
-    consulta.place(x=125, y=6)
-    comando.place(x=215, y=6)
+    database.place(relx=0.01, rely=0.1, anchor='nw')
+    consulta.place(relx=0.217, rely=0.1, anchor='nw')
+    comando.place(relx=0.375, rely=0.1, anchor='nw')
     # dat_ini_label.place(x=300, y=9)
     # dat_ini.place(x=370, y=6)
     # dat_fim_label.place(x=303, y=35)
     # dat_fim.place(x=370, y=32)
 
-    radio_ano.place(x=295, y=5)
-    radio_mes.place(x=295, y=22)
-    radio_personalizado.place(x=295, y=40)
-    ano_combo.place(x=385, y=4)
-    gear_btt.place(x=473, y=6)
-    help_btt.place(x=473, y=32)
+    radio_ano.place(relx=0.522, rely=0.08, anchor='nw')
+    radio_mes.place(relx=0.522, rely=0.38, anchor='nw')
+    radio_personalizado.place(relx=0.522, rely=0.68, anchor='nw')
+    # ano_combo.place(x=385, y=4)
+    gear_btt.place(relx=0.933, rely=0.1, anchor='nw')
+    help_btt.place(relx=0.933, rely=0.5, anchor='nw')
 
     button_list = [consulta, comando]
 
