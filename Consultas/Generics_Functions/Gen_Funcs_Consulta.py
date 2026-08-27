@@ -13,24 +13,15 @@ def copy_val(val_ven_text):
     pyperclip.copy(copy_text)
 
 
-def event_button_consulta(self, event):
+def event_invoke_button(event, button):
     # Função que simula um click no botão de consulta
     # Args:
     # self: Instância da classe que chama a função
     # event: Evento que chama a função
+    # button: Botão que chama a função
 
-    if self.consulta.cget('state') != 'disabled':
-        self.consulta.invoke()
-
-
-def event_button_comando(self, event):
-    # Função que simula um click no botão de comando
-    # Args:
-    # self: Instância da classe que chama a função
-    # event: Evento que chama a função
-
-    if self.comando.cget('state') != 'disabled':
-        self.comando.invoke()
+    if button.cget('state') != 'disabled':
+        button.invoke()
 
 
 def event_screen_close(screen, event, button, container_manager):

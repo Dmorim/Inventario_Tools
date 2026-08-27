@@ -166,3 +166,4 @@ config.ini
 *.exe
 *.env
 config.ini
+docs/Plano_Refatoracao_Inventario_Tools.pdf
