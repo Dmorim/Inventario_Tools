@@ -38,6 +38,8 @@ def calcular_periodo(tipo, *, ano=None, mes=None, ini=None, fim=None):
         ano = ano or hoje.year
         mes = mes or hoje.month
         ultimo_dia = monthrange(ano, mes)[1]
+        if mes == 1 and hoje.month == 1:
+            ano -= 1
         return datetime.date(ano, mes, 1), datetime.date(ano, mes, ultimo_dia)
 
     if tipo == TIPO_PERSONALIZADO:

@@ -53,7 +53,8 @@ def _create_command_buttons(app_self, master, entrys_list: list):
 
     hoje = datetime.datetime.now()
     anos = [str(ano) for ano in range(hoje.year - 5, hoje.year)]
-    meses = [MESES[mes] for mes in range(1, hoje.month, 1)]
+    meses = [MESES[mes] for mes in range(1, hoje.month, 1)] if hoje.month > 1 else [
+        MESES[12]]
 
     app_self.ano_combo = CTkComboBox(master, values=anos,
                                      width=90, height=13, font=('', 13), state='readonly')
@@ -61,7 +62,8 @@ def _create_command_buttons(app_self, master, entrys_list: list):
 
     app_self.mes_combo = CTkComboBox(master, values=meses,
                                      width=90, height=13, font=('', 13), state='readonly')
-    app_self.mes_combo.set(MESES.get(hoje.month - 1, ''))
+    app_self.mes_combo.set(MESES.get(hoje.month - 1, '')
+                           if hoje.month > 1 else MESES.get(12, ''))
 
     app_self.ini_date = StringVar()
     app_self.end_date = StringVar()
@@ -111,6 +113,7 @@ def _create_command_buttons(app_self, master, entrys_list: list):
         '<F1>', lambda event: event_invoke_button(event, consulta))
     app_self.root.bind(
         '<F2>', lambda event: event_invoke_button(event, comando))
+    app_self.root.bind('B', lambda event: event_invoke_button(event, database))
 
 
 def criar_top_frame(app_self, master, entry_list: list, *args, **kwargs):

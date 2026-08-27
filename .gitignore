@@ -167,3 +167,4 @@ config.ini
 *.env
 config.ini
 docs/Plano_Refatoracao_Inventario_Tools.pdf
+docs/Plano_Refatoracao_Inventario_Tools_v2.md
