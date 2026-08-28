@@ -1,4 +1,7 @@
-def Val_Ent_Screen(self, Consulta_Screen, consulta_button):
+from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
+
+
+def Val_Ent_Screen(self, Consulta_Screen, consulta_button, container_manager: ContainerManager):
     import customtkinter as ctk
 
     # Importa as funções que vão ser usadas na tela dos arquivos Consultas/Consultas_Val_Ent_Func e Consutlas/Consultas_Val_Screen
@@ -10,7 +13,7 @@ def Val_Ent_Screen(self, Consulta_Screen, consulta_button):
     consulta_button.configure(state='disabled')
 
     hub = Consultas_Val_Screen(
-        Consulta_Screen, 'Valor das Compras', consulta_button)
+        Consulta_Screen, 'Valor das Compras', consulta_button, container_manager)
 
     val_ven_label = ctk.CTkLabel(
         hub, text='Valor das Compras:', width=20, height=2, font=('', 16))

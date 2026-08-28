@@ -19,7 +19,7 @@ class ProgressBarHandler:
                           'Os botões "Listar Produtos" e "Copiar Valor" só são habilitados quando a consulta é concluída',
                           'Você só poderá corrigir uma distorção de saldo depois que gerar ela pelo menos uma vez.',
                           'O valor de compra é gerado após a exclusão de CFOPs específicos',
-                          'Belezebufo foi um sapo há 70 milhões de anos e predava dinossauros bebês',
+                          'Belzebufo foi um sapo há 70 milhões de anos e predava dinossauros bebês',
                           'Uma enchente pode ter sido responsável pela extinção dos mamutes',
                           'Se você precisar de uma versão antiga do GP, o owncloud tem uma pasta para isso',
                           'O botão "Gerar Dist. de Saldo" só é habilitado quando a consulta é concluída',
@@ -48,6 +48,14 @@ class ProgressBarHandler:
                           'Mais do que um sistema, um system',
                           'Você consegue encontrar o código fonte e a versão mais recente do InvTools no GitHub',
                           'Aproveite e me siga no GitHub, nunca se sabe o que eu posso criar de útil por lá',
+                          'Se você ver um estagiário no cantinho, ajude-o e faça pegar uma base',
+                          'Não irei pegar base!!!!',
+                          'Aqueles que se recusam a assistir JoJo enfrentarão a ira de Letícia',
+                          'Pergunte-me sobre o sistema e responderei-te que nada sei-me',
+                          'Pergunte a Sávio sobre o TEF. Nada de errado pode acontecer',
+                          'Uma martelada próxima com certeza é obra de dona Callou',
+                          'Nunca leve Talyta para uma confraternização e pague pela comida',
+                          'Luís! Cadê minha tapioca????',
                           'Se você estiver lendo essa mensagem, saíba que você é o suficiente e estou torcendo por ti',
                           ]
         return list_of_labels

@@ -1,4 +1,7 @@
-def dist_saldo_screen(self, Consulta_Screen, consulta_button):
+from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
+
+
+def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager: ContainerManager):
     def centraliza_tela():
         # Calcula a posição central da tela para o progress bar
         screen_width = Consulta_Screen.winfo_screenwidth()
@@ -22,7 +25,7 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button):
     progress_x, progress_y = centraliza_tela()
 
     hub = Consultas_Val_Screen(
-        Consulta_Screen, 'Saldo de Estoque', consulta_button)
+        Consulta_Screen, 'Saldo de Estoque', consulta_button, container_manager)
     progress_bar = ProgressBarHandler(
         hub, "Aguarde", x=progress_x, y=progress_y)
 

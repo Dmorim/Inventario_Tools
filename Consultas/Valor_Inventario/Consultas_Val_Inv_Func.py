@@ -24,7 +24,7 @@ def inv_get():
         val = banco_codigo_valueform(val)  # Formata o valor obtido
     else:
         # Se o valor for None, retorna uma string informando que não foi registrado valor de inventário
-        val = 'Não foi registrado  valor de inventário'
+        val = 'Não foi registrado valor de inventário'
     return val  # Retorna o valor formatado
 
 

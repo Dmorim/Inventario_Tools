@@ -1,4 +1,7 @@
-def Classi_Pro_Screen(Consulta_Screen, consulta_button):
+from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
+
+
+def Classi_Pro_Screen(Consulta_Screen, consulta_button, container_manager: ContainerManager):
     import customtkinter as ctk
 
     # Importa as funções e variáveis do arquivo Consultas_Val_Screen e Gen_Funcs_Consulta. Bem como a função List_Treeview_Screen para criação da tela de lista
@@ -15,7 +18,7 @@ def Classi_Pro_Screen(Consulta_Screen, consulta_button):
 
     # Cria a tela de consulta com base na função Consultas_Val_Screen
     hub = Consultas_Val_Screen(
-        Consulta_Screen, 'Produtos sem Classificação do Produto', consulta_button)
+        Consulta_Screen, 'Produtos sem Classificação do Produto', consulta_button, container_manager)
 
     # Cria os labels e botões da tela de consulta
     val_ven_label = ctk.CTkLabel(

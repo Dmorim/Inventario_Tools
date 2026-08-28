@@ -1,4 +1,7 @@
-def Preve_Precu_Precom_Screen(Consulta_Screen, consulta_button):
+from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
+
+
+def Preve_Precu_Precom_Screen(Consulta_Screen, consulta_button, container_manager: ContainerManager):
     import customtkinter as ctk
     from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
     from Consultas.Generics_Functions.Gen_Funcs_Consulta import prod_get, copy_val
@@ -11,7 +14,7 @@ def Preve_Precu_Precom_Screen(Consulta_Screen, consulta_button):
     query = 'select count (*) from in01pro where precu = 0 and preve = 0 and vldia = 0 and saldo > 0'
 
     hub = Consultas_Val_Screen(
-        Consulta_Screen, 'Produtos com Preço de Custo, Venda e Compra zerados', consulta_button)
+        Consulta_Screen, 'Produtos com Preço de Custo, Venda e Compra zerados', consulta_button, container_manager)
 
     val_ven_label = ctk.CTkLabel(
         hub, text='Produtos em que Precu, Preve e Precom = 0:', width=20, height=2, font=('', 12))

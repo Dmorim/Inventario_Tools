@@ -3,8 +3,8 @@
 # Path: Outros/__innit__.py
     # Arquivo criado para que o python entenda que a pasta Outros é um pacote, também contém comentários sobre os arquivos da pasta
     
-# Path: Outros/Datas_Config.py
-    # Arquivo que contém funções de tratamento de datas
+# Path: Outros/Periodo_Inventario.py
+    # Arquivo que contém o cálculo e a formatação dos períodos usados nas consultas
 
 # Path: Outros/Banco_Images.py
     # Arquivo que contém as imagens usadas no sistema

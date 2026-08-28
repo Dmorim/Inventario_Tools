@@ -14,6 +14,9 @@ def Consulta_Total_Screen(self, root):
     from Consultas.Controla_Estoque.Consultas_Contr_Estq_Screen import Contr_Estq_Screen
     from Consultas.Quantidade_Exorbitante.Consultas_Quant_Maior_Screen import Quant_Maior_Screen
     from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_Screen import dist_saldo_screen
+    from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
+
+    container_manager = ContainerManager()
 
     Consulta_Screen = ctk.CTkToplevel(root)  # Cria a tela principal
     Consulta_Screen.title("Consultas no Banco de Dados")
@@ -37,29 +40,29 @@ def Consulta_Total_Screen(self, root):
     title_label = ctk.CTkLabel(
         Consulta_Screen, text='Consultas no Banco de Dados', width=200, height=2, font=('', 18, 'bold'))
     val_inv_button = ctk.CTkButton(frame_l, text='Gerar valor do Inventário', width=380, height=25,
-                                   command=lambda: hub_val_inv(Consulta_Screen, val_inv_button), text_color='silver', font=('', 15, 'bold'))
+                                   command=lambda: hub_val_inv(Consulta_Screen, val_inv_button, container_manager), text_color='silver', font=('', 15, 'bold'))
     val_ven_button = ctk.CTkButton(frame_l, text='Gerar valor das Vendas', width=380, height=25, command=lambda: Val_Ven_Screen(
-        self, Consulta_Screen, val_ven_button), text_color='silver', font=('', 15, 'bold'))
+        self, Consulta_Screen, val_ven_button, container_manager), text_color='silver', font=('', 15, 'bold'))
     val_com_button = ctk.CTkButton(frame_l, text='Gerar valor das Compras', width=380, height=25, command=lambda: Val_Ent_Screen(
-        self, Consulta_Screen, val_com_button), text_color='silver', font=('', 15, 'bold'))
+        self, Consulta_Screen, val_com_button, container_manager), text_color='silver', font=('', 15, 'bold'))
     ctrl_estoq = ctk.CTkButton(frame_l, text='Produtos com Controla Estoque = N', width=380, height=25,
-                               command=lambda: Contr_Estq_Screen(self, Consulta_Screen, ctrl_estoq), text_color='silver', font=('', 14, 'bold'))
+                               command=lambda: Contr_Estq_Screen(self, Consulta_Screen, ctrl_estoq, container_manager), text_color='silver', font=('', 14, 'bold'))
     saldo_nzerado_button = ctk.CTkButton(frame_l, text='Produtos com Saldo Não Zerado', width=380, height=25,
-                                         command=lambda: Prod_NZer_Screen(Consulta_Screen, saldo_nzerado_button), text_color='silver', font=('', 14, 'bold'))
+                                         command=lambda: Prod_NZer_Screen(Consulta_Screen, saldo_nzerado_button, container_manager), text_color='silver', font=('', 14, 'bold'))
     dist_saldo_button = ctk.CTkButton(frame_l, text='Distorções de Saldo', width=380, height=25, command=lambda: dist_saldo_screen(
-        self, Consulta_Screen, dist_saldo_button), text_color='silver', font=('', 14, 'bold'))
+        self, Consulta_Screen, dist_saldo_button, container_manager), text_color='silver', font=('', 14, 'bold'))
 
     # Criação dos botões e Labels da aba direita
     precu_zer_button = ctk.CTkButton(frame_r, text='Produtos com Preço de Custo Zerado', width=380, height=25,
-                                     command=lambda: Prod_ZCusto_Screen(Consulta_Screen, precu_zer_button), text_color='silver', font=('', 14, 'bold'))
+                                     command=lambda: Prod_ZCusto_Screen(Consulta_Screen, precu_zer_button, container_manager), text_color='silver', font=('', 14, 'bold'))
     classif_prod_null = ctk.CTkButton(frame_r, text='Produtos com Classificação do Produto nula', width=380,
-                                      height=25, command=lambda: Classi_Pro_Screen(Consulta_Screen, classif_prod_null), text_color='silver', font=('', 14, 'bold'))
+                                      height=25, command=lambda: Classi_Pro_Screen(Consulta_Screen, classif_prod_null, container_manager), text_color='silver', font=('', 14, 'bold'))
     quant_maior = ctk.CTkButton(frame_r, text='Produtos com Quantidade Maior que 999999', width=380, height=25,
-                                command=lambda: Quant_Maior_Screen(self, Consulta_Screen, quant_maior), text_color='silver', font=('', 13, 'bold'))
+                                command=lambda: Quant_Maior_Screen(self, Consulta_Screen, quant_maior, container_manager), text_color='silver', font=('', 13, 'bold'))
     precu_maior_preve = ctk.CTkButton(frame_r, text='Produtos com Preço de Custo Maior que o de Venda', width=380,
-                                      height=25, command=lambda: Precu_Preve_Screen(Consulta_Screen, precu_maior_preve), text_color='silver', font=('', 13, 'bold'))
+                                      height=25, command=lambda: Precu_Preve_Screen(Consulta_Screen, precu_maior_preve, container_manager), text_color='silver', font=('', 13, 'bold'))
     precuplus_zer_button = ctk.CTkButton(frame_r, text='Produtos com Preço de Custo, Compra e Venda Zerado', width=380,
-                                         height=25, command=lambda: Preve_Precu_Precom_Screen(Consulta_Screen, precuplus_zer_button), text_color='silver', font=('', 13, 'bold'))
+                                         height=25, command=lambda: Preve_Precu_Precom_Screen(Consulta_Screen, precuplus_zer_button, container_manager), text_color='silver', font=('', 13, 'bold'))
 
     # Criação dos ToolTips
     ToolTip(val_inv_button,
