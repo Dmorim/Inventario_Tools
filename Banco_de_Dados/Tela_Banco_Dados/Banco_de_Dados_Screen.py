@@ -72,7 +72,8 @@ def Interface_Banco(self, root, entry_alter_list, button_list):
     caminho_fb_file_button.place(x=322, y=134)
 
     # Lista de entrys que serão utilizadas para armazenar os dados informados pelo usuário para obtenção dos valores escolhidos
-    entrys_list = [serv_entry, porta_entry, caminho_bd_entry, caminho_fb_entry]
+    entrys_list = [serv_entry, porta_entry, caminho_bd_entry,
+                   caminho_fb_entry]
 
     # Chama a função Set_Dados_Padrao do arquivo Banco_de_Dados_Func para preencher os entrys com os dados padrão
     Set_Dados_Padrao(entrys_list)

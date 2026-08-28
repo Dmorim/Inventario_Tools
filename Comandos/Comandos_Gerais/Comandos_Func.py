@@ -8,12 +8,12 @@ def Comandos_Func(self, checkbox_List):
         # Lista de comandos, cada comando é associado a uma checkbox, alguns comandos possuem variáveis que são preenchidas com os valores dos Entry e Combobox
         checkbox_List[0]: (f'UPDATE IN01PRO SET PRECU = PRECU * ?', (self.porcent_precu,)),
         checkbox_List[1]: (f'UPDATE IN01PRO SET PRECU = CAST(PRECU AS NUMERIC(15, 2))', ()),
-        checkbox_List[2]: (f'UPDATE IN01PRO SET PRECU = VLDIA WHERE VLDIA {self.precu_vldia} VLDIA AND VLDIA > 0', ()),
-        checkbox_List[3]: (f'UPDATE IN01PRO SET PRECU = CUSME WHERE CUSME {self.precu_cusme} CUSME AND CUSME > 0', ()),
+        checkbox_List[2]: (f'UPDATE IN01PRO SET PRECU = VLDIA WHERE VLDIA {self.precu_vldia} PRECU AND VLDIA > 0', ()),
+        checkbox_List[3]: (f'UPDATE IN01PRO SET PRECU = CUSME WHERE CUSME {self.precu_cusme} PRECU AND CUSME > 0', ()),
         checkbox_List[4]: (f'UPDATE IN01PRO SET PRECU = {self.precu_vldia_preve} WHERE (PRECU = 0 OR PRECU IS NULL) AND SALDO > 0 AND PREVE <> 0', ()),
         checkbox_List[5]: (f'UPDATE IN01PRO SET CLASSIFICACAO_PRODUTO = 00 WHERE CLASSIFICACAO_PRODUTO IS NULL', ()),
         checkbox_List[6]: (f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO BETWEEN 0.000001 AND 0.01', ()),
-        checkbox_List[7]: (f"UPDATE IN01LAN SET CONTROLAESTOQUE = 'S' WHERE (CONTROLAESTOQUE IS NULL OR CONTROLAESTOQUE = 'N') AND DTPRO >= '?'", (self.data_banco_inicial,)),
+        checkbox_List[7]: (f"UPDATE IN01LAN SET CONTROLAESTOQUE = 'S' WHERE (CONTROLAESTOQUE IS NULL OR CONTROLAESTOQUE = 'N') AND DTPRO >= ?", (self.data_banco_inicial,)),
         checkbox_List[8]: (f'UPDATE IN01LAN SET QUANT = 1 WHERE QUANT > 999999 OR VALOR > 999999', ()),
         checkbox_List[9]: (f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO < 0', ()),
         checkbox_List[10]: (f"UPDATE IN01LAN SET DTOPE = DTPRO WHERE VENDA = 'J' AND DTOPE <> DTPRO", ()),
@@ -92,6 +92,10 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
                 if not arredondamento_adicionado:
                     operacoes.append((nome, query_param[0], query_param[1]))
                     arredondamento_adicionado = True
+            elif key == checkbox_List[11]:
+                messagebox.showwarning(
+                    'Aviso', 'O comando geral irá executar exatamente como digitado, qualquer erro ou consequência do seu uso é de responsabilidade do operador', icon='warning', parent=comando)
+                operacoes.append((nome, query_param[0], query_param[1]))
             else:
                 operacoes.append((nome, query_param[0], query_param[1]))
 
@@ -133,8 +137,13 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
     else:
         self.porcent_precu = 1  # Caso o Entry esteja vazio, a porcentagem é 1
 
-    self.precu_vldia = '>' if values_List[1].get() == 'Maior' else '<'
-    self.precu_cusme = '>' if values_List[2].get() == 'Maior' else '<'
+    self.MAIORMENOR = {
+        'Maior': '>',
+        'Menor': '<'
+    }
+
+    self.precu_vldia = self.MAIORMENOR.get(values_List[1].get(), '<')
+    self.precu_cusme = self.MAIORMENOR.get(values_List[2].get(), '<')
 
     # Verifica o valor da combobox que seta o preço de custo igual com o preço de compra, ou custo médio ou preço de venda * 0,65 se o saldo estiver zerado
     if values_List[3].get() == 'Preço de Compra':

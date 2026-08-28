@@ -12,6 +12,7 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager:
         return progress_x, progress_y
 
     import customtkinter as ctk
+    from tkinter import messagebox  # Importar a classe messagebox do tkinter
 
     # Importa as funções que vão ser usadas na tela dos arquivos Consultas/Consultas_Val_Screen, Consutlas/Gen_Funcs_Consulta e Consultas/Consultas_Dist_Saldo_List
     from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
@@ -61,7 +62,10 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager:
     def on_query_error(error):
         progress_bar.finalizar()
         val_ven_text.configure(text="Erro ao gerar consulta")
-        print(f"Erro ao executar consulta: {error}")
+        consulta_button.configure(state='normal')
+        listagem_button.configure(state='disabled')
+        messagebox.showerror(
+            "Erro", f"Ocorreu um erro ao gerar a consulta: {error}", parent=hub)
 
     def execute_query(self):
         from Thread_Manager.Query_Operations import query_selector, query_executor

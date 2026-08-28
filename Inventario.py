@@ -10,11 +10,10 @@ class Inventario:
     def __init__(self, root):
         from Inv_Screen.Inv_Top_Frame import criar_top_frame
         from Inv_Screen.Inv_Bot_Frame import criar_bot_frame
-        from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Func import carregar_diretorio
+        from Configuracoes.Config_Manager import get_config
 
-        self.color_theme = carregar_diretorio('Configurações', 'Cor_do_tema')
-        if self.color_theme is None:
-            self.color_theme = 'System'
+        self.color_theme = get_config().get(
+            'Tema', 'Cor_do_tema', fallback="System")
 
         ctk.set_appearance_mode(self.color_theme)
         ctk.set_default_color_theme("dark-blue")

@@ -23,7 +23,7 @@ def ent_get(self):
                  '2.154', '2.201', '2.203', '2.204', '2.207', '2.212', '2.215', '2.252', '2.255', '2.304', '2.360', '2.406', '2.407', '2.410', '2.411', '2.503', '2.504', '2.505', '2.540', '2.543', '2.551', '2.552', '2.555', '2.556', '2.565', '2.592', '2.594', '2.640', '2.652', '2.653', '2.655', '2.656', '2.908', '2.909', '2.910', '2.911', '2.912', '2.915', '2.916', '2.919', '2.920', '2.921', '2.922', '2.923', '2.925', '2.932', '2.933', '2.949']
 
     # Criação da string com os cfops que serão excluidos da busca
-    placeholders = ', '.join(['?' * len(cfop_list)])
+    placeholders = ', '.join(['?'] * len(cfop_list))
 
     # Query que busca o valor de entradas, exclui os cfops da lista e busca somente as entradas entre as datas informadas
     query = f"""
@@ -33,7 +33,7 @@ def ent_get(self):
     ON (LAN.NOTFI = COM.NOTFI) AND (LAN.CDFRN = COM.CDFRN) AND (LAN.MODELONOTA = COM.MODELONOTA)
     where lan.venda = 'C'
     and lan.cfop not in ({placeholders})
-    and com.dtcom between '?' AND '?'
+    and com.dtcom between ? AND ?
     and character_length(lan.cfop) = 5
     """
 

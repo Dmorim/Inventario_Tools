@@ -1,6 +1,8 @@
 import ctypes
 from ctypes import wintypes
 
+from Configuracoes.Config_Manager import get_config
+
 
 def Set_Dados_Padrao(entrys_list):
     # Função para preencher os entrys com os dados padrão
@@ -19,38 +21,13 @@ def Set_Dados_Padrao(entrys_list):
 
 
 def salvar_diretorio(diretorio, name: str, last_dir):
-    # Função para salvar os dados no arquivo config.ini
-    # Args:
-    # diretorio: str -> Diretório que definirá qual a secção será utilizada no arquivo config.ini
-    # name: str -> Nome da subsecção que será salva no arquivo config.ini
-    # last_dir: str -> Valor que será salvo no arquivo config.ini
-
-    import configparser
-    # Cria um objeto config como instância da classe ConfigParser
-    config = configparser.ConfigParser()
-    config.read('config.ini')  # Lê o arquivo config.ini
-    # Verifica se a secção diretorio existe no arquivo config.ini
-    if not config.has_section(diretorio):
-        # Adiciona a secção diretorio no arquivo config.ini
-        config.add_section(diretorio)
-    # Seta os valores da secção, subsecção e valor no arquivo config.ini
+    config = get_config()
     config.set(diretorio, name, last_dir)
-    with open('config.ini', 'w') as configfile:  # Abre o arquivo config.ini em modo de escrita
-        config.write(configfile)  # Escreve as alterações no arquivo config.ini
+    config.save()
 
 
 def carregar_diretorio(diretorio, dir_busca):
-    # Função para carregar os dados do arquivo config.ini
-    # Args:
-    # diretorio: str -> Diretório que definirá qual a secção será lida no arquivo config.ini
-    # dir_busca: str -> Nome da subsecção que será lida no arquivo config.ini
-
-    import configparser
-    # Cria um objeto config como instância da classe ConfigParser
-    config = configparser.ConfigParser()
-    config.read('config.ini')  # Lê o arquivo config.ini
-    # Retorna o valor da subsecção dir_busca da secção diretorio do arquivo config.ini se existir, caso contrário retorna None
-    return config[diretorio][dir_busca] if config.has_option(diretorio, dir_busca) else None
+    return get_config().get(diretorio, dir_busca, fallback=None)
 
 
 def Caminho_Banco_Dir(Banco_Screen, entrys_list):
@@ -245,12 +222,14 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
         host=entrys_list[0].get(),
         port=entrys_list[1].get(),
         database=obter_caminho_curto_banco_dados(entrys_list[2].get()),
-        fbclient=entrys_list[3].get()
+        fbclient=entrys_list[3].get(),
+        user='SYSDBA',
+        password='masterkey'
     )
-    
+
     progress_x, progress_y = centraliza_tela()
     progress_bar = ProgressBarHandler(
-            Banco_Screen, "Aguarde", x=progress_x, y=progress_y)
+        Banco_Screen, "Aguarde", x=progress_x, y=progress_y)
 
     # Desabilita o botão de confirmar para evitar múltiplos cliques
     confirm_button.configure(state='disabled')

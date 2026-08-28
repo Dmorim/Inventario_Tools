@@ -73,8 +73,9 @@ def on_click_confirm_btt(self, parent, val_list, confirm_button):
         if tp_distorc == 'PRO = LAN':  # Verifica se a distorção é PRO = LAN
             for item in self.dist_saldo_list:  # Para cada item na lista de distorção de saldo
                 # Cria a query de distorção de saldo, deixando o saldo do produto igual ao saldo do lançamento, onde o código do produto é informado na lista
-                query = f"UPDATE IN01PRO SET SALDO = {item[2]} WHERE CDPRO = {item[0]}"
-                query_executor(query_updater, query)  # Executa a query
+                query = "UPDATE IN01PRO SET SALDO = ? WHERE CDPRO = ?"
+                params = (item[2], item[0])  # Define os parâmetros da query
+                query_executor(query_updater, query, params)  # Executa a query
         else:
             for item in self.dist_saldo_list:  # Para cada item na lista de distorção de saldo"
                 # Define o tipo de movimento como N se o saldo do produto for maior que o saldo do lançamento, caso contrário, define como S
@@ -82,11 +83,15 @@ def on_click_confirm_btt(self, parent, val_list, confirm_button):
                 quant = abs(item[2] - item[3])
                 data = datetime.strptime(
                     val_list[1].get(), "%d/%m/%Y").strftime("%d.%m.%Y")
-                nmpro = item[1].replace("'", "")
-                # Cria a query de distorção de saldo, inserindo um novo lançamento no banco de dados
-                query = f"INSERT INTO IN01LAN (NOTFI, CDPRO, VENDA, DTEMI, DTPRO, QUANT, TPMOV, HISTO, NMOPE, DTOPE, HISTORICO_AJUSTE) VALUES ('AJUSTE', '{item[0]}', 'J', '{data}', '{data}', '{quant}', '{tpmov}', 'AJUSTE DE ESTOQUE (DISTORÇÃO DE SALDO)', 'SISTECH', '{data}', 'AJUSTADO LANÇAMENTO {item[0]} - {nmpro}, DISTORÇÃO DE SALDO, AJUSTADO POR SISTECH')"
 
-                query_executor(query_updater, query)  # Executa a query
+                # Cria a query de distorção de saldo, inserindo um novo lançamento no banco de dados
+                historico = f'AJUSTADO LANÇAMENTO {item[0]} - {item[1]}, DISTORÇÃO DE SALDO, AJUSTADO POR SISTECH'
+                query = ("INSERT INTO IN01LAN (NOTFI, CDPRO, VENDA, DTEMI, DTPRO, QUANT, TPMOV, "
+                         "HISTO, NMOPE, DTOPE, HISTORICO_AJUSTE) "
+                         "VALUES ('AJUSTE', ?, 'J', ?, ?, ?, ?, 'AJUSTE DE ESTOQUE (DISTORÇÃO DE SALDO)', "
+                         "'SISTECH', ?, ?)")
+                params = (item[0], data, data, quant, tpmov, data, historico)
+                query_executor(query_updater, query, params)  # Executa a query
 
     def update_finalizado(_):
         messagebox.showinfo(

@@ -8,13 +8,17 @@ class ConfiguracaoBanco:
     port = ''
     database = ''
     fbclient = ''
+    user = ''
+    password = ''
 
     @classmethod
-    def definir(cls, host, port, database, fbclient):
+    def definir(cls, host, port, database, fbclient, user, password):
         cls.host = host
         cls.port = port
         cls.database = database
         cls.fbclient = fbclient
+        cls.user = user
+        cls.password = password
 
 
 class BancoDeDados:
@@ -41,8 +45,8 @@ class BancoDeDados:
             port=int(ConfiguracaoBanco.port),
             database=ConfiguracaoBanco.database,
             fb_library_name=ConfiguracaoBanco.fbclient,
-            user='SYSDBA',
-            password='masterkey',
+            user=ConfiguracaoBanco.user,
+            password=ConfiguracaoBanco.password,
             charset='WIN1252'
         )
 
