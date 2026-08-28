@@ -7,4 +7,4 @@ Todas as pastas tem um arquivo __init_.py que contem comentários gerais sobre a
 
 O programa vem com um tutorial que ensina as funções básicas e como utilizar elas no sistema.
 
-Em caso de precisar do arquivo executável, ou de dúvidas sobre como gerar ele, você pode entrar em contato para que seja providênciado. A ultima versão registrada do sistema é a 2.0.0
+A partir da versão 3.0.0 os uploads serão acompanhados de uma pasta com o aplicativo pronto para uso.
