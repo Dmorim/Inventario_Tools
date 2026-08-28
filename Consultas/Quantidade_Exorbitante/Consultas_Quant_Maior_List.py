@@ -6,14 +6,14 @@ def List_Treeview_Screen(self, parent):
         from Thread_Manager.Query_Operations import query_selector, query_executor
         from Thread_Manager.Thread_Executor import thread_execução
 
-        query = f"select cdpro, notfi, saldo, tpmov, dtpro from in01lan where quant > 999999 and dtpro between '{self.data_banco_inicial}' and '{self.data_banco_final}'"
-        
+        query = "select cdpro, notfi, saldo, tpmov, dtpro from in01lan where quant > 999999 and dtpro between ? and ?"
+
         def buscar():
-            return query_executor(query_selector, query)
-        
+            return query_executor(query_selector, query, (self.data_banco_inicial, self.data_banco_final))
+
         def ao_terminar(rows):
             Treeview_Insert(treeview, rows)
-        
+
         thread_execução(treeview, buscar, ao_terminar)
 
     def Treeview_Insert(treeview, rows):

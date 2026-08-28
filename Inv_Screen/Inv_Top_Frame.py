@@ -113,7 +113,8 @@ def _create_command_buttons(app_self, master, entrys_list: list):
         '<F1>', lambda event: event_invoke_button(event, consulta))
     app_self.root.bind(
         '<F2>', lambda event: event_invoke_button(event, comando))
-    app_self.root.bind('B', lambda event: event_invoke_button(event, database))
+    app_self.root.bind(
+        'B', lambda event: event_invoke_button(event, database))
 
 
 def criar_top_frame(app_self, master, entry_list: list, *args, **kwargs):

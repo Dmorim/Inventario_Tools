@@ -6,17 +6,17 @@ def Comandos_Func(self, checkbox_List):
 
     self.comandos_query = {
         # Lista de comandos, cada comando é associado a uma checkbox, alguns comandos possuem variáveis que são preenchidas com os valores dos Entry e Combobox
-        checkbox_List[0]: f'UPDATE IN01PRO SET PRECU = PRECU * {self.porcent_precu}',
-        checkbox_List[1]: f'UPDATE IN01PRO SET PRECU = CAST(PRECU AS NUMERIC(15, 2))',
-        checkbox_List[2]: f'UPDATE IN01PRO SET PRECU = VLDIA WHERE VLDIA {self.precu_vldia} VLDIA AND VLDIA > 0',
-        checkbox_List[3]: f'UPDATE IN01PRO SET PRECU = CUSME WHERE CUSME {self.precu_cusme} CUSME AND CUSME > 0',
-        checkbox_List[4]: f'UPDATE IN01PRO SET PRECU = {self.precu_vldia_preve} WHERE (PRECU = 0 OR PRECU IS NULL) AND SALDO > 0 AND PREVE <> 0',
-        checkbox_List[5]: f'UPDATE IN01PRO SET CLASSIFICACAO_PRODUTO = 00 WHERE CLASSIFICACAO_PRODUTO IS NULL',
-        checkbox_List[6]: f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO BETWEEN 0.000001 AND 0.01',
-        checkbox_List[7]: f"UPDATE IN01LAN SET CONTROLAESTOQUE = 'S' WHERE (CONTROLAESTOQUE IS NULL OR CONTROLAESTOQUE = 'N') AND DTPRO >= '{self.data_banco_inicial}'",
-        checkbox_List[8]: f'UPDATE IN01LAN SET QUANT = 1 WHERE QUANT > 999999 OR VALOR > 999999',
-        checkbox_List[9]: f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO < 0',
-        checkbox_List[10]: f"UPDATE IN01LAN SET DTOPE = DTPRO WHERE VENDA = 'J' AND DTOPE <> DTPRO",
+        checkbox_List[0]: (f'UPDATE IN01PRO SET PRECU = PRECU * ?', (self.porcent_precu,)),
+        checkbox_List[1]: (f'UPDATE IN01PRO SET PRECU = CAST(PRECU AS NUMERIC(15, 2))', ()),
+        checkbox_List[2]: (f'UPDATE IN01PRO SET PRECU = VLDIA WHERE VLDIA {self.precu_vldia} VLDIA AND VLDIA > 0', ()),
+        checkbox_List[3]: (f'UPDATE IN01PRO SET PRECU = CUSME WHERE CUSME {self.precu_cusme} CUSME AND CUSME > 0', ()),
+        checkbox_List[4]: (f'UPDATE IN01PRO SET PRECU = {self.precu_vldia_preve} WHERE (PRECU = 0 OR PRECU IS NULL) AND SALDO > 0 AND PREVE <> 0', ()),
+        checkbox_List[5]: (f'UPDATE IN01PRO SET CLASSIFICACAO_PRODUTO = 00 WHERE CLASSIFICACAO_PRODUTO IS NULL', ()),
+        checkbox_List[6]: (f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO BETWEEN 0.000001 AND 0.01', ()),
+        checkbox_List[7]: (f"UPDATE IN01LAN SET CONTROLAESTOQUE = 'S' WHERE (CONTROLAESTOQUE IS NULL OR CONTROLAESTOQUE = 'N') AND DTPRO >= '?'", (self.data_banco_inicial,)),
+        checkbox_List[8]: (f'UPDATE IN01LAN SET QUANT = 1 WHERE QUANT > 999999 OR VALOR > 999999', ()),
+        checkbox_List[9]: (f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO < 0', ()),
+        checkbox_List[10]: (f"UPDATE IN01LAN SET DTOPE = DTPRO WHERE VENDA = 'J' AND DTOPE <> DTPRO", ()),
         checkbox_List[11]: self.com_ger
     }
 
@@ -33,15 +33,14 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
         progress_bar.create_screen()
         progress_bar.atualizar_status('Executando comandos')
         resultados = []
-        for i, (nome, query) in enumerate(operacoes):
+        for i, (nome, query, params) in enumerate(operacoes):
             idx = i
             n = nome
             comando.after(0, lambda i=idx, n=n: status_label.configure(
                 text=f'Executando {i + 1} de {total}: {n}'))
-            query_executor(query_updater, query)
+            query_executor(query_updater, query, params)
             resultados.append(nome)
         return resultados
-    
 
     def update_finalizado(_):
         progress_bar.finalizar()
@@ -80,9 +79,9 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
 
         operacoes = []
         arredondamento_adicionado = False
-        query_arredond = self.comandos_query[checkbox_List[1]]
+        query_arredondamento = self.comandos_query[checkbox_List[1]][0]
 
-        for i, (key, query) in enumerate(self.comandos_query.items()):
+        for i, (key, query_param) in enumerate(self.comandos_query.items()):
             if key not in checkbox_List or key.get() != 1:
                 continue
 
@@ -91,20 +90,20 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
             if key == checkbox_List[1]:
                 # Arredondamento marcado diretamente — só adiciona se ainda não foi
                 if not arredondamento_adicionado:
-                    operacoes.append((nome, query))
+                    operacoes.append((nome, query_param[0], query_param[1]))
                     arredondamento_adicionado = True
             else:
-                operacoes.append((nome, query))
+                operacoes.append((nome, query_param[0], query_param[1]))
 
                 # Checkboxes 2, 3 e 4 disparam arredondamento após si mesmos
                 if key in (checkbox_List[2], checkbox_List[3], checkbox_List[4]):
                     if not arredondamento_adicionado:
                         operacoes.append(
-                            ('Arredondar Preço de Custo', query_arredond))
+                            ('Arredondar Preço de Custo', query_arredondamento))
                         arredondamento_adicionado = True
 
         return operacoes
-    
+
     def centraliza_tela():
         comando.update_idletasks()
 
@@ -118,8 +117,8 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
 
         x = widget_x + (widget_w - janela_w) // 2
         y = widget_y + (widget_h - janela_h) // 2
-        
-        return x,y
+
+        return x, y
 
     # Importar a classe Connect do arquivo Inventario_Conn
     from Thread_Manager.Query_Operations import query_executor, query_updater
@@ -179,7 +178,7 @@ def comandos_true(self) -> str:
     for key in self.comandos_query.keys():  # Itera sobre os itens do dicionário de comandos
         if key.get() == 1:  # Verifica se a checkbox está marcada
             # Adiciona o comando a lista
-            key_list.append(self.comandos_query[key])
+            key_list.append(self.comandos_query[key][0])
     return "\n".join(key_list)  # Retorna a lista como uma string
 
 # Validar o valor digitado no Entry como float aceitando virgula na casa decimal e bloqueando o uso de ponto

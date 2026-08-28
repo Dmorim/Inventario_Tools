@@ -11,7 +11,7 @@ def Contr_Estq_Screen(self, Consulta_Screen, consulta_button, container_manager:
     # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
     consulta_button.configure(state='disabled')
 
-    query = f"select count (*) from in01lan where controlaestoque = 'N' and dtpro between '{self.data_banco_inicial}' and '{self.data_banco_final}'"
+    query = "select count (*) from in01lan where controlaestoque = 'N' and dtpro between ? and ?"
 
     hub = Consultas_Val_Screen(
         Consulta_Screen, 'Produtos Controla Estoque', consulta_button, container_manager)
@@ -35,4 +35,5 @@ def Contr_Estq_Screen(self, Consulta_Screen, consulta_button, container_manager:
         val_ven_button.configure(state='normal')
         listagem_buttn.configure(state='normal')
 
-    thread_execução(hub, prod_get, update_val, None, query)
+    thread_execução(hub, prod_get, update_val, None, query,
+                    (self.data_banco_inicial, self.data_banco_final))

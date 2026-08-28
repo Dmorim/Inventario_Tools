@@ -1,9 +1,9 @@
-def prod_get(query_input: str):
+def prod_get(query_input: str, params=None):
     # Importa as funções para executar a query no banco de dados
     from Thread_Manager.Query_Operations import query_selector, query_executor
 
     # Retorna o valor obtido
-    return query_executor(query_selector, query_input)[0][0]
+    return query_executor(query_selector, query_input, params)[0][0]
 
 
 def copy_val(val_ven_text):
