@@ -1,33 +1,24 @@
 import ctypes
 from ctypes import wintypes
 
-from Configuracoes.Config_Manager import get_config
+from Configuracoes.Config_Manager import salvar_diretorio, carregar_diretorio
 
 
 def Set_Dados_Padrao(entrys_list):
-    # Função para preencher os entrys com os dados padrão
-    # Args:
-    # entrys_list: list -> Lista de entrys que serão utilizadas para armazenar os dados informados pelo usuário para obtenção dos valores escolhidos
+    if len(entrys_list) != 4:
+        raise ValueError(
+            "A lista de entrys deve conter exatamente 4 elementos.")
 
-    # Carrega a última porta utilizada do arquivo config.ini
-    porta = carregar_diretorio('Porta', 'last_dir')
-    # Carrega o último caminho da fbclient utilizado do arquivo config.ini
-    fbclient = carregar_diretorio('FBClient', 'dir_banco')
-    entrys_list[0].insert(0, 'localhost')  # Insere o host padrão
-    # Insere a porta padrão
-    entrys_list[1].insert(0, porta if porta else '3050')
-    entrys_list[3].insert(
-        0, fbclient if fbclient else 'C:/Program Files/Firebird/Firebird_3_0/bin/fbclient.dll')
-
-
-def salvar_diretorio(diretorio, name: str, last_dir):
-    config = get_config()
-    config.set(diretorio, name, last_dir)
-    config.save()
-
-
-def carregar_diretorio(diretorio, dir_busca):
-    return get_config().get(diretorio, dir_busca, fallback=None)
+    entrys_dict = {
+        entrys_list[0]: carregar_diretorio('Servidor', 'last_dir') or 'localhost',
+        entrys_list[1]: carregar_diretorio('Porta', 'last_dir') or '3050',
+        entrys_list[2]: '',
+        entrys_list[3]: carregar_diretorio(
+            'FBClient', 'dir_banco') or 'C:/Program Files/Firebird/Firebird_3_0/bin/fbclient.dll'
+    }
+    for entry, value in entrys_dict.items():
+        entry.delete(0, 'end')
+        entry.insert(0, value)
 
 
 def Caminho_Banco_Dir(Banco_Screen, entrys_list):
@@ -47,8 +38,6 @@ def Caminho_Banco_Dir(Banco_Screen, entrys_list):
     if caminho:  # Verifica se o caminho foi obtido
         entrys_list[2].delete(0, 'end')  # Deleta o conteúdo do entry
         entrys_list[2].insert(0, caminho)  # Insere o caminho obtido no entry
-        # Salva o caminho obtido no arquivo config.ini
-        salvar_diretorio('Banco', 'last_dir', caminho[:caminho.rfind('/')])
 
 
 def Caminho_Fb_Dir(Banco_Screen, entrys_list):
@@ -66,7 +55,6 @@ def Caminho_Fb_Dir(Banco_Screen, entrys_list):
     if caminho:
         entrys_list[3].delete(0, 'end')
         entrys_list[3].insert(0, caminho)
-        salvar_diretorio('FBClient', 'last_dir', caminho[:caminho.rfind('/')])
 
 
 def _iniciar_animacao(parent, texto_base):
@@ -120,6 +108,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
 
         BancoDeDados.conectar()  # Cria o gerenciador de conexões
 
+        salvar_diretorio('Servidor', 'last_dir', entrys_list[0].get())
         salvar_diretorio('Porta', 'last_dir', entrys_list[1].get())
         salvar_diretorio('FBClient', 'dir_banco', entrys_list[3].get())
 

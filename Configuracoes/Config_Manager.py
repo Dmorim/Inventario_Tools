@@ -54,3 +54,13 @@ _config = AppConfig()
 
 def get_config() -> AppConfig:
     return _config
+
+
+def salvar_diretorio(diretorio, name: str, last_dir):
+    config = get_config()
+    config.set(diretorio, name, last_dir)
+    config.save()
+
+
+def carregar_diretorio(diretorio, dir_busca):
+    return get_config().get(diretorio, dir_busca, fallback=None)

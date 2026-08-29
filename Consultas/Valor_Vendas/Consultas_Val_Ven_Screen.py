@@ -6,7 +6,8 @@ def Val_Ven_Screen(self, Consulta_Screen, consulta_button, container_manager: Co
 
     # Importa as funções e variáveis do arquivo Consultas/onsultas_Val_Screen, no entanto suas funções de query são buscadas em Consultas/Consultas.Consultas_Val_Ven_Func.py
     from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
-    from Consultas.Valor_Vendas.Consultas_Val_Ven_Func import ven_get, copy_val
+    from Consultas.Valor_Vendas.Consultas_Val_Ven_Func import ven_get
+    from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
     from Thread_Manager.Thread_Executor import thread_execução
 
     # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
@@ -21,7 +22,7 @@ def Val_Ven_Screen(self, Consulta_Screen, consulta_button, container_manager: Co
     val_ven_text = ctk.CTkLabel(
         hub, text='Gerando Valor...', width=20, height=2, font=('', 14))
     val_ven_button = ctk.CTkButton(
-        hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_ven_text), state='disabled')
+        hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_ven_text, 'R$ '), state='disabled')
 
     val_ven_label.place(relx=0.5, y=15, anchor='center')
     val_ven_text.place(relx=0.5, y=40, anchor='center')

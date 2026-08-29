@@ -1,15 +1,15 @@
+import customtkinter as ctk
+
+# Importa as funções que vão ser usadas na tela	 dos arquivos Consultas/Consultas_Val_Inv_Func e Consutlas/Consultas_Val_Screen
+from Consultas.Valor_Inventario.Consultas_Val_Inv_Func import inv_get
+from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
+from Thread_Manager.Thread_Executor import thread_execução
+from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
 from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
 
 
 def hub_val_inv(Consulta_Screen, consulta_button, container_manager: ContainerManager):
-    import customtkinter as ctk
 
-    # Importa as funções que vão ser usadas na tela	 dos arquivos Consultas/Consultas_Val_Inv_Func e Consutlas/Consultas_Val_Screen
-    from Consultas.Valor_Inventario.Consultas_Val_Inv_Func import inv_get, copy_val
-    from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
-    from Thread_Manager.Thread_Executor import thread_execução
-
-    # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
     consulta_button.configure(state='disabled')
 
     # Cria a tela de consulta
@@ -21,7 +21,7 @@ def hub_val_inv(Consulta_Screen, consulta_button, container_manager: ContainerMa
     val_inv_text = ctk.CTkLabel(
         hub, text='Gerando Valor...', width=20, height=2, font=('', 14))
     val_inv_button = ctk.CTkButton(
-        hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_inv_text), state='disabled')
+        hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_inv_text, 'R$ '), state='disabled')
 
     val_inv_label.place(relx=0.5, y=15, anchor='center')
     val_inv_text.place(relx=0.5, y=40, anchor='center')

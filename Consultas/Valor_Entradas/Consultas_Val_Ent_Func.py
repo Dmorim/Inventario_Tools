@@ -1,15 +1,5 @@
 from Thread_Manager.Query_Operations import query_selector, query_executor
-
-
-def banco_codigo_valueform(val):
-    # Mesmo funcionamento explicado em Consultas/Consultas_Val_Ven_Func.py
-    val = "{:,.2f}".format(val)
-    prs = val.split('.')
-    pri = prs[0]
-    prd = prs[1]
-    pri = pri.replace(",", ".")
-    val = pri + ',' + prd
-    return val
+from Consultas.Generics_Functions.Gen_Funcs_Consulta import banco_codigo_valueform
 
 
 def ent_get(self):
@@ -51,11 +41,3 @@ def ent_get(self):
     else:
         valent = 'Não foi registrado entradas'
     return valent
-
-
-def copy_val(val_ven_text):
-    # Mesmo funcionamento explicado em Consultas/Consultas_Val_Ven_Func.py
-    import pyperclip
-    copy_text = val_ven_text.cget('text')
-    copy_text = 'R$ ' + copy_text
-    pyperclip.copy(copy_text)
