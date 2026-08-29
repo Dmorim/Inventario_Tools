@@ -34,6 +34,7 @@ def ent_get(self):
     except DatabaseError as e:
         from tkinter import messagebox
         messagebox.showerror('Erro', f'Erro ao acessar o banco de dados\n {e}')
+        return None
 
     # Se o valor obtido for diferente de None, formata o valor e retorna ele, caso contrário retorna uma string informando que não foi registrado entradas
     if valent != None:

@@ -246,5 +246,4 @@ def obter_caminho_curto_banco_dados(caminho_longo):
         print(f"Caminho curto: {buffer.value}")
         return buffer.value
     except Exception as e:
-        # Retorna o original se falhar
-        print(f"Erro ao obter caminho curto: {e}")
+        raise RuntimeError(f"Erro ao obter o caminho curto: {e}")

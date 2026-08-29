@@ -1,35 +1,20 @@
+import customtkinter as ctk
+
+from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
+from Consultas.Valor_Vendas.Consultas_Val_Ven_Func import ven_get
+from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
+from Thread_Manager.Thread_Executor import thread_execução
+from Interface_Tools.Consulta_Screen.Consulta_Screen import criar_tela_consulta
 from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
 
 
 def Val_Ven_Screen(self, Consulta_Screen, consulta_button, container_manager: ContainerManager):
-    import customtkinter as ctk
-
-    # Importa as funções e variáveis do arquivo Consultas/onsultas_Val_Screen, no entanto suas funções de query são buscadas em Consultas/Consultas.Consultas_Val_Ven_Func.py
-    from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
-    from Consultas.Valor_Vendas.Consultas_Val_Ven_Func import ven_get
-    from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
-    from Thread_Manager.Thread_Executor import thread_execução
-
-    # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
-    consulta_button.configure(state='disabled')
-
-    # O resto do funcionamento é idêntico
-    hub = Consultas_Val_Screen(
-        Consulta_Screen, 'Valor das Vendas', consulta_button, container_manager)
-
-    val_ven_label = ctk.CTkLabel(
-        hub, text='Valor das Vendas:', width=20, height=2, font=('', 16))
-    val_ven_text = ctk.CTkLabel(
-        hub, text='Gerando Valor...', width=20, height=2, font=('', 14))
-    val_ven_button = ctk.CTkButton(
-        hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_ven_text, 'R$ '), state='disabled')
-
-    val_ven_label.place(relx=0.5, y=15, anchor='center')
-    val_ven_text.place(relx=0.5, y=40, anchor='center')
-    val_ven_button.place(relx=0.5, y=65, anchor='center')
-
-    def update_val_ven(valor):
-        val_ven_text.configure(text=valor)
-        val_ven_button.configure(state='normal')
-
-    thread_execução(hub, ven_get, update_val_ven, None, self)
+    return criar_tela_consulta(Consulta_Screen, consulta_button, container_manager,
+                               titulo="Valor de Vendas",
+                               label_texto="Valor de Vendas:",
+                               get_func=ven_get,
+                               self=self,
+                               prefix_copy="R$ ",
+                               on_listar=None,
+                               texto_inicial="Gerando Valor...",
+                               )

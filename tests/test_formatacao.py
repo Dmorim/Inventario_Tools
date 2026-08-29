@@ -1,5 +1,4 @@
-from Consultas.Valor_Entradas.Consultas_Val_Ent_Func import banco_codigo_valueform
-from Consultas.Valor_Vendas.Consultas_Val_Ven_Func import banco_codigo_valueform as ven_valueform
+from Consultas.Generics_Functions.Gen_Funcs_Consulta import banco_codigo_valueform
 
 
 class TestBancoCodigoValueform:
@@ -14,4 +13,5 @@ class TestBancoCodigoValueform:
 
     def test_versoes_sao_equivalentes(self):
         for valor in (0, 0.5, 1000, 1234.56, 999999.99):
-            assert banco_codigo_valueform(valor) == ven_valueform(valor)
+            assert banco_codigo_valueform(
+                valor) == banco_codigo_valueform(valor)

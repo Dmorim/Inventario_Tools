@@ -3,7 +3,7 @@ from fdb import DatabaseError
 from Consultas.Generics_Functions.Gen_Funcs_Consulta import banco_codigo_valueform
 
 
-def ven_get(self):
+def ven_get(self) -> str:
     query = """
     select
     sum(CAST(iif(F.EMITE = 'S' AND VLNOT > 0, F.VLNOT, iif(coalesce(F.VLNOT, 0) = 0, (COALESCE(F.VALNO, 0) - COALESCE(F.VALDE, 0) + COALESCE(F.ICANT, 0) + coalesce(F.VALFR, 0) + coalesce(F.valsg, 0) + coalesce(F.valip, 0) + coalesce(F.valst, 0)), F.VLNOT)) AS NUMERIC(14,2))) as valor
@@ -21,6 +21,7 @@ def ven_get(self):
     except (DatabaseError, TypeError) as e:
         from tkinter import messagebox
         messagebox.showerror('Erro', f'Erro ao acessar o banco de dados\n {e}')
+        return None
 
     # Se o valor obtido for diferente de None, formata o valor e retorna ele, caso contrário retorna uma string informando que não foi registrado vendas
     if valrec is not None:
