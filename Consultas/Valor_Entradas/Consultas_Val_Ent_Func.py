@@ -30,7 +30,7 @@ def ent_get(self):
     params = (*cfop_list, self.data_banco_inicial, self.data_banco_final)
     # Tenta executar a query no banco de dados
     try:
-        valent = query_executor(query_selector, query, params)[0][0]
+        valent = query_executor(query_selector, query, params)[0][0] if query_executor(query_selector, query, params) else None
     except DatabaseError as e:
         from tkinter import messagebox
         messagebox.showerror('Erro', f'Erro ao acessar o banco de dados\n {e}')

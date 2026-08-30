@@ -17,7 +17,7 @@ def Comandos_Func(self, checkbox_List):
         checkbox_List[8]: (f'UPDATE IN01LAN SET QUANT = 1 WHERE QUANT > 999999 OR VALOR > 999999', ()),
         checkbox_List[9]: (f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO < 0', ()),
         checkbox_List[10]: (f"UPDATE IN01LAN SET DTOPE = DTPRO WHERE VENDA = 'J' AND DTOPE <> DTPRO", ()),
-        checkbox_List[11]: self.com_ger
+        checkbox_List[11]: (self.com_ger, ())
     }
 
 
@@ -103,7 +103,7 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
                 if key in (checkbox_List[2], checkbox_List[3], checkbox_List[4]):
                     if not arredondamento_adicionado:
                         operacoes.append(
-                            ('Arredondar Preço de Custo', query_arredondamento))
+                            ('Arredondar Preço de Custo', query_arredondamento, ()))
                         arredondamento_adicionado = True
 
         return operacoes
