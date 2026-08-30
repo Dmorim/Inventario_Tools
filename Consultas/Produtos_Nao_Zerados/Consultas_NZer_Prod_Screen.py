@@ -5,10 +5,12 @@ from Consultas.Produtos_Nao_Zerados.Consultas_NZer_List_Screen import List_Treev
 
 
 def Prod_NZer_Screen(Consulta_Screen, consulta_button, container_manager: ContainerManager):
+    query = 'select count (*) from in01pro where saldo between 0.000001 and 0.01'
     return criar_tela_consulta(Consulta_Screen, consulta_button, container_manager,
                                titulo="Produtos Não Zerados",
                                label_texto="Produtos Não Zerados:",
                                get_func=prod_get,
+                               query=query,
                                prefix_copy=None,
                                on_listar=lambda: List_Treeview_Screen(
                                    Consulta_Screen),

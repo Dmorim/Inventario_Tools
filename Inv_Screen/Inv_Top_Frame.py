@@ -26,7 +26,7 @@ def _create_command_buttons(app_self, master, entrys_list: list):
         TelaInicial.help_image_tela_inicial, size=(14, 14))
 
     consulta = CTkButton(master, text='Consultas (F1)', width=80, height=48,
-                         command=lambda: Consulta_Total_Screen(app_self, master), state='disabled')
+                         command=lambda: Consulta_Total_Screen(app_self, master), state='normal')
     comando = CTkButton(master, text='Comandos (F2)', width=60, height=48,
                         command=lambda: Comandos_Screen(app_self, master), state='disabled')
     database = CTkButton(master, text='Selecione o Banco de Dados', width=100,

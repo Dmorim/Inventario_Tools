@@ -8,10 +8,12 @@ from Thread_Manager.Thread_Executor import thread_execução
 
 
 def Precu_Preve_Screen(Consulta_Screen, consulta_button, container_manager: ContainerManager):
+    query = 'select count (*) from in01pro where precu > preve and saldo > 0 and preve > 0'
     return criar_tela_consulta(Consulta_Screen, consulta_button, container_manager,
                                titulo="Produtos com Preço de Custo maior que o de venda",
                                label_texto="Produtos em que Precu > Preve:",
                                get_func=prod_get,
+                               query=query,
                                prefix_copy=None,
                                on_listar=lambda: List_Treeview_Screen(
                                    Consulta_Screen),

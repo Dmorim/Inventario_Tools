@@ -11,7 +11,6 @@ def Consultas_Val_Screen(parent, title: str, parent_button, container_manager: C
     hub.title(title)
     cm.posicionar_container(hub)
     hub.resizable(False, False)
-    # hub.grab_set()
     hub.transient(parent)
     hub.focus_set()
     hub.bind("<Escape>", lambda e: event_screen_close(
