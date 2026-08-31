@@ -1,9 +1,4 @@
-import customtkinter as ctk
-
-from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
 from Consultas.Valor_Vendas.Consultas_Val_Ven_Func import ven_get
-from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
-from Thread_Manager.Thread_Executor import thread_execução
 from Interface_Tools.Consulta_Screen.Consulta_Screen import criar_tela_consulta
 from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
 

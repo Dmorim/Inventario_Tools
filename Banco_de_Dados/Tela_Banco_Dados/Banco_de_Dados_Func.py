@@ -1,7 +1,14 @@
 import ctypes
 from ctypes import wintypes
+from tkinter import filedialog
+from tkinter import messagebox
 
 from Configuracoes.Config_Manager import salvar_diretorio, carregar_diretorio
+from Queries.Consulta_Queries import QUERY_PROPRI, QUERY_EMISSOES
+from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import ConfiguracaoBanco, BancoDeDados
+from Thread_Manager.Query_Operations import query_executor, query_selector
+from Thread_Manager.Thread_Executor import thread_execução
+from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 
 
 def Set_Dados_Padrao(entrys_list):
@@ -22,14 +29,6 @@ def Set_Dados_Padrao(entrys_list):
 
 
 def Caminho_Banco_Dir(Banco_Screen, entrys_list):
-    # Função para abrir uma janela de seleção de arquivo e obter o caminho do banco de dados
-    # Args:
-    # Banco_Screen: ctk.CTkToplevel -> Tela que será utilizada como parent da janela de seleção de arquivo
-    # entrys_list: list -> Lista de entrys que serão utilizadas para armazenar os dados informados pelo usuário para obtenção dos valores escolhidos
-
-    from tkinter import filedialog  # Importa a função filedialog da biblioteca tkinter
-
-    # Carrega o último caminho do banco de dados utilizado do arquivo config.ini
     dir = carregar_diretorio('Banco', 'last_dir')
 
     # Abre a janela de seleção de arquivo e obtém o caminho do banco de dados usando como parent a tela Banco_Screen e como caminho padrão o ultimo local usado pelo usuário
@@ -41,14 +40,6 @@ def Caminho_Banco_Dir(Banco_Screen, entrys_list):
 
 
 def Caminho_Fb_Dir(Banco_Screen, entrys_list):
-    # Função para abrir uma janela de seleção de arquivo e obter o caminho da fbclient
-    # Args:
-    # Banco_Screen: ctk.CTkToplevel -> Tela que será utilizada como parent da janela de seleção de arquivo
-    # entrys_list: list -> Lista de entrys que serão utilizadas para armazenar os dados informados pelo usuário para obtenção dos valores escolhidos
-
-    # Funcionamento idêntico ao da função Caminho_Banco_Dir
-    from tkinter import filedialog
-
     dir = carregar_diretorio('FBClient', 'last_dir')
     caminho = filedialog.askopenfilename(title='Caminho para o fbclient', parent=Banco_Screen, filetypes=[
                                          ('Firebird Dll', '*.dll')], initialdir=dir)
@@ -77,21 +68,6 @@ def _iniciar_animacao(parent, texto_base):
 
 
 def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, confirm_button, status_label):
-    # Função realizada ao clicar no botão de confirmar da tela Banco_Screen
-    # Args:
-    # entrys_list: list -> Lista de entrys que serão utilizadas para armazenar os dados informados pelo usuário para obtenção dos valores escolhidos
-    # Banco_Screen: ctk.CTkToplevel -> Tela que será utilizada como parent da janela de seleção de arquivo
-    # entry_alter_list: list -> Lista de labels que serão utilizadas para armazenar os valores obtidos do banco de dados
-    # button_list: list -> Lista de botões que serão utilizados para habilitar ou desabilitar a interação do usuário com a tela
-
-    # Importa as classes Dados e Connect do arquivo Inventario_Conn
-    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import ConfiguracaoBanco, BancoDeDados
-    from Thread_Manager.Query_Operations import query_executor, query_selector
-    from Thread_Manager.Thread_Executor import thread_execução
-    from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
-
-    from tkinter import messagebox  # Importa a função messagebox da biblioteca tkinter
-
     def centraliza_tela():
         # Calcula a posição central da tela para o progress bar
         screen_width = Banco_Screen.winfo_screenwidth()
@@ -202,7 +178,6 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
     # Verifica se todos os entrys foram preenchidos
     for entry in entrys_list:
         if entry.get() == '':
-            from tkinter import messagebox
             messagebox.showerror(
                 'Erro', 'Preencha todos os campos', parent=Banco_Screen)
             return
@@ -226,8 +201,8 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
     parar_animacao = _iniciar_animacao(
         status_label, 'Conectando ao banco de dados')
 
-    query_propri = "SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI"
-    query_emissoes = "SELECT MAX(L.DTEMI) FROM IN01LAN L LEFT JOIN IN01FAT F ON L.NOTFI = F.FATUR WHERE L.VENDA IN ('V', 'A', 'W', 'D') AND F.EMITE = 'S' AND F.CANCE <> 'S'"
+    query_propri = QUERY_PROPRI
+    query_emissoes = QUERY_EMISSOES
 
     thread_execução(Banco_Screen, executa_conexao,
                     ao_conectar, ao_conectar_erro)

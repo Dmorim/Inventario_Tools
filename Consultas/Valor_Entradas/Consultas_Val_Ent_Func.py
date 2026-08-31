@@ -1,5 +1,8 @@
+from tkinter import messagebox
+
 from Thread_Manager.Query_Operations import query_selector, query_executor
 from Consultas.Generics_Functions.Gen_Funcs_Consulta import banco_codigo_valueform
+from Queries.Consulta_Queries import QUERY_ENTRADAS
 
 
 def ent_get(self):
@@ -16,23 +19,14 @@ def ent_get(self):
     placeholders = ', '.join(['?'] * len(cfop_list))
 
     # Query que busca o valor de entradas, exclui os cfops da lista e busca somente as entradas entre as datas informadas
-    query = f"""
-    select cast(sum(((cast(LAN.valor AS numeric(14, 4)) - (cast(LAN.valor AS numeric(14, 4)) * CAST((LAN.despr/100) AS NUMERIC(14,4)))) * cast(LAN.quant AS numeric(14, 2))) + (LAN.valsub) + (((cast(LAN.valor AS numeric(14, 2)) - (cast(LAN.valor AS numeric(14, 2)) * CAST((LAN.despr/100) AS NUMERIC(14,4)))) * cast(LAN.quant AS numeric(14, 2))) * (cast(LAN.alipi_ent AS numeric(14, 2)) / 100))) as numeric (14,2))
-    from in01lan lan
-    left join in01com com
-    ON (LAN.NOTFI = COM.NOTFI) AND (LAN.CDFRN = COM.CDFRN) AND (LAN.MODELONOTA = COM.MODELONOTA)
-    where lan.venda = 'C'
-    and lan.cfop not in ({placeholders})
-    and com.dtcom between ? AND ?
-    and character_length(lan.cfop) = 5
-    """
+    query = QUERY_ENTRADAS.format(placeholders)
 
     params = (*cfop_list, self.data_banco_inicial, self.data_banco_final)
     # Tenta executar a query no banco de dados
     try:
-        valent = query_executor(query_selector, query, params)[0][0] if query_executor(query_selector, query, params) else None
+        valent = query_executor(query_selector, query, params)[
+            0][0] if query_executor(query_selector, query, params) else None
     except DatabaseError as e:
-        from tkinter import messagebox
         messagebox.showerror('Erro', f'Erro ao acessar o banco de dados\n {e}')
         return None
 

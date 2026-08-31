@@ -1,17 +1,16 @@
 import datetime
-
 import customtkinter as ctk
 
 from Outros.Periodo_Inventario import (TIPO_ANUAL, TIPO_MENSAL, TIPO_PERSONALIZADO,
                                        calcular_periodo, periodo_padrao, formatar_banco, MESES_REVERSO)
+from Inv_Screen.Inv_Top_Frame import criar_top_frame
+from Inv_Screen.Inv_Bot_Frame import criar_bot_frame
+from Configuracoes.Config_Manager import get_config
+from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
 
 
 class Inventario:
     def __init__(self, root):
-        from Inv_Screen.Inv_Top_Frame import criar_top_frame
-        from Inv_Screen.Inv_Bot_Frame import criar_bot_frame
-        from Configuracoes.Config_Manager import get_config
-
         self.color_theme = get_config().get(
             'Tema', 'Cor_do_tema', fallback="System")
 
@@ -68,7 +67,6 @@ if __name__ == '__main__':
         app = Inventario(root)
         root.mainloop()
     finally:
-        from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
         if BancoDeDados.retorna_gerenciador():
             gerenciador = BancoDeDados.gerenciador()
             gerenciador.fechar()

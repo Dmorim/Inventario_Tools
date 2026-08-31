@@ -1,11 +1,9 @@
 from Interface_Tools.Treeview_Table.Listagem_Treeview import criar_tela_listagem
+from Queries.Consulta_Queries import QUERY_LISTA_CLASSIFICACAO_NULA
 
 
 def List_Treeview_Screen(parent):
-    query = (
-        "select cdpro, nmpro, saldo, precu from in01pro "
-        "where classificacao_produto is null or classificacao_produto = ''"
-    )
+    query = QUERY_LISTA_CLASSIFICACAO_NULA
     campos = ['Código', 'Descrição', 'Saldo', 'Preço de Custo']
 
     criar_tela_listagem(parent, 'Lista de Produtos',

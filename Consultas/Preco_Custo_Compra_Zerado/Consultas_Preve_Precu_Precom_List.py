@@ -1,8 +1,9 @@
 from Interface_Tools.Treeview_Table.Listagem_Treeview import criar_tela_listagem
+from Queries.Consulta_Queries import QUERY_LISTA_PRECO_ZERADO
 
 
 def List_Treeview_Screen(parent):
-    query = "select cdpro, nmpro, saldo, precu from in01pro where precu = 0 and preve = 0 and vldia = 0 and saldo > 0"
+    query = QUERY_LISTA_PRECO_ZERADO
     campos = ['Código', 'Descrição', 'Saldo', 'Preço de Custo']
 
     criar_tela_listagem(parent, 'Lista de Produtos',

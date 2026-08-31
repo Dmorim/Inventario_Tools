@@ -2,10 +2,11 @@ from Interface_Tools.Container_Screen_Managment.Container_Manager import Contain
 from Interface_Tools.Consulta_Screen.Consulta_Screen import criar_tela_consulta
 from Consultas.Generics_Functions.Gen_Funcs_Consulta import prod_get
 from Consultas.Produtos_Nao_Zerados.Consultas_NZer_List_Screen import List_Treeview_Screen
+from Queries.Consulta_Queries import QUERY_SALDO_NAO_ZERADO
 
 
 def Prod_NZer_Screen(Consulta_Screen, consulta_button, container_manager: ContainerManager):
-    query = 'select count (*) from in01pro where saldo between 0.000001 and 0.01'
+    query = QUERY_SALDO_NAO_ZERADO
     return criar_tela_consulta(Consulta_Screen, consulta_button, container_manager,
                                titulo="Produtos Não Zerados",
                                label_texto="Produtos Não Zerados:",

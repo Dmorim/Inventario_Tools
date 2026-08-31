@@ -1,8 +1,9 @@
 from Interface_Tools.Treeview_Table.Listagem_Treeview import criar_tela_listagem
+from Queries.Consulta_Queries import QUERY_LISTA_QUANTIDADE_EXORBITANTE
 
 
 def List_Treeview_Screen(self, parent):
-    query = "select cdpro, notfi, saldo, tpmov, dtpro from in01lan where quant > 999999 and dtpro between ? and ?"
+    query = QUERY_LISTA_QUANTIDADE_EXORBITANTE
     params = (self.data_banco_inicial, self.data_banco_final)
     colunas = ['Código', 'Nota', 'Saldo', 'TPMOV', 'DTPRO']
 

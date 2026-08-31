@@ -14,10 +14,6 @@ class GerenciadorThreadBD:
         for _ in range(self.__tamanho):
             self.__pool.put(self.__conexao_banco())
 
-        print(
-            f"GerenciadorThreadBD inicializado com pool de conexões de tamanho: {self.__tamanho}"
-            f"Número de núcleos da CPU: {os.cpu_count()}")
-
     def _calcular_tamanho(self, minimo, maximo):
         nucleos = os.cpu_count() or 1
         return min(max(nucleos * 2, minimo), maximo)

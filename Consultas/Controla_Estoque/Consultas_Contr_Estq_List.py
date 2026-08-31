@@ -1,9 +1,10 @@
 from Interface_Tools.Treeview_Table.Listagem_Treeview import criar_tela_listagem
+from Queries.Consulta_Queries import QUERY_LISTA_CONTROLA_ESTOQUE
 
 
 def List_Treeview_Screen(self, parent):
 
-    query = f"select cdpro, notfi, cfop, dtpro, dtope, controlaestoque from in01lan where controlaestoque = 'N' and dtpro between ? and ?"
+    query = QUERY_LISTA_CONTROLA_ESTOQUE
     params = (self.data_banco_inicial, self.data_banco_final)
     campos = ['Código', 'Nota', 'CFOP', 'DTPRO', 'DTOPE', 'C.Estoque']
 

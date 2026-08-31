@@ -1,4 +1,13 @@
+import customtkinter as ctk
+from tkinter import messagebox
+
 from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
+from Queries.Consulta_Queries import QUERY_DISTORCAO_SALDO
+from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
+from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
+from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_List import List_Treeview_Screen
+from Thread_Manager.Thread_Executor import thread_execução
+from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 
 
 def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager: ContainerManager):
@@ -10,16 +19,6 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager:
         progress_y = (screen_height // 2) - \
             (Consulta_Screen.winfo_height() // 2)
         return progress_x, progress_y
-
-    import customtkinter as ctk
-    from tkinter import messagebox  # Importar a classe messagebox do tkinter
-
-    # Importa as funções que vão ser usadas na tela dos arquivos Consultas/Consultas_Val_Screen, Consutlas/Gen_Funcs_Consulta e Consultas/Consultas_Dist_Saldo_List
-    from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
-    from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
-    from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_List import List_Treeview_Screen
-    from Thread_Manager.Thread_Executor import thread_execução
-    from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 
     # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
     consulta_button.configure(state='disabled')
@@ -70,69 +69,7 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager:
     def execute_query(self):
         from Thread_Manager.Query_Operations import query_selector, query_executor
 
-        query = """
-            EXECUTE BLOCK
-            RETURNS (
-                cdpro VARCHAR(50),
-                nmpro VARCHAR(255),
-                saldo_lan NUMERIC(15,4),
-                saldo_pro NUMERIC(15,4)
-            )
-            AS
-            DECLARE VARIABLE formatosaldo INTEGER;
-            BEGIN
-
-                SELECT CAST(
-                        CHAR_LENGTH(
-                            SUBSTRING(valor FROM POSITION('.' IN valor) + 1)
-                        ) AS INTEGER
-                    )
-                FROM si01gp
-                WHERE ident = 'FORMATOSALDO'
-                INTO :formatosaldo;
-
-                FOR
-                    SELECT
-                        x.cdpro,
-                        x.nmpro,
-                        x.saldo_lan,
-                        x.saldo_pro
-                    FROM (
-                        SELECT
-                            p.cdpro,
-                            p.nmpro,
-                            SUM(IIF(l.tpmov = 'S', l.quant, -l.quant)) AS saldo_lan,
-                            p.saldo AS saldo_pro
-                        FROM in01lan l
-                        LEFT JOIN in01pro p
-                            ON l.cdpro = p.cdpro
-                        LEFT JOIN in01com c
-                            ON c.notfi = l.notfi
-                        AND c.cdfrn = l.cdfrn
-                        AND c.serie = l.serie
-                        WHERE
-                            COALESCE(l.controlaestoque, 'S') = 'S'
-                            AND COALESCE(l.cance, 'N') = 'N'
-                            AND classificacao_produto IN ('00', '01', '02', '04', '05', '06')
-                            AND l.venda <> 'R'
-                            AND (COALESCE(c.alterarsaldo, 'S') = 'S' OR l.venda <> 'J')
-                        GROUP BY
-                            p.cdpro,
-                            p.nmpro,
-                            p.saldo
-                    ) x
-                    WHERE
-                        ROUND(x.saldo_lan, :formatosaldo) <>
-                        ROUND(x.saldo_pro, :formatosaldo)
-                    INTO
-                        :cdpro,
-                        :nmpro,
-                        :saldo_lan,
-                        :saldo_pro
-                DO
-                    SUSPEND;
-            END
-        """
+        query = QUERY_DISTORCAO_SALDO
 
         rows = query_executor(query_selector, query)
 
