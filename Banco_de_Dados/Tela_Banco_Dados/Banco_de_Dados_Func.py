@@ -110,6 +110,12 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
             propri = resultados['propri']
             datas = resultados['datas']
 
+            if propri is None or len(propri) == 0:
+                messagebox.showerror(
+                    'Erro', 'Não foi possível obter os dados da empresa', parent=Banco_Screen)
+                confirm_button.configure(state='normal')
+                return
+
             nome, rsocial, cnpj, cgf, codcrt, fone = propri[0]
 
             codcrt_map = {
@@ -119,6 +125,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
             }
 
             codcrt = codcrt_map.get(codcrt, codcrt)
+
             max_data = datas[0][0].strftime(
                 '%d/%m/%Y') if datas and datas[0][0] is not None else 'Sem emissões'
 

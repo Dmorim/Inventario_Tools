@@ -20,6 +20,33 @@ class ConfiguracaoBanco:
         cls.user = user
         cls.password = password
 
+    @property
+    def host(self):
+        return self.host
+
+    @property
+    def port(self):
+        try:
+            return int(self.port)
+        except (ValueError, TypeError):
+            return None
+
+    @property
+    def database(self):
+        return self.database
+
+    @property
+    def fbclient(self):
+        return self.fbclient
+
+    @property
+    def user(self):
+        return self.user
+
+    @property
+    def password(self):
+        return self.password
+
 
 class BancoDeDados:
     """
@@ -42,7 +69,7 @@ class BancoDeDados:
     def _criar_conexao():
         return fdb.connect(
             host=ConfiguracaoBanco.host,
-            port=int(ConfiguracaoBanco.port),
+            port=ConfiguracaoBanco.port,
             database=ConfiguracaoBanco.database,
             fb_library_name=ConfiguracaoBanco.fbclient,
             user=ConfiguracaoBanco.user,

@@ -1,4 +1,6 @@
 import tkinter as tk
+
+
 class ToolTip:
     def __init__(self, widget, text, delay=800):
         self.widget = widget
@@ -27,13 +29,18 @@ class ToolTip:
             self.widget.after_cancel(id)
 
     def show_tooltip(self):
-        x, y, _, _ = self.widget.bbox("insert")
+        try:
+            x, y, _, _ = self.widget.bbox("insert")
+        except TypeError as e:
+            raise e
+
         x += self.widget.winfo_rootx() + 25
         y += self.widget.winfo_rooty() + 20
         self.tooltip = tk.Toplevel(self.widget)
         self.tooltip.wm_overrideredirect(True)
         self.tooltip.wm_geometry(f"+{x}+{y}")
-        label = tk.Label(self.tooltip, text=self.text, background="#ffffe0", relief="groove", borderwidth=1, wraplength=250)
+        label = tk.Label(self.tooltip, text=self.text, background="#ffffe0",
+                         relief="groove", borderwidth=1, wraplength=250)
         label.pack(ipadx=1)
 
     def hide_tooltip(self):

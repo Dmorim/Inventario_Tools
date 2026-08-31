@@ -1,12 +1,8 @@
-def theme_def(cbb_entry):
-    # Função chamada para definir o tema do sistema e salvar o valor no arquivo config.ini
-    # Args:
-    # cbb_entry: combobox do tema
+from customtkinter import set_appearance_mode
+from Configuracoes.Config_Manager import get_config
 
-    # Importa a função set_appearance_mode do customtkinter
-    from customtkinter import set_appearance_mode
-    # Importa a função get_config do arquivo Config_Manager
-    from Configuracoes.Config_Manager import get_config
+
+def theme_def(cbb_entry):
     tema_dict = {
         "Claro": "light",
         "Escuro": "dark",
@@ -15,7 +11,7 @@ def theme_def(cbb_entry):
 
     config = get_config()  # Obtém o objeto de configuração
     # Define o valor do tema no arquivo config.ini
-    config.set("Tema", "Cor_do_tema", tema_dict.get(cbb_entry.get(), "system"))
+    config.set("Tema", "cor_do_tema", tema_dict.get(cbb_entry.get(), "system"))
     config.save()  # Salva as alterações no arquivo config.ini
     # Define o tema do sistema
     set_appearance_mode(config.get("Tema", "Cor_do_tema", fallback="System"))

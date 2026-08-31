@@ -43,6 +43,7 @@ def criar_tela_listagem(parent, titulo, colunas, query, params=None, geometry: s
 
     treeview.bind("<Double-1>", lambda event: treeview.selection())
     treeview.bind("<Escape>", lambda event: toplevel.destroy())
+    treeview.bind("WM_DELETE_WINDOW", lambda event: toplevel.destroy())
 
     thread_execução(treeview, buscar, ao_terminar)
 

@@ -8,7 +8,7 @@ def Consultas_Val_Screen(parent, title: str, parent_button, container_manager: C
     cm = container_manager
     hub = ctk.CTkToplevel(parent)
     hub.title(title)
-    cm.posicionar_container(hub)
+    __posicionar_container(hub, cm)
     hub.resizable(False, False)
     hub.transient(parent)
     hub.focus_set()
@@ -17,3 +17,11 @@ def Consultas_Val_Screen(parent, title: str, parent_button, container_manager: C
     hub.protocol("WM_DELETE_WINDOW", lambda: event_screen_close(
         hub, None, parent_button, cm))
     return hub
+
+
+def __posicionar_container(hub, cm):
+    hub.update_idletasks()
+    try:
+        cm.posicionar_container(hub)
+    except RuntimeError as e:
+        raise e

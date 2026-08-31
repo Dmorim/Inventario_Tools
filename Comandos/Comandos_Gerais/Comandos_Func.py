@@ -75,55 +75,7 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
             'Erro', f'Erro ao executar os comandos\n{erro}', parent=comando)
 
     def _montar_operacoes(self, checkbox_List) -> list:
-        """
-        Retorna uma lista de (nome_legível, query) para cada checkbox marcada,
-        na ordem correta — respeitando a dependência do arredondamento.
-        """
-        nomes = [
-            'Preço de Custo por Porcentagem',
-            'Arredondar Preço de Custo',
-            'Preço de Custo = Preço de Compra',
-            'Preço de Custo = Custo Médio',
-            'Preço de Custo zerado',
-            'Corrigir Classificação Nula',
-            'Zerar Produtos Não Zerados',
-            "Setar Controla Estoque 'S'",
-            'Corrigir Quantidade Alta',
-            'Zerar Saldo Negativo',
-            'DTOPE igual DTPRO',
-            'Comando Geral',
-        ]
-
-        operacoes = []
-        arredondamento_adicionado = False
-        query_arredondamento = self.comandos_query[checkbox_List[1]][0]
-
-        for i, (key, query_param) in enumerate(self.comandos_query.items()):
-            if key not in checkbox_List or key.get() != 1:
-                continue
-
-            nome = nomes[checkbox_List.index(key)]
-
-            if key == checkbox_List[1]:
-                # Arredondamento marcado diretamente — só adiciona se ainda não foi
-                if not arredondamento_adicionado:
-                    operacoes.append((nome, query_param[0], query_param[1]))
-                    arredondamento_adicionado = True
-            elif key == checkbox_List[11]:
-                messagebox.showwarning(
-                    'Aviso', 'O comando geral irá executar exatamente como digitado, qualquer erro ou consequência do seu uso é de responsabilidade do operador', icon='warning', parent=comando)
-                operacoes.append((nome, query_param[0], query_param[1]))
-            else:
-                operacoes.append((nome, query_param[0], query_param[1]))
-
-                # Checkboxes 2, 3 e 4 disparam arredondamento após si mesmos
-                if key in (checkbox_List[2], checkbox_List[3], checkbox_List[4]):
-                    if not arredondamento_adicionado:
-                        operacoes.append(
-                            ('Arredondar Preço de Custo', query_arredondamento, ()))
-                        arredondamento_adicionado = True
-
-        return operacoes
+        return montar_operacoes(self, checkbox_List, comando)
 
     def centraliza_tela():
         comando.update_idletasks()
@@ -195,6 +147,59 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
     confirm_button.configure(state='disabled', text='Executando...')
 
     thread_execução(comando, executa_comandos, update_finalizado, update_erro)
+
+
+def montar_operacoes(self, checkbox_List, comando=None) -> list:
+    """
+    Retorna uma lista de (nome_legível, query, params) para cada checkbox marcada,
+    na ordem correta — respeitando a dependência do arredondamento.
+    """
+    from tkinter import messagebox
+
+    nomes = [
+        'Preço de Custo por Porcentagem',
+        'Arredondar Preço de Custo',
+        'Preço de Custo = Preço de Compra',
+        'Preço de Custo = Custo Médio',
+        'Preço de Custo zerado',
+        'Corrigir Classificação Nula',
+        'Zerar Produtos Não Zerados',
+        "Setar Controla Estoque 'S'",
+        'Corrigir Quantidade Alta',
+        'Zerar Saldo Negativo',
+        'DTOPE igual DTPRO',
+        'Comando Geral',
+    ]
+
+    operacoes = []
+    arredondamento_adicionado = False
+    query_arredondamento = self.comandos_query[checkbox_List[1]][0]
+
+    for key, query_param in self.comandos_query.items():
+        if key not in checkbox_List or key.get() != 1:
+            continue
+
+        nome = nomes[checkbox_List.index(key)]
+
+        if key == checkbox_List[1]:
+            if not arredondamento_adicionado:
+                operacoes.append((nome, query_param[0], query_param[1]))
+                arredondamento_adicionado = True
+        elif key == checkbox_List[11]:
+            messagebox.showwarning(
+                'Aviso', 'O comando geral irá executar exatamente como digitado, qualquer erro ou consequência do seu uso é de responsabilidade do operador', icon='warning', parent=comando)
+            operacoes.append((nome, query_param[0], query_param[1]))
+        else:
+            operacoes.append((nome, query_param[0], query_param[1]))
+
+            # Checkboxes 2, 3 e 4 disparam arredondamento após si mesmos
+            if key in (checkbox_List[2], checkbox_List[3], checkbox_List[4]):
+                if not arredondamento_adicionado:
+                    operacoes.append(
+                        ('Arredondar Preço de Custo', query_arredondamento, ()))
+                    arredondamento_adicionado = True
+
+    return operacoes
 
 
 def comandos_true(self) -> str:
