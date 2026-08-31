@@ -12,40 +12,13 @@ class ConfiguracaoBanco:
     password = ''
 
     @classmethod
-    def definir(cls, host, port, database, fbclient, user, password):
+    def definir(cls, host, port: int | None, database, fbclient, user, password):
         cls.host = host
         cls.port = port
         cls.database = database
         cls.fbclient = fbclient
         cls.user = user
         cls.password = password
-
-    @property
-    def host(self):
-        return self.host
-
-    @property
-    def port(self):
-        try:
-            return int(self.port)
-        except (ValueError, TypeError):
-            return None
-
-    @property
-    def database(self):
-        return self.database
-
-    @property
-    def fbclient(self):
-        return self.fbclient
-
-    @property
-    def user(self):
-        return self.user
-
-    @property
-    def password(self):
-        return self.password
 
 
 class BancoDeDados:

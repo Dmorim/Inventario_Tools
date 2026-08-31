@@ -9,6 +9,7 @@ from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import ConfiguracaoBanco
 from Thread_Manager.Query_Operations import query_executor, query_selector
 from Thread_Manager.Thread_Executor import thread_execução
 from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
+from Interface_Tools.Tk_Status_Animator import TextAnimator
 
 
 def Set_Dados_Padrao(entrys_list):
@@ -50,20 +51,27 @@ def Caminho_Fb_Dir(Banco_Screen, entrys_list):
 
 def _iniciar_animacao(parent, texto_base):
     estados = ['.', '..', '...']
-    ciclo = {'i': 0, 'job': None}
+    ciclo = {'i': 0, 'job': None, 'animator': None}
 
     def tick():
+        if parent is None or not parent.winfo_exists():
+            return
+
         parent.configure(text=f'{texto_base}{estados[ciclo["i"]]}')
         ciclo['i'] = (ciclo['i'] + 1) % len(estados)
-        ciclo['job'] = parent.after(500, tick)
 
     def stop(texto_final=''):
-        if ciclo['job'] is not None:
-            parent.after_cancel(ciclo['job'])
-            ciclo['job'] = None
-        parent.configure(text=texto_final)
+        if ciclo['animator'] is not None:
+            ciclo['animator'].cancel()
+            ciclo['animator'] = None
+        if parent is not None and parent.winfo_exists():
+            try:
+                parent.configure(text=texto_final)
+            except Exception:
+                pass
 
-    tick()  # Inicia a animação
+    ciclo['animator'] = TextAnimator(parent, 500)
+    ciclo['animator'].start(tick)
     return stop
 
 
@@ -189,14 +197,20 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
                 'Erro', 'Preencha todos os campos', parent=Banco_Screen)
             return
 
-    ConfiguracaoBanco.definir(
-        host=entrys_list[0].get(),
-        port=entrys_list[1].get(),
-        database=obter_caminho_curto_banco_dados(entrys_list[2].get()),
-        fbclient=entrys_list[3].get(),
-        user='SYSDBA',
-        password='masterkey'
-    )
+    try:
+        ConfiguracaoBanco.definir(
+            host=entrys_list[0].get(),
+            port=int(entrys_list[1].get()
+                     ) if entrys_list[1].get().isdigit() else None,
+            database=obter_caminho_curto_banco_dados(entrys_list[2].get()),
+            fbclient=entrys_list[3].get(),
+            user='SYSDBA',
+            password='masterkey'
+        )
+    except Exception as e:
+        messagebox.showerror(
+            'Erro', f'Não foi possível definir os dados de conexão\n {e}', parent=Banco_Screen)
+        return
 
     progress_x, progress_y = centraliza_tela()
     progress_bar = ProgressBarHandler(

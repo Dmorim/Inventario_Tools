@@ -1,6 +1,8 @@
 from customtkinter import CTkProgressBar, CTkToplevel, CTkLabel
 from random import randint
 
+from Interface_Tools.Tk_Status_Animator import TextAnimator
+
 
 class ProgressBarHandler:
     def __init__(self, parent, title: str, width: int = 400, height: int = 130, x: int = 200, y: int = 150):
@@ -65,16 +67,18 @@ class ProgressBarHandler:
         self._ciclo['i'] = randint(0, len(msgs) - 1)
 
         def tick():
+            if self.tip_label is None or not self.tip_label.winfo_exists():
+                return
+
             self.tip_label.configure(text=f'{msgs[self._ciclo["i"]]}')
 
-            # Sorteia o próximo índice garantindo que seja diferente do atual
             ultimo = self._ciclo['i']
             proximos = [i for i in range(len(msgs)) if i != ultimo]
             self._ciclo['i'] = proximos[randint(0, len(proximos) - 1)]
 
-            self._ciclo['label'] = self.screen.after(intervalo_ms, tick)
-
-        tick()
+        self._ciclo['animator'] = TextAnimator(self.screen, intervalo_ms)
+        self._ciclo['animator'].start(tick)
+        self._ciclo['label'] = self._ciclo['animator']._job_id
 
     def _create_tip_label(self):
         self.tip_label = CTkLabel(
@@ -118,7 +122,12 @@ class ProgressBarHandler:
         self.status_label.configure(text=novo_status)
 
     def finalizar(self):
-        if self._ciclo['label'] is not None:
-            self.screen.after_cancel(self._ciclo['label'])
-        self.progress_bar.stop()
-        self.screen.destroy()
+        animator = self._ciclo.get('animator')
+        if animator is not None:
+            animator.cancel()
+
+        if self.progress_bar is not None and self.progress_bar.winfo_exists():
+            self.progress_bar.stop()
+
+        if self.screen is not None and self.screen.winfo_exists():
+            self.screen.destroy()
