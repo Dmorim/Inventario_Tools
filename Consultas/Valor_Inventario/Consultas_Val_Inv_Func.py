@@ -1,4 +1,5 @@
 from tkinter import messagebox
+from fdb import DatabaseError
 
 from Thread_Manager.Query_Operations import query_selector, query_executor
 from Consultas.Generics_Functions.Gen_Funcs_Consulta import banco_codigo_valueform
@@ -11,9 +12,9 @@ def inv_get():
         query = QUERY_INVENTARIO
         val = query_executor(query_selector, query)[0][0] if query_executor(
             query_selector, query) else None
-    except:
-        messagebox.showerror('Erro', 'Erro ao acessar o banco de dados')
-        return
+    except DatabaseError as e:
+        messagebox.showerror('Erro', f'Erro ao acessar o banco de dados: {e}')
+        return None
 
     if val is not None:
         val = banco_codigo_valueform(val)  # Formata o valor obtido

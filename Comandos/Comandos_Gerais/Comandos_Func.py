@@ -1,3 +1,19 @@
+from Queries.Comando_Queries import (
+    QUERY_UPDATE_PRECU_PORCENTAGEM,
+    QUERY_UPDATE_PRECU_ARREDONDAMENTO,
+    QUERY_UPDATE_PRECU_VLDIA,
+    QUERY_UPDATE_PRECU_CUSME,
+    QUERY_UPDATE_PRECU_ZERADO,
+    QUERY_UPDATE_CLASSIFICACAO_NULA,
+    QUERY_UPDATE_SALDO_NAO_ZERADO,
+    QUERY_UPDATE_CONTROLAESTOQUE_S,
+    QUERY_UPDATE_QUANTIDADE_ALTA,
+    QUERY_UPDATE_SALDO_NEGATIVO,
+    QUERY_UPDATE_DTOPE_IGUAL_DTPRO,
+    QUERY_COMANDO_GERAL,
+)
+
+
 def Comandos_Func(self, checkbox_List):
     # Criação de um dicionário associando cada checkbox a um comando
     # Args:
@@ -6,18 +22,19 @@ def Comandos_Func(self, checkbox_List):
 
     self.comandos_query = {
         # Lista de comandos, cada comando é associado a uma checkbox, alguns comandos possuem variáveis que são preenchidas com os valores dos Entry e Combobox
-        checkbox_List[0]: (f'UPDATE IN01PRO SET PRECU = PRECU * ?', (self.porcent_precu,)),
-        checkbox_List[1]: (f'UPDATE IN01PRO SET PRECU = CAST(PRECU AS NUMERIC(15, 2))', ()),
-        checkbox_List[2]: (f'UPDATE IN01PRO SET PRECU = VLDIA WHERE VLDIA {self.precu_vldia} PRECU AND VLDIA > 0', ()),
-        checkbox_List[3]: (f'UPDATE IN01PRO SET PRECU = CUSME WHERE CUSME {self.precu_cusme} PRECU AND CUSME > 0', ()),
-        checkbox_List[4]: (f'UPDATE IN01PRO SET PRECU = {self.precu_vldia_preve} WHERE (PRECU = 0 OR PRECU IS NULL) AND SALDO > 0 AND PREVE <> 0', ()),
-        checkbox_List[5]: (f'UPDATE IN01PRO SET CLASSIFICACAO_PRODUTO = 00 WHERE CLASSIFICACAO_PRODUTO IS NULL', ()),
-        checkbox_List[6]: (f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO BETWEEN 0.000001 AND 0.01', ()),
-        checkbox_List[7]: (f"UPDATE IN01LAN SET CONTROLAESTOQUE = 'S' WHERE (CONTROLAESTOQUE IS NULL OR CONTROLAESTOQUE = 'N') AND DTPRO >= ?", (self.data_banco_inicial,)),
-        checkbox_List[8]: (f'UPDATE IN01LAN SET QUANT = 1 WHERE QUANT > 999999 OR VALOR > 999999', ()),
-        checkbox_List[9]: (f'UPDATE IN01PRO SET SALDO = 0 WHERE SALDO < 0', ()),
-        checkbox_List[10]: (f"UPDATE IN01LAN SET DTOPE = DTPRO WHERE VENDA = 'J' AND DTOPE <> DTPRO", ()),
-        checkbox_List[11]: (self.com_ger, ())
+        checkbox_List[0]: (QUERY_UPDATE_PRECU_PORCENTAGEM, (self.porcent_precu,)),
+        checkbox_List[1]: (QUERY_UPDATE_PRECU_ARREDONDAMENTO, ()),
+        checkbox_List[2]: (QUERY_UPDATE_PRECU_VLDIA.format(operador=self.precu_vldia), ()),
+        checkbox_List[3]: (QUERY_UPDATE_PRECU_CUSME.format(operador=self.precu_cusme), ()),
+        checkbox_List[4]: (QUERY_UPDATE_PRECU_ZERADO.format(campo=self.precu_vldia_preve), ()),
+        checkbox_List[5]: (QUERY_UPDATE_CLASSIFICACAO_NULA, ()),
+        checkbox_List[6]: (QUERY_UPDATE_SALDO_NAO_ZERADO, ()),
+        checkbox_List[7]: (QUERY_UPDATE_CONTROLAESTOQUE_S, (self.data_banco_inicial,)),
+        checkbox_List[8]: (QUERY_UPDATE_QUANTIDADE_ALTA, ()),
+        checkbox_List[9]: (QUERY_UPDATE_SALDO_NEGATIVO, ()),
+        checkbox_List[10]: (QUERY_UPDATE_DTOPE_IGUAL_DTPRO, ()),
+        checkbox_List[11]: (
+            QUERY_COMANDO_GERAL.format(comando=self.com_ger), ())
     }
 
 

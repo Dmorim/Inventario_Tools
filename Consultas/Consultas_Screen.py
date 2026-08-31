@@ -13,7 +13,7 @@ def Consulta_Total_Screen(self, root):
     from Consultas.Preco_Custo_Compra_Zerado.Consultas_Preve_Precu_Precom_Screen import Preve_Precu_Precom_Screen
     from Consultas.Controla_Estoque.Consultas_Contr_Estq_Screen import Contr_Estq_Screen
     from Consultas.Quantidade_Exorbitante.Consultas_Quant_Maior_Screen import Quant_Maior_Screen
-    from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_Screen import dist_saldo_screen
+    from Consultas.Generics_Functions.Distorcao_de_Saldo.Consultas_Dist_Saldo_Screen import dist_saldo_screen
     from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
 
     container_manager = ContainerManager()

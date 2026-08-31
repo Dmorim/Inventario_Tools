@@ -5,7 +5,7 @@ from Interface_Tools.Container_Screen_Managment.Container_Manager import Contain
 from Queries.Consulta_Queries import QUERY_DISTORCAO_SALDO
 from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
 from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
-from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_List import List_Treeview_Screen
+from Consultas.Generics_Functions.Distorcao_de_Saldo.Consultas_Dist_Saldo_List import List_Treeview_Screen
 from Thread_Manager.Thread_Executor import thread_execução
 from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 

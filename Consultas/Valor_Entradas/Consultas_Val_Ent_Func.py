@@ -19,7 +19,7 @@ def ent_get(self):
     placeholders = ', '.join(['?'] * len(cfop_list))
 
     # Query que busca o valor de entradas, exclui os cfops da lista e busca somente as entradas entre as datas informadas
-    query = QUERY_ENTRADAS.format(placeholders)
+    query = QUERY_ENTRADAS.format(placeholders=placeholders)
 
     params = (*cfop_list, self.data_banco_inicial, self.data_banco_final)
     # Tenta executar a query no banco de dados

@@ -12,7 +12,7 @@ from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
 class Inventario:
     def __init__(self, root):
         self.color_theme = get_config().get(
-            'Tema', 'Cor_do_tema', fallback="System")
+            'Tema', 'cor_do_tema', fallback="System")
 
         ctk.set_appearance_mode(self.color_theme)
         ctk.set_default_color_theme("dark-blue")

@@ -1,3 +1,6 @@
+from Queries.Comando_Queries import QUERY_ATUALIZA_SALDO_PRODUTO, QUERY_INSERE_AJUSTE_LAN
+
+
 def on_click_dist_saldo(self, parent):
     # Função chamada ao apertar o botão de distorção de saldo, cria a tela de distorção de saldo
     # Args:
@@ -73,7 +76,7 @@ def on_click_confirm_btt(self, parent, val_list, confirm_button):
         if tp_distorc == 'PRO = LAN':  # Verifica se a distorção é PRO = LAN
             for item in self.dist_saldo_list:  # Para cada item na lista de distorção de saldo
                 # Cria a query de distorção de saldo, deixando o saldo do produto igual ao saldo do lançamento, onde o código do produto é informado na lista
-                query = "UPDATE IN01PRO SET SALDO = ? WHERE CDPRO = ?"
+                query = QUERY_ATUALIZA_SALDO_PRODUTO
                 params = (item[2], item[0])  # Define os parâmetros da query
                 query_executor(query_updater, query, params)  # Executa a query
         else:
@@ -86,10 +89,7 @@ def on_click_confirm_btt(self, parent, val_list, confirm_button):
 
                 # Cria a query de distorção de saldo, inserindo um novo lançamento no banco de dados
                 historico = f'AJUSTADO LANÇAMENTO {item[0]} - {item[1]}, DISTORÇÃO DE SALDO, AJUSTADO POR SISTECH'
-                query = ("INSERT INTO IN01LAN (NOTFI, CDPRO, VENDA, DTEMI, DTPRO, QUANT, TPMOV, "
-                         "HISTO, NMOPE, DTOPE, HISTORICO_AJUSTE) "
-                         "VALUES ('AJUSTE', ?, 'J', ?, ?, ?, ?, 'AJUSTE DE ESTOQUE (DISTORÇÃO DE SALDO)', "
-                         "'SISTECH', ?, ?)")
+                query = QUERY_INSERE_AJUSTE_LAN
                 params = (item[0], data, data, quant, tpmov, data, historico)
                 query_executor(query_updater, query, params)  # Executa a query
 

@@ -4,7 +4,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 
 from Configuracoes.Config_Manager import salvar_diretorio, carregar_diretorio
-from Queries.Consulta_Queries import QUERY_PROPRI, QUERY_EMISSOES
+from Queries.Consulta_Queries import QUERY_PROPRI, QUERY_EMISSOES_MAXIMA
 from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import ConfiguracaoBanco, BancoDeDados
 from Thread_Manager.Query_Operations import query_executor, query_selector
 from Thread_Manager.Thread_Executor import thread_execução
@@ -202,7 +202,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
         status_label, 'Conectando ao banco de dados')
 
     query_propri = QUERY_PROPRI
-    query_emissoes = QUERY_EMISSOES
+    query_emissoes = QUERY_EMISSOES_MAXIMA
 
     thread_execução(Banco_Screen, executa_conexao,
                     ao_conectar, ao_conectar_erro)
@@ -217,8 +217,6 @@ def obter_caminho_curto_banco_dados(caminho_longo):
             buffer,
             wintypes.MAX_PATH
         )
-
-        print(f"Caminho curto: {buffer.value}")
         return buffer.value
     except Exception as e:
         raise RuntimeError(f"Erro ao obter o caminho curto: {e}")
