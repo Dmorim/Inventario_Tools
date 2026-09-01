@@ -167,3 +167,4 @@ config.ini
 *.env
 config.ini
 *.ini
+/logs

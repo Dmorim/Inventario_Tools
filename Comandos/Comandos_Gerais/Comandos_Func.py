@@ -6,6 +6,7 @@ from Thread_Manager.Query_Operations import query_executor, query_updater
 from Thread_Manager.Thread_Executor import thread_execução
 from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 from Thread_Manager.Thread_Executor import atualizar_ui_main
+from Outros.Logger.Get_Logger import get_logger
 from Queries.Comando_Queries import (
     QUERY_UPDATE_PRECU_PORCENTAGEM,
     QUERY_UPDATE_PRECU_ARREDONDAMENTO,
@@ -20,6 +21,8 @@ from Queries.Comando_Queries import (
     QUERY_UPDATE_DTOPE_IGUAL_DTPRO,
     QUERY_COMANDO_GERAL,
 )
+
+logger = get_logger(__name__)
 
 
 def Comandos_Func(self, checkbox_List):
@@ -47,7 +50,6 @@ def Comandos_Func(self, checkbox_List):
 
 
 def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, status_label):
-
     def executa_comandos():
         resultados = []
         for i, (nome, query, params) in enumerate(operacoes):
@@ -57,19 +59,23 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
                 comando,
                 lambda i=idx, n=n: status_label.configure(
                     text=f'Executando {i + 1} de {total}: {n}'))
+            logger.info(f'Executando comando: {nome}')
             query_executor(query_updater, query, params)
             resultados.append(nome)
         return resultados
 
     def update_finalizado(_):
+        logger.info('Update realizado com sucesso')
         atualizar_ui_main(comando, progress_bar.finalizar)
         status_label.configure(
             text=f'{total} comando(s) executado(s) com sucesso.')
         messagebox.showinfo(
             'Aviso', 'Comandos executados com sucesso', parent=comando)
         comando.destroy()
+        logger.info('Comandos finalizados.')
 
     def update_erro(erro):
+        logger.error(f'Erro ao executar os comandos: {erro}')
         atualizar_ui_main(comando, progress_bar.finalizar)
         confirm_button.configure(state='normal', text='Confirmar')
         status_label.configure(text='Erro ao executar os comandos.')
@@ -208,7 +214,7 @@ def comandos_true(self) -> str:
         if key.get() == 1:  # Verifica se a checkbox está marcada
             # Adiciona o comando a lista
             key_list.append(self.comandos_query[key][0])
-    return "\n".join(key_list)  # Retorna a lista como uma string
+    return "".join(key_list)  # Retorna a lista como uma string
 
 # Validar o valor digitado no Entry como float aceitando virgula na casa decimal e bloqueando o uso de ponto
 

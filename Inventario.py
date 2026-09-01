@@ -1,12 +1,15 @@
 import datetime
 import customtkinter as ctk
 
+from Outros.Logger.Get_Logger import get_logger
 from Outros.Periodo_Inventario import (TIPO_ANUAL, TIPO_MENSAL, TIPO_PERSONALIZADO,
                                        calcular_periodo, periodo_padrao, formatar_banco, MESES_REVERSO)
 from Inv_Screen.Inv_Top_Frame import criar_top_frame
 from Inv_Screen.Inv_Bot_Frame import criar_bot_frame
 from Configuracoes.Config_Manager import get_config
 from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
+
+logger = get_logger(__name__)
 
 
 class Inventario:
@@ -62,11 +65,18 @@ class Inventario:
 
 
 if __name__ == '__main__':
+    logger.info('Iniciando aplicação Inventario Tools.')
     try:
         root = ctk.CTk()
         app = Inventario(root)
+        logger.info('Janela principal criada com sucesso.')
         root.mainloop()
+    except Exception:
+        logger.exception('Erro ao iniciar a aplicação.')
+        raise
     finally:
         if BancoDeDados.retorna_gerenciador():
+            logger.info('Fechando pool de conexões do banco.')
             gerenciador = BancoDeDados.gerenciador()
             gerenciador.fechar()
+        logger.info('Aplicação encerrada.')

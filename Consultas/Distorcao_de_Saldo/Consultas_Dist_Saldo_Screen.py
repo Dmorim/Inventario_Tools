@@ -9,6 +9,9 @@ from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_List import List_Treeview
 from Thread_Manager.Thread_Executor import thread_execução
 from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 from Thread_Manager.Query_Operations import query_selector, query_executor
+from Outros.Logger.Get_Logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager: ContainerManager):
@@ -54,12 +57,14 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager:
     progress_bar.atualizar_status("Consultando distorções de saldo...")
 
     def on_query_complete(empty):
+        logger.info("Consulta de distorção de saldo concluída com sucesso.")
         progress_bar.finalizar()
         val_ven_text.configure(text=len(self.dist_saldo_list))
         val_ven_button.configure(state='normal')
         listagem_button.configure(state='normal')
 
     def on_query_error(error):
+        logger.error(f"Erro na consulta de distorção de saldo: {error}")
         progress_bar.finalizar()
         val_ven_text.configure(text="Erro ao gerar consulta")
         consulta_button.configure(state='normal')
@@ -68,6 +73,7 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager:
             "Erro", f"Ocorreu um erro ao gerar a consulta: {error}", parent=hub)
 
     def execute_query(self):
+        logger.info("Iniciando consulta de distorção de saldo.")
         query = QUERY_DISTORCAO_SALDO
 
         rows = query_executor(query_selector, query)

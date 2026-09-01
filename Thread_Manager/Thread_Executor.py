@@ -2,22 +2,30 @@ import threading
 import queue
 from tkinter import messagebox, TclError
 
+from Outros.Logger.Get_Logger import get_logger
+
+logger = get_logger(__name__)
+
 
 def _safe_schedule_ui(master, func, *args):
     """Agenda uma ação da UI na thread principal apenas se a janela ainda existir."""
     if master is None:
+        logger.debug('Não foi possível agendar callback na UI: master=None.')
         return False
 
     try:
         if not master.winfo_exists():
+            logger.warning('Tentativa de agendar callback em UI inexistente.')
             return False
     except (AttributeError, TclError):
+        logger.debug('Master da UI inválido ao tentar agendar callback.')
         return False
 
     try:
         master.after(0, lambda: func(*args))
         return True
     except TclError:
+        logger.exception('Falha ao agendar callback na thread principal.')
         return False
 
 
@@ -34,12 +42,18 @@ def thread_execução(master, func, callback, on_erro=None, *args, **kwargs):
     """
 
     fila = queue.Queue()
+    logger.info('Iniciando thread para %s.',
+                getattr(func, '__name__', repr(func)))
 
     def thread_target(*args, **kwargs):
         try:
             result = func(*args, **kwargs)
             fila.put((True, result))
+            logger.info('Thread %s concluída com sucesso.',
+                        getattr(func, '__name__', repr(func)))
         except Exception as exc:
+            logger.exception('Thread %s falhou.', getattr(
+                func, '__name__', repr(func)))
             fila.put((False, exc))
 
     threading.Thread(target=thread_target, args=args,

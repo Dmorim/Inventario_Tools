@@ -1,5 +1,8 @@
 import fdb
+from Outros.Logger.Get_Logger import get_logger
 from Thread_Manager.Gerenciador_Thread_BD import GerenciadorThreadBD
+
+logger = get_logger(__name__)
 
 
 class ConfiguracaoBanco:
@@ -33,8 +36,11 @@ class BancoDeDados:
     def conectar(cls):
         """Cria o pool uma única vez. Chamadas seguintes reaproveitam."""
         if cls._gerenciador is not None:
+            logger.debug(
+                'Pool de conexões já existente; reutilizando conexão atual.')
             return cls._gerenciador  # idempotente — já existe, não recria
 
+        logger.info('Inicializando pool de conexões do banco de dados.')
         cls._gerenciador = GerenciadorThreadBD(cls._criar_conexao)
         return cls._gerenciador
 
@@ -67,6 +73,7 @@ class BancoDeDados:
     @classmethod
     def fechar(cls):
         if cls._gerenciador is not None:
+            logger.info('Encerrando pool de conexões do banco.')
             cls._gerenciador.fechar()
             cls._gerenciador = None
 

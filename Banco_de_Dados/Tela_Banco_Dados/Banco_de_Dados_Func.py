@@ -11,10 +11,15 @@ from Thread_Manager.Thread_Executor import thread_execução
 from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 from Interface_Tools.Tk_Status_Animator import TextAnimator
 from Thread_Manager.Thread_Executor import atualizar_ui_main
+from Outros.Logger.Get_Logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def Set_Dados_Padrao(entrys_list):
     if len(entrys_list) != 4:
+        logger.error(
+            'Lista de entradas inválida para configuração padrão: %s', len(entrys_list))
         raise ValueError(
             "A lista de entrys deve conter exatamente 4 elementos.")
 
@@ -102,6 +107,8 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
         _disparar_queries()
 
     def ao_conectar_erro(erro):
+        logger.exception(
+            'Erro ao conectar ao banco de dados durante a inicialização do pool.')
         parar_animacao('Erro ao conectar ao banco de dados')  # Para a animação
         progress_bar.finalizar()
         confirm_button.configure(state='normal')
@@ -121,6 +128,8 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
             datas = resultados['datas']
 
             if propri is None or len(propri) == 0:
+                logger.warning(
+                    'Dados da empresa retornaram vazios para a tela de conexão.')
                 messagebox.showerror(
                     'Erro', 'Não foi possível obter os dados da empresa', parent=Banco_Screen)
                 confirm_button.configure(state='normal')
@@ -164,6 +173,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
                 finalizar()
 
         def falha_propri(erro):
+            logger.exception('Falha ao buscar os dados da empresa no banco.')
             parar_propri('Erro ao buscar dados da empresa')
             confirm_button.configure(state='normal')
             atualizar_ui_main(Banco_Screen, messagebox.showerror,
@@ -182,6 +192,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
                 finalizar()
 
         def falha_datas(erro):
+            logger.exception('Falha ao buscar as datas de emissão.')
             if parar_emissoes[0]:
                 parar_emissoes[0]('Erro ao buscar datas de emissão')
             confirm_button.configure(state='normal')
@@ -212,6 +223,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
             password='masterkey'
         )
     except Exception as e:
+        logger.exception('Erro ao preparar os dados de conexão com o banco.')
         messagebox.showerror(
             'Erro', f'Não foi possível definir os dados de conexão\n {e}', parent=Banco_Screen)
         return
@@ -248,4 +260,6 @@ def obter_caminho_curto_banco_dados(caminho_longo):
         )
         return buffer.value
     except Exception as e:
+        logger.exception(
+            'Erro ao obter o caminho curto do banco de dados: %s', caminho_longo)
         raise RuntimeError(f"Erro ao obter o caminho curto: {e}")

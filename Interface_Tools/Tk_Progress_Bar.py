@@ -12,6 +12,10 @@ class ProgressBarHandler:
         self.height = height
         self.x = x
         self.y = y
+        self.screen = None
+        self.tip_label = None
+        self.status_label = None
+        self.progress_bar = None
         self._ciclo = {'label': None, 'i': 0}
 
     def _generate_label_text_list(self) -> list[str]:
@@ -119,15 +123,29 @@ class ProgressBarHandler:
         return self
 
     def atualizar_status(self, novo_status: str):
-        self.status_label.configure(text=novo_status)
+        if self.status_label is None:
+            return
+        try:
+            if self.status_label.winfo_exists():
+                self.status_label.configure(text=novo_status)
+        except Exception:
+            pass
 
     def finalizar(self):
         animator = self._ciclo.get('animator')
         if animator is not None:
             animator.cancel()
 
-        if self.progress_bar is not None and self.progress_bar.winfo_exists():
-            self.progress_bar.stop()
+        if self.progress_bar is not None:
+            try:
+                if self.progress_bar.winfo_exists():
+                    self.progress_bar.stop()
+            except Exception:
+                pass
 
-        if self.screen is not None and self.screen.winfo_exists():
-            self.screen.destroy()
+        if self.screen is not None:
+            try:
+                if self.screen.winfo_exists():
+                    self.screen.destroy()
+            except Exception:
+                pass

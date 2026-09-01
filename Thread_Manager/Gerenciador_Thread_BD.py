@@ -2,6 +2,7 @@ import os
 import threading
 import time
 from queue import Queue, Empty
+from Outros.Logger.Get_Logger import get_logger
 
 
 class GerenciadorThreadBD:
@@ -11,6 +12,7 @@ class GerenciadorThreadBD:
         self.__pool = Queue()
         self._lock = threading.Lock()
         self._fechando = False
+        self.logger = get_logger(__name__)
 
         self._preencher_pool()
 
@@ -37,6 +39,8 @@ class GerenciadorThreadBD:
     def _pegar_conexao(self, timeout=5, tentativas=3):
         for tentativa_conexao in range(tentativas + 1):
             try:
+                self.logger.debug(
+                    f"Tentativa {tentativa_conexao + 1} de obter conexão do pool.")
                 conexao = self.__pool.get(timeout=timeout)
             except Empty:
                 if tentativa_conexao == tentativas:
