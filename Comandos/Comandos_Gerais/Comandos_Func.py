@@ -1,5 +1,11 @@
-from Thread_Manager.Thread_Executor import atualizar_ui_main
+# Importar a classe Connect do arquivo Inventario_Conn
+from tkinter import messagebox
 
+
+from Thread_Manager.Query_Operations import query_executor, query_updater
+from Thread_Manager.Thread_Executor import thread_execução
+from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
+from Thread_Manager.Thread_Executor import atualizar_ui_main
 from Queries.Comando_Queries import (
     QUERY_UPDATE_PRECU_PORCENTAGEM,
     QUERY_UPDATE_PRECU_ARREDONDAMENTO,
@@ -47,8 +53,10 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
         for i, (nome, query, params) in enumerate(operacoes):
             idx = i
             n = nome
-            comando.after(5, lambda i=idx, n=n: status_label.configure(
-                text=f'Executando {i + 1} de {total}: {n}'))
+            atualizar_ui_main(
+                comando,
+                lambda i=idx, n=n: status_label.configure(
+                    text=f'Executando {i + 1} de {total}: {n}'))
             query_executor(query_updater, query, params)
             resultados.append(nome)
         return resultados
@@ -86,12 +94,6 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
         y = widget_y + (widget_h - janela_h) // 2
 
         return x, y
-
-    # Importar a classe Connect do arquivo Inventario_Conn
-    from Thread_Manager.Query_Operations import query_executor, query_updater
-    from Thread_Manager.Thread_Executor import thread_execução
-    from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
-    from tkinter import messagebox  # Importar a classe messagebox do tkinter
 
     if values_List[0].get() != '':  # Verifica se o Entry de porcentagem foi preenchido
         # Preenche a variável porcent_precu com o valor do Entry
@@ -151,7 +153,6 @@ def montar_operacoes(self, checkbox_List, comando=None) -> list:
     Retorna uma lista de (nome_legível, query, params) para cada checkbox marcada,
     na ordem correta — respeitando a dependência do arredondamento.
     """
-    from tkinter import messagebox
 
     nomes = [
         'Preço de Custo por Porcentagem',

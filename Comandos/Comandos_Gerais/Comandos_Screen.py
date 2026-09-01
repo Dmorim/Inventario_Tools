@@ -1,13 +1,12 @@
+import customtkinter as ctk
+
+
+from Interface_Tools.Tk_Tooltip import ToolTip
+from Comandos.Comandos_Gerais.Comandos_Func import on_click_confirm, precu_porcent_entry_validate
+from Comandos.Distorcao_Saldo.Comandos_Dist_Saldo import on_click_dist_saldo
+
+
 def Comandos_Screen(self, parent):
-    import customtkinter as ctk  # Importa a biblioteca customtkinter como ctk
-
-    # Importa a função ToolTip do arquivo Tk_Tooltip da pasta Outros
-    from Interface_Tools.Tk_Tooltip import ToolTip
-    # Importa as funções on_click_confirm e precu_porcent_entry_validate do arquivo Comandos_Func da pasta Comandos
-    from Comandos.Comandos_Gerais.Comandos_Func import on_click_confirm, precu_porcent_entry_validate
-    # Importa a função on_click_dist_saldo do arquivo Comandos_Dist_Saldo da pasta Comandos
-    from Comandos.Distorcao_Saldo.Comandos_Dist_Saldo import on_click_dist_saldo
-
     # Cria a janela comando como um Toplevel do parent
     comando = ctk.CTkToplevel(parent)
     comando.geometry("820x292+150+135")

@@ -14,7 +14,7 @@ def theme_def(cbb_entry):
     config.set("Tema", "cor_do_tema", tema_dict.get(cbb_entry.get(), "system"))
     config.save()  # Salva as alterações no arquivo config.ini
     # Define o tema do sistema
-    set_appearance_mode(config.get("Tema", "Cor_do_tema", fallback="System"))
+    set_appearance_mode(config.get("Tema", "cor_do_tema", fallback="System"))
 
 
 def on_click_confirm(self, config, cbb_entry):

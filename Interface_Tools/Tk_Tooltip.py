@@ -29,10 +29,11 @@ class ToolTip:
             self.widget.after_cancel(id)
 
     def show_tooltip(self):
-        try:
-            x, y, _, _ = self.widget.bbox("insert")
-        except TypeError as e:
-            raise e
+        bbox = self.widget.bbox("insert")
+        if bbox is None:
+            return
+
+        x, y, _, _ = bbox
 
         x += self.widget.winfo_rootx() + 25
         y += self.widget.winfo_rooty() + 20

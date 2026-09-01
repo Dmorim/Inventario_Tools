@@ -1,9 +1,9 @@
+import customtkinter as ctk
+
+from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Func import Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir, on_click_confirm
+
+
 def Interface_Banco(self, root, entry_alter_list, button_list):
-    import customtkinter as ctk  # Importa a biblioteca customtkinter como ctk
-
-    # Importa as funções Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir, on_click_confirm do arquivo Banco_de_Dados_Func
-    from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Func import Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir, on_click_confirm
-
     # Cria a tela Banco_Screen como TopLevel e define suas configurações
     Banco_Screen = ctk.CTkToplevel(root)
     Banco_Screen.title("Configurações de Banco de Dados")

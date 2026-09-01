@@ -5,9 +5,10 @@ from Interface_Tools.Container_Screen_Managment.Container_Manager import Contain
 from Queries.Consulta_Queries import QUERY_DISTORCAO_SALDO
 from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
 from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
-from Consultas.Generics_Functions.Distorcao_de_Saldo.Consultas_Dist_Saldo_List import List_Treeview_Screen
+from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_List import List_Treeview_Screen
 from Thread_Manager.Thread_Executor import thread_execução
 from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
+from Thread_Manager.Query_Operations import query_selector, query_executor
 
 
 def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager: ContainerManager):
@@ -67,8 +68,6 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager:
             "Erro", f"Ocorreu um erro ao gerar a consulta: {error}", parent=hub)
 
     def execute_query(self):
-        from Thread_Manager.Query_Operations import query_selector, query_executor
-
         query = QUERY_DISTORCAO_SALDO
 
         rows = query_executor(query_selector, query)

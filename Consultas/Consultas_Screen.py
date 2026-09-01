@@ -1,21 +1,21 @@
+import customtkinter as ctk
+
+from Interface_Tools.Tk_Tooltip import ToolTip
+from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
+from Consultas.Valor_Inventario.Consultas_Val_Inv_Screen import hub_val_inv
+from Consultas.Valor_Vendas.Consultas_Val_Ven_Screen import Val_Ven_Screen
+from Consultas.Valor_Entradas.Consultas_Val_Ent_Screen import Val_Ent_Screen
+from Consultas.Produtos_Nao_Zerados.Consultas_NZer_Prod_Screen import Prod_NZer_Screen
+from Consultas.Preco_Custo_Zerado.Consultas_ZCusto_Screen import Prod_ZCusto_Screen
+from Consultas.Classificação_Do_Produto.Consultas_Classi_Pro_Screen import Classi_Pro_Screen
+from Consultas.Preco_Custo_Maior_Preco_Venda.Consultas_Precu_Preve_Screen import Precu_Preve_Screen
+from Consultas.Preco_Custo_Compra_Zerado.Consultas_Preve_Precu_Precom_Screen import Preve_Precu_Precom_Screen
+from Consultas.Controla_Estoque.Consultas_Contr_Estq_Screen import Contr_Estq_Screen
+from Consultas.Quantidade_Exorbitante.Consultas_Quant_Maior_Screen import Quant_Maior_Screen
+from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_Screen import dist_saldo_screen
+
+
 def Consulta_Total_Screen(self, root):
-    import customtkinter as ctk
-
-    # Importação de todas as telas de consultas + ToolTip
-    from Interface_Tools.Tk_Tooltip import ToolTip
-    from Consultas.Valor_Inventario.Consultas_Val_Inv_Screen import hub_val_inv
-    from Consultas.Valor_Vendas.Consultas_Val_Ven_Screen import Val_Ven_Screen
-    from Consultas.Valor_Entradas.Consultas_Val_Ent_Screen import Val_Ent_Screen
-    from Consultas.Produtos_Nao_Zerados.Consultas_NZer_Prod_Screen import Prod_NZer_Screen
-    from Consultas.Preco_Custo_Zerado.Consultas_ZCusto_Screen import Prod_ZCusto_Screen
-    from Consultas.Classificação_Do_Produto.Consultas_Classi_Pro_Screen import Classi_Pro_Screen
-    from Consultas.Preco_Custo_Maior_Preco_Venda.Consultas_Precu_Preve_Screen import Precu_Preve_Screen
-    from Consultas.Preco_Custo_Compra_Zerado.Consultas_Preve_Precu_Precom_Screen import Preve_Precu_Precom_Screen
-    from Consultas.Controla_Estoque.Consultas_Contr_Estq_Screen import Contr_Estq_Screen
-    from Consultas.Quantidade_Exorbitante.Consultas_Quant_Maior_Screen import Quant_Maior_Screen
-    from Consultas.Generics_Functions.Distorcao_de_Saldo.Consultas_Dist_Saldo_Screen import dist_saldo_screen
-    from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
-
     container_manager = ContainerManager()
 
     Consulta_Screen = ctk.CTkToplevel(root)  # Cria a tela principal

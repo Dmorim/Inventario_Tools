@@ -23,5 +23,5 @@ def __posicionar_container(hub, cm):
     hub.update_idletasks()
     try:
         cm.posicionar_container(hub)
-    except RuntimeError as e:
-        raise e
+    except RuntimeError:
+        pass
