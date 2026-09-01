@@ -1,4 +1,3 @@
-from tkinter import messagebox
 from fdb import DatabaseError
 
 from Thread_Manager.Query_Operations import query_selector, query_executor
@@ -13,8 +12,8 @@ def inv_get():
         val = query_executor(query_selector, query)[0][0] if query_executor(
             query_selector, query) else None
     except DatabaseError as e:
-        messagebox.showerror('Erro', f'Erro ao acessar o banco de dados: {e}')
-        return None
+        raise DatabaseError(
+            f"Erro ao executar a query de valor de inventário: {e}")
 
     if val is not None:
         val = banco_codigo_valueform(val)  # Formata o valor obtido

@@ -1,3 +1,5 @@
+from Thread_Manager.Thread_Executor import atualizar_ui_main
+
 from Queries.Comando_Queries import (
     QUERY_UPDATE_PRECU_PORCENTAGEM,
     QUERY_UPDATE_PRECU_ARREDONDAMENTO,
@@ -39,28 +41,20 @@ def Comandos_Func(self, checkbox_List):
 
 
 def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, status_label):
-    # Função chamada ao apertar o botão de confirmar, itera sobre os itens da combobox e executa os comandos marcados
-    # Args:
-    # self: objeto da classe
-    # comando: janela do tkinter
-    # checkbox_List: lista de checkbox da aba comandos
-    # values_List: lista de valores da aba comandos
 
     def executa_comandos():
-        progress_bar.create_screen()
-        progress_bar.atualizar_status('Executando comandos')
         resultados = []
         for i, (nome, query, params) in enumerate(operacoes):
             idx = i
             n = nome
-            comando.after(0, lambda i=idx, n=n: status_label.configure(
+            comando.after(5, lambda i=idx, n=n: status_label.configure(
                 text=f'Executando {i + 1} de {total}: {n}'))
             query_executor(query_updater, query, params)
             resultados.append(nome)
         return resultados
 
     def update_finalizado(_):
-        progress_bar.finalizar()
+        atualizar_ui_main(comando, progress_bar.finalizar)
         status_label.configure(
             text=f'{total} comando(s) executado(s) com sucesso.')
         messagebox.showinfo(
@@ -68,7 +62,7 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
         comando.destroy()
 
     def update_erro(erro):
-        progress_bar.finalizar()
+        atualizar_ui_main(comando, progress_bar.finalizar)
         confirm_button.configure(state='normal', text='Confirmar')
         status_label.configure(text='Erro ao executar os comandos.')
         messagebox.showerror(
@@ -146,6 +140,9 @@ def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, 
 
     confirm_button.configure(state='disabled', text='Executando...')
 
+    atualizar_ui_main(comando, progress_bar.create_screen)
+    atualizar_ui_main(comando, progress_bar.atualizar_status,
+                      'Executando comandos')
     thread_execução(comando, executa_comandos, update_finalizado, update_erro)
 
 

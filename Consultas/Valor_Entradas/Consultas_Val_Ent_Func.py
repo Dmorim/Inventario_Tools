@@ -1,4 +1,3 @@
-from tkinter import messagebox
 from fdb import DatabaseError
 
 from Thread_Manager.Query_Operations import query_selector, query_executor
@@ -22,11 +21,10 @@ def ent_get(self):
         valent = query_executor(query_selector, query, params)[
             0][0] if query_executor(query_selector, query, params) else None
     except DatabaseError as e:
-        messagebox.showerror('Erro', f'Erro ao acessar o banco de dados\n {e}')
-        return None
+        raise DatabaseError(f"Erro ao acessar o banco de dados\n {e}") from e
 
     # Se o valor obtido for diferente de None, formata o valor e retorna ele, caso contrário retorna uma string informando que não foi registrado entradas
-    if valent != None:
+    if valent is not None:
         valent = banco_codigo_valueform(valent)
     else:
         valent = 'Não foi registrado entradas'

@@ -1,7 +1,6 @@
-from tkinter import messagebox
+from fdb import DatabaseError
 
 from Thread_Manager.Query_Operations import query_selector, query_executor
-from fdb import DatabaseError
 from Consultas.Generics_Functions.Gen_Funcs_Consulta import banco_codigo_valueform
 from Queries.Consulta_Queries import QUERY_VENDAS
 
@@ -16,8 +15,7 @@ def ven_get(self) -> str:
         rows = query_executor(query_selector, query, params)
         valrec = rows[0][0] if rows else None
     except (DatabaseError, TypeError) as e:
-        messagebox.showerror('Erro', f'Erro ao acessar o banco de dados\n {e}')
-        return None
+        raise DatabaseError(f"Erro ao acessar o banco de dados\n {e}") from e
 
     # Se o valor obtido for diferente de None, formata o valor e retorna ele, caso contrário retorna uma string informando que não foi registrado vendas
     if valrec is not None:

@@ -10,6 +10,7 @@ from Thread_Manager.Query_Operations import query_executor, query_selector
 from Thread_Manager.Thread_Executor import thread_execução
 from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 from Interface_Tools.Tk_Status_Animator import TextAnimator
+from Thread_Manager.Thread_Executor import atualizar_ui_main
 
 
 def Set_Dados_Padrao(entrys_list):
@@ -85,27 +86,28 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
         return progress_x, progress_y
 
     def executa_conexao():
-        progress_bar.create_screen()
-        progress_bar.atualizar_status("Conectando ao banco de dados...")
         if BancoDeDados.retorna_gerenciador() is not None:
             BancoDeDados.fechar()  # Cria o gerenciador de conexões
 
         BancoDeDados.conectar()  # Cria o gerenciador de conexões
 
+    def ao_conectar(_):
+        atualizar_ui_main(Banco_Screen, parar_animacao,
+                          'Conectado ao banco de dados')
+
         salvar_diretorio('Servidor', 'last_dir', entrys_list[0].get())
         salvar_diretorio('Porta', 'last_dir', entrys_list[1].get())
         salvar_diretorio('FBClient', 'dir_banco', entrys_list[3].get())
 
-    def ao_conectar(_):
-        parar_animacao('Conectado ao banco de dados')  # Para a animação
         _disparar_queries()
 
     def ao_conectar_erro(erro):
         parar_animacao('Erro ao conectar ao banco de dados')  # Para a animação
         progress_bar.finalizar()
         confirm_button.configure(state='normal')
-        messagebox.showerror(
-            'Erro', f'Não foi possível conectar ao banco de dados\n {erro}', parent=Banco_Screen)
+        atualizar_ui_main(Banco_Screen, messagebox.showerror,
+                          'Erro', f'Não foi possível conectar ao banco de dados\n {erro}',
+                          parent=Banco_Screen)
 
     def _disparar_queries():
         resultados = {}
@@ -164,8 +166,9 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
         def falha_propri(erro):
             parar_propri('Erro ao buscar dados da empresa')
             confirm_button.configure(state='normal')
-            messagebox.showerror(
-                'Erro', f'Não foi possível buscar os dados da empresa\n {erro}', parent=Banco_Screen)
+            atualizar_ui_main(Banco_Screen, messagebox.showerror,
+                              'Erro', f'Não foi possível buscar os dados da empresa\n {erro}',
+                              parent=Banco_Screen)
 
         def buscar_datas():
             return query_executor(query_selector, query_emissoes)
@@ -182,8 +185,9 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
             if parar_emissoes[0]:
                 parar_emissoes[0]('Erro ao buscar datas de emissão')
             confirm_button.configure(state='normal')
-            messagebox.showerror(
-                'Erro', f'Não foi possível buscar as datas de emissão\n {erro}', parent=Banco_Screen)
+            atualizar_ui_main(Banco_Screen, messagebox.showerror,
+                              'Erro', f'Não foi possível buscar as datas de emissão\n {erro}',
+                              parent=Banco_Screen)
 
         thread_execução(Banco_Screen, buscar_propri,
                         finalizar_propri, falha_propri)
@@ -224,6 +228,10 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
 
     query_propri = QUERY_PROPRI
     query_emissoes = QUERY_EMISSOES_MAXIMA
+
+    atualizar_ui_main(Banco_Screen, progress_bar.create_screen)
+    atualizar_ui_main(Banco_Screen, progress_bar.atualizar_status,
+                      'Conectando ao banco de dados...')
 
     thread_execução(Banco_Screen, executa_conexao,
                     ao_conectar, ao_conectar_erro)
