@@ -219,8 +219,8 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
                      ) if entrys_list[1].get().isdigit() else None,
             database=obter_caminho_curto_banco_dados(entrys_list[2].get()),
             fbclient=entrys_list[3].get(),
-            user='SYSDBA',
-            password='masterkey'
+            user=carregar_diretorio('Credenciais', 'user_db'),
+            password=carregar_diretorio('Credenciais', 'pass_db')
         )
     except Exception as e:
         logger.exception('Erro ao preparar os dados de conexão com o banco.')
@@ -263,3 +263,14 @@ def obter_caminho_curto_banco_dados(caminho_longo):
         logger.exception(
             'Erro ao obter o caminho curto do banco de dados: %s', caminho_longo)
         raise RuntimeError(f"Erro ao obter o caminho curto: {e}")
+
+
+def validar_credenciais():
+    user = carregar_diretorio('Credenciais', 'user_db')
+    password = carregar_diretorio('Credenciais', 'pass_db')
+
+    if not user or not password:
+        logger.warning('Credenciais do banco de dados não encontradas.')
+        return False
+
+    return True
