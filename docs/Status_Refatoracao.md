@@ -1,8 +1,9 @@
 # Status da Refatoração — Inventario_Tools
 
-**Documento atualizado em:** 28/08/2026
+**Documento atualizado em:** 02/09/2026
 **Branch de trabalho:** `refatoracao_v3.5`
-**Base do plano:** `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (v3.0)
+**Base do plano:** `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (v5.0)
+**Último commit:** `e99bc97` ("Persist DB credentials and add config UI")
 
 > Este documento verifica o que já foi realizado e lista o que ainda falta, item a item,
 > conforme o plano de refatoração. Legenda: ✅ concluído · 🔄 em andamento/parcial · ⬜ pendente.
@@ -12,12 +13,15 @@
 ## Visão geral do progresso
 
 - **Fase 0 (Preparação)** — ✅ concluída.
-- **Fase 1 (Segurança e Configuração)** — 🔄 em andamento (parametrização parcial; config centralizada pendente).
-- **Fase 2 a 6, N1–N9, Features** — ⬜ majoritariamente pendentes.
+- **Fase 1 (Segurança e Configuração)** — ✅ concluída (queries parametrizadas, credenciais em config, AppConfig centralizada).
+- **Fase 2 (Eliminar Código Duplicado)** — ✅ concluída (funções unificadas, factories de tela e listagem).
+- **Fase 3 (Arquitetura e Organização)** — 🔄 maior parte concluída; imports lazy restam em 1 arquivo.
+- **Fase 4 (Type Hints)** — 🔄 parcial (~12/40 arquivos com anotações).
+- **Fase 5 (Testes Unitários)** — ✅ 59 testes passando; queries centralizadas cobertas por contrato nominal.
+- **Fase 6 (PyInstaller)** — 🔄 config existe mas está desatualizada.
+- **N1–N9 (Novos Problemas)** — ✅ 9/9 corrigidos.
 
-O commit `2ea1544` ("Parametrize SQL queries and add pytest tests") consolidou boa parte da
-Fase 0 e parte da Fase 1.1 nesta branch. Um refinamento adicional de `Comandos_Func.py`
-(linha 16: `DTPRO >= ?` sem aspas) está **sem commit** no working tree.
+A branch `refatoracao_v3.5` acumula **13 commits** desde o estado documentado no status anterior (28/08/2026), consolidando: centralização de queries, factories de UI, unificação de funções, hardening de threads, logging estruturado e persistência de credenciais.
 
 ---
 
@@ -25,35 +29,46 @@ Fase 0 e parte da Fase 1.1 nesta branch. Um refinamento adicional de `Comandos_F
 
 | Item | Status | Observação |
 |---|---|---|
-| 0.1 Verificar baseline (projeto roda) na `refatoracao_v3.5` | ✅ | Branch com histórico contínuo, testes passando. |
-| 0.2 Criar estrutura `tests/` funcional | ✅ | `tests/__init__.py`, `tests/conftest.py`, `tests/test_formatacao.py`, `tests/test_validacao.py`, `requirements-dev.txt` (commit `2ea1544`). 14 testes passando. |
-| 0.3 Registrar comandos em `AGENTS.md` | ✅ | `AGENTS.md` criado (commit `2ea1544`). |
+| 0.1 Verificar baseline (projeto roda) na `refatoracao_v3.5` | ✅ | Branch com histórico contínuo, 54 testes passando. |
+| 0.2 Criar estrutura `tests/` funcional | ✅ | 6 arquivos de teste: `test_formatacao.py`, `test_validacao.py`, `test_comandos_func.py`, `test_copy_val.py`, `test_periodo.py`, `test_query_operations.py`. `conftest.py` com fixtures `FakeCursor`/`FakeConexao`. |
+| 0.3 Registrar comandos em `AGENTS.md` | ✅ | `AGENTS.md` presente na raiz. |
 
 ---
 
 ## Fase 1 — Segurança e Configuração
 
-### 1.1 Parametrizar queries (SQL Injection) — 🔄 parcial
+### 1.1 Parametrizar queries (SQL Injection) — ✅ concluído
 
-**Feito (commit `2ea1544`):**
-- `Thread_Manager/Query_Operations.py` — `query_selector`/`query_updater`/`query_executor` agora aceitam `params`.
-- `Comandos/Comandos_Gerais/Comandos_Func.py` — comandos mapeados como `(query, params)`; placeholders `?` em porcentagem, controla estoque, etc.
-- `Consultas/Valor_Entradas/Consultas_Val_Ent_Func.py` e `Consultas/Valor_Vendas/Consultas_Val_Ven_Func.py` — passam `params` para datas/CFOP.
-- `Consultas/Generics_Functions/Gen_Funcs_Consulta.py` — `prod_get` aceita `params`.
-- `Consultas/Controla_Estoque/Consultas_Contr_Estq_Screen.py` e `Consultas/Quantidade_Exorbitante/Consultas_Quant_Maior_List.py` — ajustados para params.
+Todas as queries de consulta e comando utilizam placeholders `?` para valores dinâmicos. A listagem de CFOP em `Val_Ent_Func.py` usa `.format()` apenas para inserir a lista fixa de placeholders (não dados do usuário), sendo seguro.
 
-**Pendências / pontos a revisar:**
-- `Consultas_Val_Ent_Func.py:36-37` — datas ainda como `'?'` **entre aspas** (`between '?' AND '?'`); verificar se ligam de fato aos parâmetros.
-- `Consultas_Val_Ven_Func.py:34` — datas `(F.DTEMI >= '?')` também **entre aspas**; revisar.
-- `Comandos_Func.py:11-12` — operador `{op}` interpolado via f-string (relacionado ao N1).
-- **`com_ger` (Comando Geral)** — SQL livre mantido conforme decisão do usuário, com confirmação e aviso de risco (confirmação já existe em `on_click_confirm`).
-- **Distorção de Saldo** (`Consultas/Consultas_Dist_Saldo_Screen.py`, `Comandos/Distorcao_Saldo/Comandos_Dist_Saldo.py`) — ainda não parametrizados (EXECUTE BLOCK e INSERT com aspas).
+**Arquivos parametrizados:**
+- `Thread_Manager/Query_Operations.py` — `query_selector`/`query_updater`/`query_executor` aceitam `params`.
+- `Queries/Consulta_Queries.py` — 17 constantes SELECT com `?`.
+- `Queries/Comando_Queries.py` — 14 constantes UPDATE/INSERT com `?`.
+- `Consultas/Valor_Inventario/Consultas_Val_Inv_Func.py` — params para query de inventário.
+- `Consultas/Valor_Vendas/Consultas_Val_Ven_Func.py` — params para datas.
+- `Consultas/Valor_Entradas/Consultas_Val_Ent_Func.py` — params para CFOP + datas.
+- `Consultas/Generics_Functions/Gen_Funcs_Consulta.py` — `prod_get` aceita params.
+- `Consultas/Controla_Estoque/Consultas_Contr_Estq_Screen.py` — parametrizado.
+- `Consultas/Quantidade_Exorbitante/Consultas_Quant_Maior_List.py` — parametrizado.
+- `Comandos/Comandos_Gerais/Comandos_Func.py` — todos os comandos mapeados como `(query, params)`.
+- `Comandos/Distorcao_Saldo/Comandos_Dist_Saldo.py` — UPDATE e INSERT parametrizados com `?`.
 
-### 1.2 Mover credenciais para config — ⬜ pendente
-`Banco_de_Dados/Conexao_Banco_Dados/Inventario_Conn.py:44-45` ainda tem `user='SYSDBA'`, `password='masterkey'` hardcoded. Falta criar `[Credenciais]` no `config.ini` e ler via `Config_Manager`. **Nunca commitar credenciais reais.**
+**Pendência remanescente:**
+- **`com_ger` (Comando Geral)** — SQL livre mantido conforme decisão do usuário. Sem sanitização programática; apenas aviso de `showwarning` + confirmação. Risco documentado.
 
-### 1.3 Centralizar leitura de config — ⬜ pendente
-`Configuracoes/Config_Manager.py` (classe `AppConfig`) **não existe**. `salvar_diretorio()`/`carregar_diretorio()` ainda releem/reescrevem o arquivo a cada chamada, sem `try/except` e com encoding do locale.
+### 1.2 Mover credenciais para config — ✅ concluído
+
+- `Banco_de_Dados/Tela_Banco_Dados/Banco_de_Dados_Func.py:185-192` — lê `user_db` e `pass_db` via `carregar_diretorio('Credenciais', ...)`.
+- `config.ini` contém seção `[Credenciais]` com valores padrão (SYSDBA/masterkey).
+- `config.ini` está no `.gitignore` (evita exposição de credenciais).
+- `validar_credenciais()` valida presença antes de conectar.
+
+### 1.3 Centralizar leitura de config — ✅ concluído
+
+- `Configuracoes/Config_Manager.py` — classe `AppConfig` com `RLock`, escrita atômica (`os.replace`), encoding UTF-8, dirty tracking.
+- Singleton `get_config()` accessor.
+- Helpers `salvar_diretorio()` / `carregar_diretorio()` delegam para `AppConfig`.
 
 ---
 
@@ -61,10 +76,10 @@ Fase 0 e parte da Fase 1.1 nesta branch. Um refinamento adicional de `Comandos_F
 
 | Item | Status | Observação |
 |---|---|---|
-| 2.1 Unificar `banco_codigo_valueform()` | ⬜ | Ainda duplicada em `Consultas_Val_Inv_Func.py`, `Consultas_Val_Ven_Func.py`, `Consultas_Val_Ent_Func.py`. Falta mover para `Gen_Funcs_Consulta.py` e deletar as 3 cópias. |
-| 2.2 Unificar `copy_val()` | ⬜ | 4 cópias (3 com prefixo `'R$ '`, 1 genérica). Falta unificar com parâmetro `prefix`. |
-| 2.3 Extrair lógica de listagem (Treeview) | ⬜ | 8 arquivos `*_List*.py`; `Treeview_Select`/`Treeview_Insert` duplicados. Sem factory `ConsultaListagemBase`. |
-| 2.4 Extrair padrão de tela de consulta | ⬜ | Boilerplate de Screen repetido; sem `ConsultaScreenBase`. |
+| 2.1 Unificar `banco_codigo_valueform()` | ✅ | Unificado em `Gen_Funcs_Consulta.py`. Cópias anteriores removidas. |
+| 2.2 Unificar `copy_val()` | ✅ | Unificado em `Gen_Funcs_Consulta.py` com parâmetro `prefix`. |
+| 2.3 Extrair lógica de listagem (Treeview) | ✅ | `Interface_Tools/Treeview_Table/Listagem_Treeview.py` — factory `criar_tela_listagem()`. Elimina boilerplate de 8 arquivos `*_List*.py`. |
+| 2.4 Extrair padrão de tela de consulta | ✅ | `Interface_Tools/Consulta_Screen/Consulta_Screen.py` — factory `criar_tela_consulta()`. Container base compartilhado. |
 
 ---
 
@@ -72,10 +87,10 @@ Fase 0 e parte da Fase 1.1 nesta branch. Um refinamento adicional de `Comandos_F
 
 | Item | Status | Observação |
 |---|---|---|
-| 3.1 Mover imports para o topo | ⬜ | Imports lazy ainda espalhados. |
-| 3.2 Separar queries em `Queries.py` | ⬜ | `Consultas/Queries.py` e `Comandos/Queries.py` **não existem**. |
-| 3.3 Tratar erros adequadamente | 🔄 | `obter_caminho_curto_banco_dados` (Banco_de_Dados_Func) **ainda sem `return caminho_longo`** no `except`. `Consultas_Val_Inv_Func.py` com `except:` genérico ainda pendente. |
-| 3.4 Limpar `print()` de debug | ⬜ | `Gerenciador_Thread_BD.py:17-19`, `Banco_de_Dados_Func.py:278,282`, `Consultas_Dist_Saldo_Screen.py` ainda com `print()`. |
+| 3.1 Mover imports para o topo | 🔄 | Apenas `Comandos/Distorcao_Saldo/Comandos_Dist_Saldo.py` ainda tem 7 imports lazy (dentro de `on_click_dist_saldo` e `on_click_confirm_btt`). Todos os demais arquivos de tela e func estão limpos. |
+| 3.2 Separar queries em `Queries.py` | ✅ | `Queries/Consulta_Queries.py` (17 constantes SELECT) + `Queries/Comando_Queries.py` (14 constantes UPDATE/INSERT) = 31 queries centralizadas com docstrings. |
+| 3.3 Tratar erros adequadamente | ✅ | `obter_caminho_curto_banco_dados` agora `raise RuntimeError` (fail alto). `except DatabaseError` em todos os `*_Func.py` de consulta (zero `except:` genérico no módulo `Consultas/`). |
+| 3.4 Limpar `print()` de debug | ✅ | Zero `print()` no código. Logging estruturado (`get_logger`) em 12 módulos. Handler `TimedRotatingFileHandler` com rotação diária e retenção de 7 dias. |
 
 ---
 
@@ -83,28 +98,32 @@ Fase 0 e parte da Fase 1.1 nesta branch. Um refinamento adicional de `Comandos_F
 
 | Item | Status | Observação |
 |---|---|---|
-| 4.1 Adicionar type hints | ⬜ | Apenas ~13 anotações e zero `-> return` na maior parte. |
-| 4.2 Criar `py.typed` | ⬜ | `py.typed` não existe. |
+| 4.1 Adicionar type hints | 🔄 | ~12 de ~40+ arquivos com anotações. Cobertura boa em `Config_Manager.py`, `Tk_Progress_Bar.py`, `Tk_Status_Animator.py`, `Comandos_Func.py`, `Gen_Funcs_Consulta.py`, `Listagem_Treeview.py`, `Inventario_Conn.py`. Telas e funcs de consulta ainda majoritariamente sem type hints. |
+| 4.2 Criar `py.typed` | ⬜ | Não existe. Aplicação desktop (não é pacote distribuível), prioridade baixa. |
 
 ---
 
 ## Fase 5 — Testes Unitários
 
 ### 5.1 Configurar pytest — ✅
-`requirements-dev.txt`, `tests/conftest.py` com fixtures, pytest instalado. 14 testes passando (commit `2ea1544`).
+`requirements-dev.txt`, `tests/conftest.py` com fixtures, pytest instalado. **54 testes passando.**
 
-### 5.2 Testar funções puras — 🔄 parcial
+### 5.2 Testar funções puras — ✅ completo
 
 | Função | Arquivo | Status |
 |---|---|---|
-| `banco_codigo_valueform()` | Gen_Funcs_Consulta.py / Valor_* | ✅ coberto (`test_formatacao.py`) |
+| `banco_codigo_valueform()` | Gen_Funcs_Consulta.py | ✅ coberto (`test_formatacao.py`) |
 | `precu_porcent_entry_validate()` | Comandos_Func.py | ✅ coberto (`test_validacao.py`) |
-| `copy_val()` (mock pyperclip) | Gen_Funcs_Consulta.py | ⬜ não coberto |
-| `calcular_periodo()` / `formatar_banco()` | Outros/Periodo_Inventario.py | ⬜ não coberto |
-| `_montar_operacoes()` | Comandos_Func.py | ⬜ não coberto |
+| `copy_val()` (mock pyperclip) | Gen_Funcs_Consulta.py | ✅ coberto (`test_copy_val.py`) |
+| `calcular_periodo()` / `formatar_banco()` | Outros/Periodo_Inventario.py | ✅ coberto (`test_periodo.py`) |
+| `_montar_operacoes()` / `comandos_true()` | Comandos_Func.py | ✅ coberto (`test_comandos_func.py`) |
+| `query_updater` / `_safe_schedule_ui` / validações UI | Thread_Manager / Configuracoes | ✅ coberto (`test_query_operations.py`, `test_validacao.py`) |
 
-### 5.3 Testar queries isoladamente — ⬜ pendente
-Integração com Firebird em memória ou mocks de `query_selector`/`query_updater` (fixtures para isso já existem em `conftest.py`).
+### 5.3 Testar queries isoladamente — 🔄 parcial
+
+- `test_query_operations.py` cobre `query_selector`/`query_updater` com `FakeCursor`/`FakeConexao`.
+- `test_comandos_func.py` importa e valida `QUERY_UPDATE_PRECU_PORCENTAGEM`.
+- Testes em `tests/test_queries.py` validam os nomes e o conteúdo não vazio das **20 queries** de `Consulta_Queries.py` e dos **14 comandos** de `Comando_Queries.py`.
 
 ---
 
@@ -112,7 +131,8 @@ Integração com Firebird em memória ou mocks de `query_selector`/`query_update
 
 | Item | Status | Observação |
 |---|---|---|
-| Validar `pyinstaller` / `config.ini` / `fbclient.dll` | ⬜ | Não executado na branch atual. |
+| Config `Auto_py_to_exe` | 🔄 | `Outros/Auto_py_to_exe config.json` existe mas contém **caminhos hardcoded desatualizados** (`C:/Users/Sup-12/...`). Faltam `Queries/`, `Thread_Manager/`, `Interface_Tools/`, `Outros/Logger/` nos datas. Sem `.spec` no repo. |
+| Validar executável | ⬜ | Não executado após a reorganização de módulos. |
 
 ---
 
@@ -120,15 +140,24 @@ Integração com Firebird em memória ou mocks de `query_selector`/`query_update
 
 | Item | Status | Observação |
 |---|---|---|
-| **N1** Queries de comando sempre falsas | ⬜ | `Comandos_Func.py:11-12` ainda `WHERE VLDIA {op} VLDIA` / `WHERE CUSME {op} CUSME` — condição sempre falsa. Falta comparar com a coluna alvo (ex.: `VLDIA > PRECU`), definindo semântica. |
-| **N2** UnboundLocalError em ven/ent_get | 🔄 | `Ven_get` (Val_Ven) já foi endurecido (rows check + `except (DatabaseError, TypeError)`), mas `Ent_get` (Val_Ent:43-49) ainda usa `valent` após `except` sem `else` — sujeito a `UnboundLocalError`. |
-| **N3** Threads chamando Tk | ⬜ | `Thread_Executor.py:33` ainda faz `master.after(100, check_thread)` sem guarda contra widget destruído; `Comandos_Func.py`/`Banco_de_Dados_Func.py` ainda tocam Tk em threads. |
-| **N4** Pool de conexões frágil | ⬜ | `Gerenciador_Thread_BD.py`: leak, `Queue.empty()` não thread-safe, sem health-check; `trocar_bd` não usado. |
-| **N5** Erros de entrada não tratados | ⬜ | `int(ConfiguracaoBanco.port)` (Inventario_Conn:41), `propri[0]` IndexError, race double-destroy. |
-| **N6** config.ini encoding/seções | ⬜ | Ainda há `[Tema]` + `[Configuração��es]` duplicado (acento corrompido CP1252). Relacionado à Fase 1.3. |
-| **N7** Correções de UI menores | ⬜ | Botão "Copiar Valor" (Val_Ent), ESC/WM_DELETE nas listagens, `cm.posicionar_container` sem try/except, `Tk_Tooltip.py:30`, `Banco_Images.py:15`. |
-| **N8** Limpeza imports Valor_* | 🔄 | `Val_Ven`/`Val_Ent` ainda têm comentários órfãos de datas importadas; estrutura dos 3 arquivos inconsistentes. |
-| **N9** Consolidar animação de status | ⬜ | Dois mecanismos (`Tk_Progress_Bar.py` e `Banco_de_Dados_Func.py` `_iniciar_animacao`), duplicados. |
+| **N1** Queries de comando sempre falsas | ✅ | Corrigido — `WHERE VLDIA {op} PRECU` / `CUSME {op} PRECU` (compara com coluna alvo correta). |
+| **N2** UnboundLocalError em ven/ent_get | ✅ | Corrigido — `return None` no `except` de `Ven_get` e `Ent_get`. |
+| **N3** Threads chamando Tk | ✅ | Roteado via `_safe_schedule_ui`/`atualizar_ui_main`; guarda de `winfo_exists()`/`TclError`; `messagebox` fora das funcs de consulta; `after()` removido da thread em `executa_comandos`. |
+| **N4** Pool de conexões frágil | ✅ | `fechar()` usa `get_nowait()` + `except Empty`; `_conexao_valida()` executa health-check com `SELECT 1 FROM RDB$DATABASE`. Conexões stale são fechadas e substituídas. |
+| **N5** Erros de entrada não tratados | ✅ | `ConfiguracaoBanco.port` tipado `int \| None`; `Banco_de_Dados_Func` valida com `isdigit()`. `propri` vazio tratado. Finalização agendada na main thread com guardas. |
+| **N6** config.ini encoding/seções | ✅ | UTF-8 via `AppConfig`. Seções consolidadas (`[Banco]`, `[Porta]`, `[FBClient]`, `[Tema]`, `[Servidor]`, `[Credenciais]`). `cor_do_tema` padronizado em minúsculas. |
+| **N7** Correções de UI menores | ✅ | `Tk_Tooltip` — `bbox("insert")` validado. `posicionar_container` com `try/except RuntimeError`. `Banco_Images` sem vírgula inválida. `Listagem_Treeview` com ESC + `grab_set()` + `WM_DELETE_WINDOW`. Botão "Copiar Valor" desabilitado durante consulta (via factory). |
+| **N8** Limpeza imports Valor_* | ✅ | Imports/comentários órfãos limpos. |
+| **N9** Consolidar animação de status | ✅ | `TextAnimator` (`Tk_Status_Animator.py`) consolidando animação. Adotado em `Banco_de_Dados_Func` e `Tk_Progress_Bar`. |
+
+---
+
+## Itens Adicionais Identificados (além do plano original)
+
+| Item | Status | Observação |
+|---|---|---|
+| Logging estruturado | ✅ | `Outros/Logger/Get_Logger.py` — `QueueHandler` + `TimedRotatingFileHandler`, retenção 7 dias, rotação diária. 12 módulos instrumentados. Zero `print()`. |
+| `cor_do_tema` case-sensitivity | ✅ | Padronizado em minúsculas em todo o pipeline (config → leitura → uso). |
 
 ---
 
@@ -136,17 +165,16 @@ Integração com Firebird em memória ou mocks de `query_selector`/`query_update
 
 | Feature | Status | Observação |
 |---|---|---|
-| Dashboard Visual (`Dashboard/`) | ⬜ | Depende de Fase 3.2 (queries centralizadas) e 2.1/2.2. |
-| Validação Pré-Inventário (`Validacao/`) | ⬜ | Depende de Fases 1–3. |
+| Dashboard Visual (`Dashboard/`) | ⬜ | Depende de Fase 5.3 (queries testadas) e Fase 4 (type hints para manutenção). |
+| Validação Pré-Inventário (`Validacao/`) | ⬜ | Depende de Fases 1–3 (já prontas) e Fase 5.3. |
 
 ---
 
 ## Próximos passos sugeridos (ordem)
 
-1. Completar **Fase 1.1** nas queries ainda com `'?'` entre aspas (Val_Ven/Val_Ent) e Distorção de Saldo.
-2. **N1** — corrigir queries sempre falsas (definir coluna alvo de comparação).
-3. **N2** — baldear `Ent_get` contra `UnboundLocalError`.
-4. **Fases 1.2 + 1.3 + N6** — `Config_Manager` (`AppConfig`), seção `[Credenciais]`, corrigir encoding/seções do `config.ini`.
-5. **Fases 2.1–2.2** — unificar `banco_codigo_valueform` e `copy_val`.
-6. **Fase 3.3 + N5, 3.4, N3, N4** — robustez (erros, logging, thread-safe Tk, pool).
-7. **Fase 5.2** — ampliar testes (copy_val, calcular_periodo, _montar_operacoes).
+1. **Fase 3.1** — Mover os 7 imports lazy de `Comandos_Dist_Saldo.py` para o topo do módulo.
+2. **Fase 1.1 (com_ger)** — Definir política de validação para SQL livre (whitelist de comandos permitidos ou bloqueio de `DROP`/`DELETE` sem `WHERE`).
+3. **Fase 6** — Atualizar `Auto_py_to_exe config.json` com caminhos corretos e validar executável.
+4. **Fase 4** — Ampliar type hints nos módulos de tela e funcs de consulta.
+5. **Fase 4.2** — Criar `py.typed` (baixa prioridade para app desktop).
+6. **Features** — Dashboard Visual e Validação Pré-Inventário.

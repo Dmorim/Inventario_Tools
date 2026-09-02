@@ -31,10 +31,28 @@ class GerenciadorThreadBD:
         try:
             if getattr(conexao, 'closed', False):
                 return False
+            cursor = conexao.cursor()
+            try:
+                cursor.execute('SELECT 1 FROM RDB$DATABASE')
+            finally:
+                cursor.close()
         except Exception:
             return False
 
         return True
+
+    def _fechar_conexao(self, conexao):
+        try:
+            conexao.close()
+        except Exception:
+            pass
+
+    def _criar_conexao_valida(self):
+        conexao = self.__conexao_banco()
+        if self._conexao_valida(conexao):
+            return conexao
+        self._fechar_conexao(conexao)
+        raise ConnectionError('A nova conexão falhou no health-check.')
 
     def _pegar_conexao(self, timeout=5, tentativas=3):
         for tentativa_conexao in range(tentativas + 1):
@@ -50,14 +68,14 @@ class GerenciadorThreadBD:
                 continue
 
             if not self._conexao_valida(conexao):
+                self._fechar_conexao(conexao)
                 try:
-                    conexao.close()
+                    return self._criar_conexao_valida()
                 except Exception:
-                    pass
-                if tentativa_conexao == tentativas:
-                    raise TimeoutError(
-                        "Conexão inválida ou fechada foi descartada do pool.")
-                continue
+                    if tentativa_conexao == tentativas:
+                        raise TimeoutError(
+                            'Conexão inválida ou fechada foi descartada do pool.')
+                    continue
 
             return conexao
 
@@ -66,26 +84,22 @@ class GerenciadorThreadBD:
 
     def _devolver_conexao(self, conexao):
         if self._fechando:
-            try:
-                conexao.close()
-            except Exception:
-                pass
+            self._fechar_conexao(conexao)
             return
 
         if not self._conexao_valida(conexao):
+            self._fechar_conexao(conexao)
             try:
-                conexao.close()
+                self.__pool.put(self._criar_conexao_valida())
             except Exception:
-                pass
+                self.logger.exception(
+                    'Não foi possível repor conexão inválida no pool.')
             return
 
         try:
             self.__pool.put(conexao)
         except Exception:
-            try:
-                conexao.close()
-            except Exception:
-                pass
+            self._fechar_conexao(conexao)
 
     def executar(self, funcao, *args, **kwargs):
         conexao = self._pegar_conexao()
@@ -102,7 +116,4 @@ class GerenciadorThreadBD:
                     conexao = self.__pool.get_nowait()
                 except Empty:
                     break
-                try:
-                    conexao.close()
-                except Exception:
-                    pass
+                self._fechar_conexao(conexao)

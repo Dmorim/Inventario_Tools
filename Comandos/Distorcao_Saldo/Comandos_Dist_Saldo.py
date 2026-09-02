@@ -1,20 +1,15 @@
+import customtkinter as ctk
+from datetime import datetime
+from tkcalendar import DateEntry
+from tkinter import messagebox
+
+from Thread_Manager.Query_Operations import query_updater, query_executor
+from Thread_Manager.Thread_Executor import thread_execução
 from Queries.Comando_Queries import QUERY_ATUALIZA_SALDO_PRODUTO, QUERY_INSERE_AJUSTE_LAN
 
 
 def on_click_dist_saldo(self, parent):
-    # Função chamada ao apertar o botão de distorção de saldo, cria a tela de distorção de saldo
-    # Args:
-    # self: objeto da classe
-    # parent: janela do tkinter
 
-    # Importações de bibliotecas externas
-    import customtkinter as ctk
-    from datetime import datetime
-    from tkcalendar import DateEntry
-
-    # Importação da função update_executor do arquivo Thread_Manager/Thread_Executor.py
-
-    # Cria a janela distorcao como um Toplevel do parent
     distorcao = ctk.CTkToplevel(parent)
     distorcao.geometry("330x120+150+135")
     distorcao.title("Distorção de Saldo")
@@ -59,18 +54,6 @@ def on_click_dist_saldo(self, parent):
 
 
 def on_click_confirm_btt(self, parent, val_list, confirm_button):
-    # Função chamada ao apertar o botão de confirmar, executa a distorção de saldo
-    # Args:
-    # self: objeto da classe
-    # parent: janela do tkinter
-    # val_list: lista de valores da aba distorção de saldo
-
-    from datetime import datetime  # Importa a classe datetime
-    from tkinter import messagebox  # Importa a classe messagebox do tkinter
-
-    from Thread_Manager.Query_Operations import query_updater, query_executor
-    from Thread_Manager.Thread_Executor import thread_execução
-
     def executa_distorcao():
         tp_distorc = val_list[0].get()
         if tp_distorc == 'PRO = LAN':  # Verifica se a distorção é PRO = LAN
