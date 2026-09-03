@@ -7,6 +7,7 @@ from Comandos.Comandos_Gerais.Comandos_Screen import Comandos_Screen
 from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Screen import Interface_Banco
 from Configuracoes.Config_Screen import config_screen
 from Tutorial.Tutorial_Screen import tutorial_screen
+from Dashboard.Dashboard_Screen import Dashboard_Screen
 from Outros.Banco_Images import TelaInicial
 from Outros.Periodo_Inventario import TIPO_ANUAL, TIPO_MENSAL, TIPO_PERSONALIZADO, MESES, periodo_padrao
 from Consultas.Generics_Functions.Gen_Funcs_Consulta import event_invoke_button
@@ -30,7 +31,9 @@ def _create_command_buttons(app_self, master, entrys_list: list):
     comando = CTkButton(master, text='Comandos (F2)', width=60, height=48,
                         command=lambda: Comandos_Screen(app_self, master), state='disabled')
     database = CTkButton(master, text='Selecione o Banco de Dados', width=100,
-                         height=48, command=lambda: Interface_Banco(app_self, master, entrys_list, [consulta, comando]))
+                         height=48, command=lambda: Interface_Banco(app_self, master, entrys_list, [consulta, comando, dashboard]))
+    dashboard = CTkButton(master, text='Dashboard (F3)', width=80, height=48,
+                          command=lambda: Dashboard_Screen(app_self, master, dashboard), state='disabled')
 
     app_self.data_setada = IntVar(value=TIPO_ANUAL)
 
@@ -82,14 +85,16 @@ def _create_command_buttons(app_self, master, entrys_list: list):
     database._text_label.configure(wraplength=100)
     consulta._text_label.configure(wraplength=70)
     comando._text_label.configure(wraplength=70)
+    dashboard._text_label.configure(wraplength=70)
 
     database.place(relx=0.01, rely=0.1, anchor='nw')
-    consulta.place(relx=0.217, rely=0.1, anchor='nw')
-    comando.place(relx=0.375, rely=0.1, anchor='nw')
+    consulta.place(relx=0.18, rely=0.1, anchor='nw')
+    comando.place(relx=0.325, rely=0.1, anchor='nw')
+    dashboard.place(relx=0.46, rely=0.1, anchor='nw')
 
-    radio_ano.place(relx=0.522, rely=0.08, anchor='nw')
-    radio_mes.place(relx=0.522, rely=0.38, anchor='nw')
-    radio_personalizado.place(relx=0.522, rely=0.68, anchor='nw')
+    radio_ano.place(relx=0.585, rely=0.08, anchor='nw')
+    radio_mes.place(relx=0.585, rely=0.38, anchor='nw')
+    radio_personalizado.place(relx=0.585, rely=0.68, anchor='nw')
 
     grupo_controles = {
         TIPO_ANUAL: [app_self.ano_combo],
@@ -97,12 +102,12 @@ def _create_command_buttons(app_self, master, entrys_list: list):
         TIPO_PERSONALIZADO: [dat_ini_label, app_self.dat_ini, dat_fim_label, app_self.dat_fim],
     }
     posicoes = {
-        app_self.ano_combo: dict(relx=0.71, rely=0.08, anchor='nw'),
-        app_self.mes_combo: dict(relx=0.71, rely=0.32, anchor='nw'),
-        dat_ini_label: dict(relx=0.705, rely=0.05, anchor='nw'),
-        app_self.dat_ini: dict(relx=0.755, rely=0.1, anchor='nw'),
-        dat_fim_label: dict(relx=0.705, rely=0.50, anchor='nw'),
-        app_self.dat_fim: dict(relx=0.755, rely=0.53, anchor='nw'),
+        app_self.ano_combo: dict(relx=0.75, rely=0.08, anchor='nw'),
+        app_self.mes_combo: dict(relx=0.75, rely=0.32, anchor='nw'),
+        dat_ini_label: dict(relx=0.745, rely=0.05, anchor='nw'),
+        app_self.dat_ini: dict(relx=0.795, rely=0.1, anchor='nw'),
+        dat_fim_label: dict(relx=0.745, rely=0.50, anchor='nw'),
+        app_self.dat_fim: dict(relx=0.795, rely=0.53, anchor='nw'),
     }
     exibir_periodo_atual()
 
@@ -113,6 +118,8 @@ def _create_command_buttons(app_self, master, entrys_list: list):
         '<F1>', lambda event: event_invoke_button(event, consulta))
     app_self.root.bind(
         '<F2>', lambda event: event_invoke_button(event, comando))
+    app_self.root.bind(
+        '<F3>', lambda event: event_invoke_button(event, dashboard))
     app_self.root.bind(
         'B', lambda event: event_invoke_button(event, database))
 

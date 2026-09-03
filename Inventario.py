@@ -22,16 +22,16 @@ class Inventario:
 
         self.root = root
         self.root.title("Configurações de Inventario")
-        self.root.geometry("530x200+80+60")
+        self.root.geometry("600x200+80+60")
         self.root.resizable(False, False)
         self.root.focus_set()
 
         self.entry_alter_list = []
 
-        self.frame_top = criar_top_frame(self, root, self.entry_alter_list, width=530,
-                                         height=60, border_width=2, border_color='silver', corner_radius=2)
+        self.frame_top = criar_top_frame(self, root, self.entry_alter_list, width=600,
+                                          height=60, border_width=2, border_color='silver', corner_radius=2)
 
-        self.frame_bot = criar_bot_frame(root, self.entry_alter_list, width=530,
+        self.frame_bot = criar_bot_frame(root, self.entry_alter_list, width=600,
                                          height=140, border_width=2, border_color='silver', corner_radius=5)
 
     def _periodo_selecionado(self):
