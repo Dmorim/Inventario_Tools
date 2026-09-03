@@ -7,7 +7,7 @@ from Outros.Logger.Get_Logger import get_logger
 logger = get_logger(__name__)
 
 
-def _safe_schedule_ui(master, func, *args):
+def _safe_schedule_ui(master, func, *args, **kwargs):
     """Agenda uma ação da UI na thread principal apenas se a janela ainda existir."""
     if master is None:
         logger.debug('Não foi possível agendar callback na UI: master=None.')
@@ -22,7 +22,7 @@ def _safe_schedule_ui(master, func, *args):
         return False
 
     try:
-        master.after(0, lambda: func(*args))
+        master.after(0, lambda: func(*args, **kwargs))
         return True
     except TclError:
         logger.exception('Falha ao agendar callback na thread principal.')
@@ -89,5 +89,5 @@ def thread_execução(master, func, callback, on_erro=None, *args, **kwargs):
     check_thread()
 
 
-def atualizar_ui_main(master, func, *args):
-    return _safe_schedule_ui(master, func, *args)
+def atualizar_ui_main(master, func, *args, **kwargs):
+    return _safe_schedule_ui(master, func, *args, **kwargs)

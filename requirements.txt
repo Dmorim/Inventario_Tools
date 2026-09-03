@@ -3,3 +3,4 @@ tkcalendar
 Pillow
 fdb
 pyperclip
+matplotlib

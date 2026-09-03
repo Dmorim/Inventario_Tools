@@ -2,6 +2,7 @@ import ctypes
 from ctypes import wintypes
 from tkinter import filedialog
 from tkinter import messagebox
+from pathlib import Path
 
 from Configuracoes.Config_Manager import salvar_diretorio, carregar_diretorio
 from Queries.Consulta_Queries import QUERY_PROPRI, QUERY_EMISSOES_MAXIMA
@@ -17,6 +18,9 @@ logger = get_logger(__name__)
 
 
 def Set_Dados_Padrao(entrys_list):
+    default_dir = Path(__file__).resolve(
+    ).parents[2]/"Recursos"/"Firebird"/"fbclient.dll"
+
     if len(entrys_list) != 4:
         logger.error(
             'Lista de entradas inválida para configuração padrão: %s', len(entrys_list))
@@ -28,7 +32,7 @@ def Set_Dados_Padrao(entrys_list):
         entrys_list[1]: carregar_diretorio('Porta', 'last_dir') or '3050',
         entrys_list[2]: '',
         entrys_list[3]: carregar_diretorio(
-            'FBClient', 'dir_banco') or 'C:/Program Files/Firebird/Firebird_3_0/bin/fbclient.dll'
+            'FBClient', 'dir_banco') or str(default_dir)
     }
     for entry, value in entrys_dict.items():
         entry.delete(0, 'end')
