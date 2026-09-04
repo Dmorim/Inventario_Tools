@@ -35,7 +35,6 @@ def _criar_kpi_card(master, titulo, valor, cor_valor=COR_TEXTO):
 
 
 def _atualizar_dashboard(screen, kpis, cards_frame, charts_frame):
-    logger.info('Atualizando interface do dashboard.')
     for widget in cards_frame.winfo_children():
         widget.destroy()
     for widget in charts_frame.winfo_children():
@@ -53,13 +52,13 @@ def _atualizar_dashboard(screen, kpis, cards_frame, charts_frame):
                     kpis['total_movimentacoes'])
 
     chart_left = ctk.CTkFrame(charts_frame, fg_color=COR_CARD,
-                               corner_radius=8, border_width=1,
-                               border_color='#e0e0e0')
+                              corner_radius=8, border_width=1,
+                              border_color='#e0e0e0')
     chart_left.pack(side='left', padx=6, pady=4, fill='both', expand=True)
 
     chart_right = ctk.CTkFrame(charts_frame, fg_color=COR_CARD,
-                                corner_radius=8, border_width=1,
-                                border_color='#e0e0e0')
+                               corner_radius=8, border_width=1,
+                               border_color='#e0e0e0')
     chart_right.pack(side='right', padx=6, pady=4, fill='both', expand=True)
 
     criar_grafico_saude(chart_left, kpis['saude'])
@@ -80,7 +79,6 @@ def _carregar_dados(screen, cards_frame, charts_frame, on_erro=None):
 
 
 def Dashboard_Screen(app_self, parent, button):
-    logger.info('Abrindo Dashboard.')
     button.configure(state='disabled')
 
     screen = ctk.CTkToplevel(parent)

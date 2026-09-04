@@ -32,7 +32,7 @@ def _create_command_buttons(app_self, master, entrys_list: list):
                         command=lambda: Comandos_Screen(app_self, master), state='disabled')
     database = CTkButton(master, text='Selecione o Banco de Dados', width=100,
                          height=48, command=lambda: Interface_Banco(app_self, master, entrys_list, [consulta, comando, dashboard]))
-    dashboard = CTkButton(master, text='Dashboard (F3)', width=80, height=48,
+    dashboard = CTkButton(master, text='Dashboard (F3)', width=70, height=48,
                           command=lambda: Dashboard_Screen(app_self, master, dashboard), state='disabled')
 
     app_self.data_setada = IntVar(value=TIPO_ANUAL)
@@ -88,13 +88,13 @@ def _create_command_buttons(app_self, master, entrys_list: list):
     dashboard._text_label.configure(wraplength=70)
 
     database.place(relx=0.01, rely=0.1, anchor='nw')
-    consulta.place(relx=0.18, rely=0.1, anchor='nw')
-    comando.place(relx=0.325, rely=0.1, anchor='nw')
-    dashboard.place(relx=0.46, rely=0.1, anchor='nw')
+    consulta.place(relx=0.187, rely=0.1, anchor='nw')
+    comando.place(relx=0.322, rely=0.1, anchor='nw')
+    dashboard.place(relx=0.449, rely=0.1, anchor='nw')
 
-    radio_ano.place(relx=0.585, rely=0.08, anchor='nw')
-    radio_mes.place(relx=0.585, rely=0.38, anchor='nw')
-    radio_personalizado.place(relx=0.585, rely=0.68, anchor='nw')
+    radio_ano.place(relx=0.580, rely=0.08, anchor='nw')
+    radio_mes.place(relx=0.580, rely=0.38, anchor='nw')
+    radio_personalizado.place(relx=0.580, rely=0.68, anchor='nw')
 
     grupo_controles = {
         TIPO_ANUAL: [app_self.ano_combo],

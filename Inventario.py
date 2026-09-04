@@ -22,16 +22,16 @@ class Inventario:
 
         self.root = root
         self.root.title("Configurações de Inventario")
-        self.root.geometry("600x200+80+60")
+        self.root.geometry("620x200+80+60")
         self.root.resizable(False, False)
         self.root.focus_set()
 
         self.entry_alter_list = []
 
-        self.frame_top = criar_top_frame(self, root, self.entry_alter_list, width=600,
-                                          height=60, border_width=2, border_color='silver', corner_radius=2)
+        self.frame_top = criar_top_frame(self, root, self.entry_alter_list, width=620,
+                                         height=60, border_width=2, border_color='silver', corner_radius=2)
 
-        self.frame_bot = criar_bot_frame(root, self.entry_alter_list, width=600,
+        self.frame_bot = criar_bot_frame(root, self.entry_alter_list, width=620,
                                          height=140, border_width=2, border_color='silver', corner_radius=5)
 
     def _periodo_selecionado(self):
@@ -65,7 +65,6 @@ class Inventario:
 
 
 if __name__ == '__main__':
-    logger.info('Iniciando aplicação Inventario Tools.')
     try:
         root = ctk.CTk()
         app = Inventario(root)
@@ -76,7 +75,6 @@ if __name__ == '__main__':
         raise
     finally:
         if BancoDeDados.retorna_gerenciador():
-            logger.info('Fechando pool de conexões do banco.')
             gerenciador = BancoDeDados.gerenciador()
             gerenciador.fechar()
         logger.info('Aplicação encerrada.')
