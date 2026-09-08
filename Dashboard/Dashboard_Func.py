@@ -112,6 +112,17 @@ def carregar_kpis(ini=None, fim=None):
         classificacao_nula = _executar_consulta(QUERY_CLASSIFICACAO_NULA)
         saldo_nao_zerado = _executar_consulta(QUERY_SALDO_NAO_ZERADO)
 
+        somatorio_vendas_mes_ano = _executar_consulta(
+            QUERY_VENDAS_MES_ANO_AGRUPADO, (ini, fim))
+        somatorio_vendas_ano = _executar_consulta(
+            QUERY_VENDAS_ANO_AGRUPADO, (ini, fim))
+        somatorio_entradas_mes_ano = _executar_consulta(
+            QUERY_ENTRADAS_MES_ANO_AGRUPADO, (ini, fim))
+        somatorio_entradas_ano = _executar_consulta(
+            QUERY_ENTRADAS_ANO_AGRUPADO, (ini, fim))
+        diferenca_entrada_saida = _executar_consulta(
+            QUERY_DIFERENCA_ENTRADA_SAIDA_AGRUPADO)
+
         total_problemas = (preco_custo_zerado + preco_custo_maior +
                            preco_tudo_zerado + classificacao_nula + saldo_nao_zerado)
 
@@ -138,6 +149,11 @@ def carregar_kpis(ini=None, fim=None):
                 'Classificacao nula': classificacao_nula,
                 'Saldo nao zerado': saldo_nao_zerado,
             },
+            'somatorio_vendas_mes_ano': somatorio_vendas_mes_ano,
+            'somatorio_vendas_ano': somatorio_vendas_ano,
+            'somatorio_entradas_mes_ano': somatorio_entradas_mes_ano,
+            'somatorio_entradas_ano': somatorio_entradas_ano,
+            'diferenca_entrada_saida': diferenca_entrada_saida,
         }
         return kpis
 

@@ -8,6 +8,7 @@ from Inv_Screen.Inv_Top_Frame import criar_top_frame
 from Inv_Screen.Inv_Bot_Frame import criar_bot_frame
 from Configuracoes.Config_Manager import get_config
 from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
+from Queries.Create_Views import deletar_views
 
 logger = get_logger(__name__)
 
@@ -75,6 +76,7 @@ if __name__ == '__main__':
         raise
     finally:
         if BancoDeDados.retorna_gerenciador():
+            deletar_views()
             gerenciador = BancoDeDados.gerenciador()
             gerenciador.fechar()
         logger.info('Aplicação encerrada.')
