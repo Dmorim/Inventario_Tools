@@ -24,21 +24,14 @@ Retorna: sum(valor_inventário)
 """
 
 QUERY_VENDAS = """
-    SELECT SUM(CAST(IIF(F.EMITE = 'S' AND VLNOT > 0,
-        F.VLNOT, 
-        IIF(COALESCE(F.VLNOT, 0) = 0,
-            (COALESCE(F.VALNO, 0) - COALESCE(F.VALDE, 0) + COALESCE(F.ICANT, 0) + 
-             COALESCE(F.VALFR, 0) + COALESCE(F.valsg, 0) + COALESCE(F.valip, 0) + 
-             COALESCE(F.valst, 0)), 
-            F.VLNOT)) 
-        AS NUMERIC(14,2))) AS valor
-    FROM in01fat F
-    WHERE F.FATUR <> ''
-    AND (F.CANCE = 'N' OR F.CANCE IS NULL)
-    AND F.VENDA <> 'R'
-    AND F.VENDA <> 'X'
-    AND F.DTEMI >= ?
-    AND F.DTEMI <= ?
+    SELECT SUM(valor_saida) AS valor
+    FROM V_FAT_VALOR_SAIDA
+    WHERE FATUR <> ''
+    AND (CANCE = 'N' OR CANCE IS NULL)
+    AND VENDA <> 'R'
+    AND VENDA <> 'X'
+    AND DTEMI >= ?
+    AND DTEMI <= ?
 """
 """
 Calcula o valor total de vendas em um período.
@@ -50,25 +43,21 @@ Retorna: sum(valor_vendas)
 QUERY_ENTRADAS = """
     SELECT CAST(
         SUM(
-            ((CAST(LAN.valor AS NUMERIC(14, 4)) - 
-              (CAST(LAN.valor AS NUMERIC(14, 4)) * CAST((LAN.despr/100) AS NUMERIC(14,4)))) * 
-              CAST(LAN.quant AS NUMERIC(14, 2))) +
-            (LAN.valsub) + 
-            (((CAST(LAN.valor AS NUMERIC(14, 2)) - 
-               (CAST(LAN.valor AS NUMERIC(14, 2)) * CAST((LAN.despr/100) AS NUMERIC(14,4)))) * 
-               CAST(LAN.quant AS NUMERIC(14, 2))) * 
-             (CAST(LAN.alipi_ent AS NUMERIC(14, 2)) / 100))
+            ((CAST(valor AS NUMERIC(14, 4)) - 
+              (CAST(valor AS NUMERIC(14, 4)) * CAST((despr/100) AS NUMERIC(14,4)))) * 
+              CAST(quant AS NUMERIC(14, 2))) +
+            (valsub) + 
+            (((CAST(valor AS NUMERIC(14, 2)) - 
+               (CAST(valor AS NUMERIC(14, 2)) * CAST((despr/100) AS NUMERIC(14,4)))) * 
+               CAST(quant AS NUMERIC(14, 2))) * 
+             (CAST(alipi_ent AS NUMERIC(14, 2)) / 100))
         ) AS NUMERIC(14,2)
     ) AS valor
-    FROM in01lan LAN
-    LEFT JOIN in01com COM ON 
-        (LAN.NOTFI = COM.NOTFI) AND 
-        (LAN.CDFRN = COM.CDFRN) AND 
-        (LAN.MODELONOTA = COM.MODELONOTA)
-    WHERE LAN.venda = 'C'
-    AND LAN.cfop NOT IN ({placeholders})
-    AND COM.dtcom BETWEEN ? AND ?
-    AND CHARACTER_LENGTH(LAN.cfop) = 5
+    FROM V_LAN_COM
+    WHERE venda = 'C'
+    AND cfop NOT IN ({placeholders})
+    AND com_dtcom BETWEEN ? AND ?
+    AND CHARACTER_LENGTH(cfop) = 5
 """
 """
 Calcula o valor total de entradas em um período.
@@ -356,12 +345,11 @@ Retorna: (NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE)
 """
 
 QUERY_EMISSOES_MAXIMA = """
-    SELECT MAX(L.DTEMI) 
-    FROM IN01LAN L
-    LEFT JOIN IN01FAT F ON L.NOTFI = F.FATUR
-    WHERE L.VENDA IN ('V', 'A', 'W', 'D')
-    AND F.EMITE = 'S'
-    AND F.CANCE <> 'S'
+    SELECT MAX(DTEMI) 
+    FROM V_FAT_VALOR_SAIDA
+    WHERE VENDA IN ('V', 'A', 'W', 'D')
+    AND EMITE = 'S'
+    AND CANCE <> 'S'
 """
 """
 Busca a data máxima de emissão (último movimento).

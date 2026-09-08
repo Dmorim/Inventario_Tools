@@ -6,6 +6,7 @@ from pathlib import Path
 
 from Configuracoes.Config_Manager import salvar_diretorio, carregar_diretorio
 from Queries.Consulta_Queries import QUERY_PROPRI, QUERY_EMISSOES_MAXIMA
+from Queries.Create_Views import criar_views
 from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import ConfiguracaoBanco, BancoDeDados
 from Thread_Manager.Query_Operations import query_executor, query_selector
 from Thread_Manager.Thread_Executor import thread_execução
@@ -108,7 +109,19 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
         salvar_diretorio('Porta', 'last_dir', entrys_list[1].get())
         salvar_diretorio('FBClient', 'dir_banco', entrys_list[3].get())
 
-        _disparar_queries()
+        def _criar_views_em_thread():
+            return criar_views()
+
+        def _apos_criar_views(_):
+            logger.info('Views auxiliares criadas/atualizadas com sucesso.')
+            _disparar_queries()
+
+        def _falha_criar_views(erro):
+            logger.exception('Falha ao criar views auxiliares: %s', erro)
+            _disparar_queries()
+
+        thread_execução(Banco_Screen, _criar_views_em_thread,
+                        _apos_criar_views, _falha_criar_views)
 
     def ao_conectar_erro(erro):
         logger.exception(
@@ -209,12 +222,26 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
         thread_execução(Banco_Screen, buscar_datas,
                         ao_terminar_datas, falha_datas)
 
+    def delete_views():
+        try:
+            from Queries.Create_Views import deletar_views
+            deletar_views()
+        except Exception as e:
+            logger.exception('Falha ao deletar views auxiliares: %s', e)
+            atualizar_ui_main(Banco_Screen, messagebox.showerror,
+                              'Erro', f'Não foi possível deletar as views auxiliares\n {e}',
+                              parent=Banco_Screen)
+
     # Verifica se todos os entrys foram preenchidos
     for entry in entrys_list:
         if entry.get() == '':
             messagebox.showerror(
                 'Erro', 'Preencha todos os campos', parent=Banco_Screen)
             return
+
+    if BancoDeDados.retorna_gerenciador() is not None:
+        thread_execução(Banco_Screen, delete_views, lambda _: logger.info(
+            'Views auxiliares deletadas com sucesso.'))
 
     try:
         ConfiguracaoBanco.definir(

@@ -30,6 +30,61 @@ QUERY_TOTAL_MOVIMENTACOES = """
     SELECT COUNT(*) FROM in01lan
 """
 
+QUERY_VENDAS_MES_ANO_AGRUPADO = """
+    SELECT mes, ano, sum(valor_saida) AS valor
+FROM V_FAT_VALOR_SAIDA
+WHERE (cance = 'N' OR cance IS NULL)
+  AND fatur <> ''
+  AND venda NOT IN ('R','X')
+  AND dtemi BETWEEN ? AND ?
+GROUP BY 1, 2
+ORDER BY 2, 1
+"""
+
+QUERY_VENDAS_ANO_AGRUPADO = """
+    SELECT extract(year FROM dtemi) AS ano,
+       sum(valor_saida) AS valor
+FROM V_FAT_VALOR_SAIDA
+WHERE (cance = 'N' OR cance IS NULL)
+  AND fatur <> ''
+  AND venda NOT IN ('R','X')
+  AND dtemi BETWEEN ? AND ?
+GROUP BY 1
+ORDER BY 1
+
+"""
+
+QUERY_ENTRADAS_MES_ANO_AGRUPADO = """
+SELECT extract(month FROM com_dtcom) AS mes,
+       extract(year  FROM com_dtcom) AS ano,
+       CAST(SUM(COALESCE(valor,0)) AS NUMERIC(14,2)) AS valor
+FROM V_LAN_COM
+WHERE venda = 'C'
+  AND CHARACTER_LENGTH(cfop) = 5
+  AND cfop NOT IN ({placeholders})
+  AND com_dtcom BETWEEN ? AND ?
+GROUP BY 1, 2
+ORDER BY 2, 1
+"""
+
+QUERY_ENTRADAS_ANO_AGRUPADO = """
+SELECT extract(year FROM com_dtcom) AS ano,
+       CAST(SUM(COALESCE(valor,0)) AS NUMERIC(14,2)) AS valor
+FROM V_LAN_COM
+WHERE venda = 'C'
+  AND CHARACTER_LENGTH(cfop) = 5
+  AND cfop NOT IN ({placeholders})
+  AND com_dtcom BETWEEN ? AND ?
+GROUP BY 1
+ORDER BY 1
+"""
+
+QUERY_DIFERENCA_ENTRADA_SAIDA_AGRUPADO = """
+SELECT mes, ano, valor_entrada, valor_saida, valor_diff
+FROM V_DIFF_ENTRADA_SAIDA_MES
+ORDER BY 2, 1
+"""
+
 
 def _executar_consulta(query, params=None):
     try:
@@ -84,9 +139,6 @@ def carregar_kpis(ini=None, fim=None):
                 'Saldo nao zerado': saldo_nao_zerado,
             },
         }
-
-        logger.info('KPIs carregados: saude=%.1f%% | total_problemas=%d | total_produtos=%d',
-                     saude, total_problemas, total_produtos)
         return kpis
 
     except Exception:
