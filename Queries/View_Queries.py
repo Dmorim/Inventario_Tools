@@ -66,6 +66,7 @@ LEFT JOIN in01com c
 # VIEW: V_DIFF_ENTRADA_SAIDA_MES
 # Agrupamento mensal da diferença entre entradas e saídas, base para a query
 # do dashboard QUERY_DIFERENCA_ENTRADA_SAIDA_AGRUPADO.
+# Expõe também dt (data-base das entradas) para filtros de período no dashboard.
 # ============================================================================
 
 VIEW_V_DIFF_ENTRADA_SAIDA_MES = """
@@ -77,6 +78,7 @@ WITH entradas AS (
         l.modelonota,
         extract(month from l.dtpro) AS mes,
         extract(year from l.dtpro) AS ano,
+        MIN(l.dtpro) AS dt,
         COALESCE(MAX(c.com_valno), 0) AS valor_entrada
     FROM in01lan l
     LEFT JOIN V_LAN_COM c
@@ -96,6 +98,7 @@ WITH entradas AS (
 SELECT
     e.mes,
     e.ano,
+    MIN(e.dt) AS dt,
     SUM(e.valor_entrada) AS valor_entrada,
     SUM(COALESCE(s.valor_saida, 0)) AS valor_saida,
     SUM(e.valor_entrada) - SUM(COALESCE(s.valor_saida, 0)) AS valor_diff

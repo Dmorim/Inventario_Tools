@@ -3,11 +3,7 @@ from Thread_Manager.Query_Operations import query_selector, query_executor, _nom
 from Consultas.Generics_Functions.Gen_Funcs_Consulta import banco_codigo_valueform
 from Queries.Consulta_Queries import (
     QUERY_INVENTARIO,
-    QUERY_PRECO_CUSTO_ZERADO,
-    QUERY_PRECO_CUSTO_MAIOR_VENDA,
-    QUERY_PRECO_CUSTO_VENDA_COMPRA_ZERADOS,
-    QUERY_CLASSIFICACAO_NULA,
-    QUERY_SALDO_NAO_ZERADO,
+    CFOP_LIST,
 )
 
 logger = get_logger(__name__)
@@ -82,8 +78,22 @@ ORDER BY 1
 QUERY_DIFERENCA_ENTRADA_SAIDA_AGRUPADO = """
 SELECT mes, ano, valor_entrada, valor_saida, valor_diff
 FROM V_DIFF_ENTRADA_SAIDA_MES
+WHERE dt BETWEEN ? AND ?
 ORDER BY 2, 1
 """
+
+QUERY_DIFERENCA_ANO_AGRUPADO = """
+SELECT ano,
+       SUM(valor_entrada) AS valor_entrada,
+       SUM(valor_saida) AS valor_saida,
+       SUM(valor_diff) AS valor_diff
+FROM V_DIFF_ENTRADA_SAIDA_MES
+WHERE dt BETWEEN ? AND ?
+GROUP BY 1
+ORDER BY 1
+"""
+
+_PLACEHOLDERS_CFOP = ', '.join(['?'] * len(CFOP_LIST))
 
 
 def _executar_consulta(query, params=None):
@@ -96,6 +106,86 @@ def _executar_consulta(query, params=None):
         return 0
 
 
+def _executar_select(query, params=None):
+    try:
+        return query_executor(query_selector, query, params)
+    except Exception:
+        logger.exception('Erro ao executar select do dashboard: %s',
+                         _nome_query(query))
+        return []
+
+
+def _extrair_series(rows, granularidade, com_diferenca=False):
+    valores = {}
+    rotulos = {}
+    for row in rows:
+        if granularidade == 'mes':
+            mes, ano = int(row[0]), int(row[1])
+            chave = (ano, mes)
+            rotulos[chave] = f'{mes:02d}/{ano}'
+            dados = row[2:]
+        else:
+            ano = int(row[0])
+            chave = (ano,)
+            rotulos[chave] = str(ano)
+            dados = row[1:]
+
+        if com_diferenca:
+            valores[chave] = [float(v or 0) for v in dados]
+        else:
+            valores[chave] = float(dados[0] or 0)
+
+    return valores, rotulos
+
+
+def carregar_dados_tendencia(ini, fim, granularidade):
+    logger.info('Carregando dados de tendência. granularidade=%s | período=%s..%s',
+                granularidade, ini, fim)
+    try:
+        if granularidade == 'mes':
+            vendas_rows = _executar_select(
+                QUERY_VENDAS_MES_ANO_AGRUPADO, (ini, fim))
+            entradas_query = QUERY_ENTRADAS_MES_ANO_AGRUPADO.format(
+                placeholders=_PLACEHOLDERS_CFOP)
+            entradas_rows = _executar_select(
+                entradas_query, (*CFOP_LIST, ini, fim))
+            diff_rows = _executar_select(
+                QUERY_DIFERENCA_ENTRADA_SAIDA_AGRUPADO, (ini, fim))
+        else:
+            vendas_rows = _executar_select(
+                QUERY_VENDAS_ANO_AGRUPADO, (ini, fim))
+            entradas_query = QUERY_ENTRADAS_ANO_AGRUPADO.format(
+                placeholders=_PLACEHOLDERS_CFOP)
+            entradas_rows = _executar_select(
+                entradas_query, (*CFOP_LIST, ini, fim))
+            diff_rows = _executar_select(
+                QUERY_DIFERENCA_ANO_AGRUPADO, (ini, fim))
+
+        vendas, rotulos = _extrair_series(vendas_rows, granularidade)
+        entradas, _ = _extrair_series(entradas_rows, granularidade)
+        diffs, rotulos_diff = _extrair_series(
+            diff_rows, granularidade, com_diferenca=True)
+
+        rotulos_merge = dict(rotulos)
+        rotulos_merge.update(rotulos_diff)
+
+        periodos = sorted(set(vendas) | set(entradas) | set(diffs))
+        labels = [rotulos_merge[periodo] for periodo in periodos]
+
+        dados = {
+            'labels': labels,
+            'vendas': [vendas.get(periodo, 0) for periodo in periodos],
+            'entradas': [entradas.get(periodo, 0) for periodo in periodos],
+            'diferenca': [diffs.get(periodo, [0, 0, 0])[2]
+                          for periodo in periodos],
+        }
+        return dados
+
+    except Exception:
+        logger.exception('Erro ao carregar dados de tendência.')
+        return {'labels': [], 'vendas': [], 'entradas': [], 'diferenca': []}
+
+
 def carregar_kpis(ini=None, fim=None):
     logger.info('Carregando KPIs do dashboard.')
     try:
@@ -104,33 +194,6 @@ def carregar_kpis(ini=None, fim=None):
         total_zerados = _executar_consulta(QUERY_TOTAL_PRODUTOS_ZERADOS)
         valor_inventario = _executar_consulta(QUERY_INVENTARIO)
         total_movimentacoes = _executar_consulta(QUERY_TOTAL_MOVIMENTACOES)
-
-        preco_custo_zerado = _executar_consulta(QUERY_PRECO_CUSTO_ZERADO)
-        preco_custo_maior = _executar_consulta(QUERY_PRECO_CUSTO_MAIOR_VENDA)
-        preco_tudo_zerado = _executar_consulta(
-            QUERY_PRECO_CUSTO_VENDA_COMPRA_ZERADOS)
-        classificacao_nula = _executar_consulta(QUERY_CLASSIFICACAO_NULA)
-        saldo_nao_zerado = _executar_consulta(QUERY_SALDO_NAO_ZERADO)
-
-        somatorio_vendas_mes_ano = _executar_consulta(
-            QUERY_VENDAS_MES_ANO_AGRUPADO, (ini, fim))
-        somatorio_vendas_ano = _executar_consulta(
-            QUERY_VENDAS_ANO_AGRUPADO, (ini, fim))
-        somatorio_entradas_mes_ano = _executar_consulta(
-            QUERY_ENTRADAS_MES_ANO_AGRUPADO, (ini, fim))
-        somatorio_entradas_ano = _executar_consulta(
-            QUERY_ENTRADAS_ANO_AGRUPADO, (ini, fim))
-        diferenca_entrada_saida = _executar_consulta(
-            QUERY_DIFERENCA_ENTRADA_SAIDA_AGRUPADO)
-
-        total_problemas = (preco_custo_zerado + preco_custo_maior +
-                           preco_tudo_zerado + classificacao_nula + saldo_nao_zerado)
-
-        if total_produtos > 0:
-            saude = round(100 - (total_problemas / total_produtos * 100), 1)
-        else:
-            saude = 100.0
-        saude = max(0, min(100, saude))
 
         valor_fmt = banco_codigo_valueform(
             valor_inventario) if valor_inventario else 'R$ 0,00'
@@ -141,19 +204,6 @@ def carregar_kpis(ini=None, fim=None):
             'total_ativos': total_ativos,
             'total_zerados': total_zerados,
             'total_movimentacoes': total_movimentacoes,
-            'saude': saude,
-            'problemas': {
-                'Preco custo zerado': preco_custo_zerado,
-                'Preco custo > venda': preco_custo_maior,
-                'Todos precos zerados': preco_tudo_zerado,
-                'Classificacao nula': classificacao_nula,
-                'Saldo nao zerado': saldo_nao_zerado,
-            },
-            'somatorio_vendas_mes_ano': somatorio_vendas_mes_ano,
-            'somatorio_vendas_ano': somatorio_vendas_ano,
-            'somatorio_entradas_mes_ano': somatorio_entradas_mes_ano,
-            'somatorio_entradas_ano': somatorio_entradas_ano,
-            'diferenca_entrada_saida': diferenca_entrada_saida,
         }
         return kpis
 
@@ -165,6 +215,4 @@ def carregar_kpis(ini=None, fim=None):
             'total_ativos': 0,
             'total_zerados': 0,
             'total_movimentacoes': 0,
-            'saude': 0.0,
-            'problemas': {},
         }
