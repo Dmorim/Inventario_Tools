@@ -36,9 +36,7 @@ class BancoDeDados:
     def conectar(cls):
         """Cria o pool uma única vez. Chamadas seguintes reaproveitam."""
         if cls._gerenciador is not None:
-            logger.debug(
-                'Pool de conexões já existente; reutilizando conexão atual.')
-            return cls._gerenciador  # idempotente — já existe, não recria
+            return cls._gerenciador
 
         logger.info('Inicializando pool de conexões do banco de dados.')
         cls._gerenciador = GerenciadorThreadBD(cls._criar_conexao)

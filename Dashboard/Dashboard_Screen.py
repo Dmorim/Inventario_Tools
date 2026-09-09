@@ -50,16 +50,6 @@ def _atualizar_dashboard(screen, kpis, cards_frame, charts_frame):
                     kpis['total_zerados'], '#e74c3c')
     _criar_kpi_card(cards_frame, 'Total de Movimentacoes',
                     kpis['total_movimentacoes'])
-    _criar_kpi_card(cards_frame, 'Somatorio de Vendas (Mês/Ano)',
-                    kpis['somatorio_vendas_mes_ano'], COR_DESTAQUE)
-    _criar_kpi_card(cards_frame, 'Somatorio de Vendas (Ano)',
-                    kpis['somatorio_vendas_ano'], COR_DESTAQUE)
-    _criar_kpi_card(cards_frame, 'Somatorio de Entradas (Mês/Ano)',
-                    kpis['somatorio_entradas_mes_ano'], COR_DESTAQUE)
-    _criar_kpi_card(cards_frame, 'Somatorio de Entradas (Ano)',
-                    kpis['somatorio_entradas_ano'], COR_DESTAQUE)
-    _criar_kpi_card(cards_frame, 'Diferença Entrada/Saída',
-                    kpis['diferenca_entrada_saida'], COR_DESTAQUE)
 
     chart_left = ctk.CTkFrame(charts_frame, fg_color=COR_CARD,
                               corner_radius=8, border_width=1,

@@ -14,6 +14,7 @@ from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 from Interface_Tools.Tk_Status_Animator import TextAnimator
 from Thread_Manager.Thread_Executor import atualizar_ui_main
 from Outros.Logger.Get_Logger import get_logger
+from Queries.Create_Views import deletar_views
 
 logger = get_logger(__name__)
 
@@ -223,14 +224,17 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
                         ao_terminar_datas, falha_datas)
 
     def delete_views():
-        try:
-            from Queries.Create_Views import deletar_views
-            deletar_views()
-        except Exception as e:
-            logger.exception('Falha ao deletar views auxiliares: %s', e)
-            atualizar_ui_main(Banco_Screen, messagebox.showerror,
-                              'Erro', f'Não foi possível deletar as views auxiliares\n {e}',
-                              parent=Banco_Screen)
+        deletar_views()
+
+    def falha_ao_deletar_views(erro):
+        logger.exception('Falha ao deletar views auxiliares: %s', erro)
+        atualizar_ui_main(Banco_Screen, messagebox.showerror,
+                          'Erro', f'Não foi possível deletar as views auxiliares\n {erro}',
+                          parent=Banco_Screen)
+
+    def iniciar_conexao(_=None):
+        thread_execução(Banco_Screen, executa_conexao,
+                        ao_conectar, ao_conectar_erro)
 
     # Verifica se todos os entrys foram preenchidos
     for entry in entrys_list:
@@ -238,10 +242,6 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
             messagebox.showerror(
                 'Erro', 'Preencha todos os campos', parent=Banco_Screen)
             return
-
-    if BancoDeDados.retorna_gerenciador() is not None:
-        thread_execução(Banco_Screen, delete_views, lambda _: logger.info(
-            'Views auxiliares deletadas com sucesso.'))
 
     try:
         ConfiguracaoBanco.definir(
@@ -276,8 +276,12 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
     atualizar_ui_main(Banco_Screen, progress_bar.atualizar_status,
                       'Conectando ao banco de dados...')
 
-    thread_execução(Banco_Screen, executa_conexao,
-                    ao_conectar, ao_conectar_erro)
+    if BancoDeDados.retorna_gerenciador() is not None:
+        thread_execução(Banco_Screen, delete_views, iniciar_conexao,
+                        falha_ao_deletar_views)
+    else:
+        iniciar_conexao()
+
     # Salva os valores dos entrys no arquivo config.ini
 
 

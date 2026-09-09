@@ -41,6 +41,7 @@ def query_selector(conexao, query, params=None):
     finally:
         if 'cursor' in locals():
             cursor.close()
+        conexao.rollback()
 
 
 def query_updater(conexao, query, params=None):

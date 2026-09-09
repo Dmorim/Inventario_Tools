@@ -11,6 +11,8 @@ class GerenciadorThreadBD:
         self.__tamanho = self._calcular_tamanho(minimo, maximo)
         self.__pool = Queue()
         self._lock = threading.Lock()
+        self._operacoes_condicao = threading.Condition(self._lock)
+        self._operacoes_ativas = 0
         self._fechando = False
         self.logger = get_logger(__name__)
 
@@ -38,6 +40,11 @@ class GerenciadorThreadBD:
                 cursor.close()
         except Exception:
             return False
+        finally:
+            try:
+                conexao.rollback()
+            except Exception:
+                pass
 
         return True
 
@@ -102,15 +109,35 @@ class GerenciadorThreadBD:
             self._fechar_conexao(conexao)
 
     def executar(self, funcao, *args, **kwargs):
-        conexao = self._pegar_conexao()
+        with self._operacoes_condicao:
+            if self._fechando:
+                raise RuntimeError(
+                    'O gerenciador de conexões está sendo fechado.')
+            self._operacoes_ativas += 1
+
+        conexao = None
         try:
+            conexao = self._pegar_conexao()
             return funcao(conexao, *args, **kwargs)
         finally:
-            self._devolver_conexao(conexao)
+            if conexao is not None:
+                self._devolver_conexao(conexao)
+            with self._operacoes_condicao:
+                self._operacoes_ativas -= 1
+                if self._operacoes_ativas == 0:
+                    self._operacoes_condicao.notify_all()
+
+    def aguardar_operacoes(self):
+        """Aguarda as operações em andamento antes de uma manutenção."""
+        with self._operacoes_condicao:
+            while self._operacoes_ativas:
+                self._operacoes_condicao.wait()
 
     def fechar(self):
         with self._lock:
             self._fechando = True
+        self.aguardar_operacoes()
+        with self._lock:
             while True:
                 try:
                     conexao = self.__pool.get_nowait()
