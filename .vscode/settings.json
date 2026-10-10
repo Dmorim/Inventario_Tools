@@ -1,6 +1,9 @@
 {
   "python-envs.defaultEnvManager": "ms-python.python:venv",
-  "python.testing.pytestArgs": ["Comandos"],
+  "python.testing.pytestArgs": [
+    "Comandos"
+  ],
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true
+  "python.testing.pytestEnabled": true,
+  "cmake.sourceDirectory": "C:/Users/Sup-12/Documents/GitHub/Inventario_Tools/Recursos/Firebird/examples"
 }

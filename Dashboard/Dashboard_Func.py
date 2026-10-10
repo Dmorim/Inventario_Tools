@@ -112,7 +112,7 @@ def _executar_select(query, params=None):
     except Exception:
         logger.exception('Erro ao executar select do dashboard: %s',
                          _nome_query(query))
-        return []
+        raise
 
 
 def _extrair_series(rows, granularidade, com_diferenca=False):
@@ -139,28 +139,29 @@ def _extrair_series(rows, granularidade, com_diferenca=False):
 
 
 def carregar_dados_tendencia(ini, fim, granularidade):
+
+    def __executar_consulta_mes():
+        vendas_mes_ano = _executar_select(
+            QUERY_VENDAS_MES_ANO_AGRUPADO, (ini, fim))
+        entradas_mes_ano = _executar_select(QUERY_ENTRADAS_MES_ANO_AGRUPADO.format(
+            placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim))
+        diff_mes_ano = _executar_select(
+            QUERY_DIFERENCA_ENTRADA_SAIDA_AGRUPADO, (ini, fim))
+        return vendas_mes_ano, entradas_mes_ano, diff_mes_ano
+
+    def __executar_consulta_ano():
+        vendas_ano = _executar_select(QUERY_VENDAS_ANO_AGRUPADO, (ini, fim))
+        entradas_ano = _executar_select(QUERY_ENTRADAS_ANO_AGRUPADO.format(
+            placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim))
+        diff_ano = _executar_select(QUERY_DIFERENCA_ANO_AGRUPADO, (ini, fim))
+        return vendas_ano, entradas_ano, diff_ano
+
     logger.info('Carregando dados de tendência. granularidade=%s | período=%s..%s',
                 granularidade, ini, fim)
-    try:
-        if granularidade == 'mes':
-            vendas_rows = _executar_select(
-                QUERY_VENDAS_MES_ANO_AGRUPADO, (ini, fim))
-            entradas_query = QUERY_ENTRADAS_MES_ANO_AGRUPADO.format(
-                placeholders=_PLACEHOLDERS_CFOP)
-            entradas_rows = _executar_select(
-                entradas_query, (*CFOP_LIST, ini, fim))
-            diff_rows = _executar_select(
-                QUERY_DIFERENCA_ENTRADA_SAIDA_AGRUPADO, (ini, fim))
-        else:
-            vendas_rows = _executar_select(
-                QUERY_VENDAS_ANO_AGRUPADO, (ini, fim))
-            entradas_query = QUERY_ENTRADAS_ANO_AGRUPADO.format(
-                placeholders=_PLACEHOLDERS_CFOP)
-            entradas_rows = _executar_select(
-                entradas_query, (*CFOP_LIST, ini, fim))
-            diff_rows = _executar_select(
-                QUERY_DIFERENCA_ANO_AGRUPADO, (ini, fim))
 
+    try:
+        vendas_rows, entradas_rows, diff_rows = __executar_consulta_mes(
+        ) if granularidade == 'mes' else __executar_consulta_ano()
         vendas, rotulos = _extrair_series(vendas_rows, granularidade)
         entradas, _ = _extrair_series(entradas_rows, granularidade)
         diffs, rotulos_diff = _extrair_series(

@@ -66,11 +66,11 @@ def _carregar_dados(screen, cards_frame, on_erro=None):
     thread_execução(screen, carregar_kpis, callback, on_erro)
 
 
-def _recarregar_tendencia(app_self, screen, trend_frame, tipo_var, gran_var, estado):
+def _recarregar_tendencia(app_self, screen, trend_frame, tipo_var, agrupamento_var, estado):
     estado['seq'] += 1
     seq = estado['seq']
     tipo = tipo_var.get()
-    gran = 'mes' if gran_var.get() == 'Mês' else 'ano'
+    gran = 'mes' if agrupamento_var.get() == 'Mês' else 'ano'
     ini = app_self.data_banco_inicial
     fim = app_self.data_banco_final
 
@@ -143,15 +143,15 @@ def Dashboard_Screen(app_self, parent, button):
         width=110, font=('', 12), state='readonly')
     tipo_combo.pack(side='left', padx=(0, 18))
 
-    gran_label = ctk.CTkLabel(
+    agrupamento_label = ctk.CTkLabel(
         controls_frame, text='Agrupar por:',
         font=('', 12), text_color=COR_SUBTEXTO)
-    gran_label.pack(side='left', padx=(0, 4))
-    gran_var = ctk.StringVar(value=OPCOES_AGRUPAMENTO[1])
-    gran_combo = ctk.CTkComboBox(
-        controls_frame, variable=gran_var, values=OPCOES_AGRUPAMENTO,
+    agrupamento_label.pack(side='left', padx=(0, 4))
+    agrupamento_var = ctk.StringVar(value=OPCOES_AGRUPAMENTO[1])
+    agrupamento_combo = ctk.CTkComboBox(
+        controls_frame, variable=agrupamento_var, values=OPCOES_AGRUPAMENTO,
         width=100, font=('', 12), state='readonly')
-    gran_combo.pack(side='left')
+    agrupamento_combo.pack(side='left')
 
     trend_frame = ctk.CTkFrame(
         content_frame, fg_color=COR_CARD, corner_radius=8,
@@ -162,10 +162,10 @@ def Dashboard_Screen(app_self, parent, button):
 
     def carregar_tendencia(_=None):
         _recarregar_tendencia(app_self, screen, trend_frame,
-                              tipo_var, gran_var, estado)
+                              tipo_var, agrupamento_var, estado)
 
     tipo_combo.configure(command=carregar_tendencia)
-    gran_combo.configure(command=carregar_tendencia)
+    agrupamento_combo.configure(command=carregar_tendencia)
 
     def on_erro(exc):
         loading_label.configure(text=f'Erro ao carregar dados: {exc}')
