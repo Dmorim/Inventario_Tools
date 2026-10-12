@@ -81,8 +81,6 @@ def _recarregar_tendencia(app_self, screen, trend_frame, tipo_var, agrupamento_v
             widget.destroy()
         criar_grafico_tendencia(trend_frame, dados, tipo)
         screen.update_idletasks()
-        logger.info('Gráfico de tendência atualizado. tipo=%s | granularidade=%s',
-                    tipo, gran)
 
     def on_erro(exc):
         if seq != estado['seq']:
