@@ -3,9 +3,9 @@
 **Versão do sistema:** 2.0.0 (em evolução)
 **Autor:** Daniel Amorim (com colaboração de Cícero Romão nas consultas SQL)
 **Licença:** CC0 1.0 Universal (domínio público)
-**Documento atualizado em:** 01/09/2026
-**Versão do documento:** 5.0 (reescrito — reflete o estado atual do código após o commit `fc40fdd`,
-da branch `refatoracao_v3.5`, e das correções de divergências aplicadas nesta revisão)
+**Documento atualizado em:** 13/10/2026
+**Versão do documento:** 5.1 (atualizado — reflete o estado atual do código após o commit `e2c46ce`,
+da branch `refatoracao_v3.5`: Dashboard implementado, pool endurecido, 59 testes passando)
 
 > Este documento atualiza o plano original (`Plano_Refatoracao_Inventario_Tools.pdf`) e as revisões
 > 1.x/2.0/3.0. Ele incorpora as **modificações já feitas no projeto** (branch `QoL` integrada ao
@@ -149,7 +149,7 @@ Todas as mudanças abaixo já estão no código (a maioria na branch `refatoraca
 | `help_base64_image` sem vírgula inválida (`Banco_Images.py`) | N7/§5.6 | ✅ Feito |
 | `Listagem_Treeview` — `grab_set()` + `WM_DELETE_WINDOW` (via `toplevel.protocol`) | N7/§5.6 | ✅ Feito |
 | `executa_comandos` — feedback de status via `atualizar_ui_main` (sem `after()` na thread) | N3/§5.3 | ✅ Feito |
-| **54 testes** passando (`pytest -q` → 54 passed) | Fase 5 | ✅ Feito |
+| **59 testes** passando (`pytest` → 59 passed) | Fase 5 | ✅ Feito |
 
 > **Nota sobre branches:** As modificações de UI foram consolidadas no `main` via PR #14
 > (merge `48e7fe3`). A refatoração estrutural é conduzida na branch `refatoracao_v3.5`, que já
@@ -165,15 +165,11 @@ Todas as mudanças abaixo já estão no código (a maioria na branch `refatoraca
 
 ### Fase 1 — Segurança e Configuração (restante)
 
-#### 1.2 Mover credenciais para config — ⬜ PENDENTE
+#### 1.2 Mover credenciais para config — ✅ CONCLUÍDO
 
-As credenciais continuam hardcoded em:
-- `Banco_de_Dados/Tela_Banco_Dados/Banco_de_Dados_Func.py:185-192` — `user='SYSDBA'`,
-  `password='masterkey'` passados a `ConfiguracaoBanco.definir(...)`.
-
-**Ação:** adicionar seção `[Credenciais]` no `config.ini` (com padrão SYSDBA/masterkey) e ler via
-`Config_Manager` (`get_config().get('Credenciais', 'user')`, `'password'`) antes de montar a
-conexão. **Nunca commitar credenciais reais.**
+Status atual: implementado. As credenciais são lidas de `[Credenciais]` via `AppConfig`
+(`user_db`/`pass_db` com padrão SYSDBA/masterkey), validadas por `validar_credenciais()`;
+`config.ini` segue no `.gitignore`. **Nunca commitar credenciais reais.**
 
 #### 1.1 (remanescente) — SQL livre `com_ger`
 
@@ -258,7 +254,7 @@ centralizadas em `Queries/` (todas as 20 consultas e 14 comandos usados pelas te
 | N1 | Queries de comando sempre falsas | ✅ | Corrigido — `WHERE VLDIA {op} PRECU` / `CUSME {op} PRECU`. |
 | N2 | UnboundLocalError em ven_get/ent_get | ✅ | Corrigido — `return None` no `except` de ambos. |
 | N3 | Threads chamando Tk (não thread-safe) | ✅ | Roteado via `_safe_schedule_ui`/`atualizar_ui_main`; guarda de widget destruído; `messagebox` fora das funcs; `after()` removido da thread em `executa_comandos` (ver §5.3). |
-| N4 | Pool de conexões frágil | ⬜ | `fechar()` usa `Queue.empty()`; `trocar_bd` é código morto; sem health-check. |
+| N4 | Pool de conexões frágil | ✅ | Health-check (`_conexao_valida` com `SELECT 1 FROM RDB$DATABASE`), descarte/reposição de conexões stale, reposição na devolução e `fechar()` seguro; código morto `trocar_bd` removido. |
 | N5 | Erros de entrada não tratados | ✅ | Porta `int \| None` validada; PROPRI vazio tratado; finalização agendada na main thread (ver §5.5). |
 | N6 | config.ini encoding/seções | ✅ | Encoding UTF-8 e seções consolidadas; tema padronizado `cor_do_tema` (ver §5.2). |
 | N7 | Correções de UI menores | ✅ | Todos os itens resolvidos (ver §5.6). |

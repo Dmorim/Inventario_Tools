@@ -18,7 +18,6 @@ OPCOES_AGRUPAMENTO = ['Mês', 'Ano']
 
 
 def _fechar_dashboard(screen, button):
-    logger.info('Fechando dashboard.')
     button.configure(state='normal')
     screen.destroy()
 
@@ -54,7 +53,6 @@ def _atualizar_dashboard(screen, kpis, cards_frame):
 
     screen.update_idletasks()
     screen.geometry(f'{screen.winfo_width()}x{screen.winfo_height()}')
-    logger.info('Dashboard atualizado com sucesso.')
 
 
 def _carregar_dados(screen, cards_frame, on_erro=None):
@@ -100,7 +98,7 @@ def Dashboard_Screen(app_self, parent, button):
 
     screen = ctk.CTkToplevel(parent)
     screen.title('Dashboard - Visao Geral do Inventario')
-    screen.geometry('980x720')
+    screen.geometry('980x720+100+20')
     screen.minsize(840, 620)
     screen.resizable(True, True)
     screen.transient(parent)

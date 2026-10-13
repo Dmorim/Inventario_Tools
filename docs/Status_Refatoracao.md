@@ -1,9 +1,9 @@
 # Status da Refatoração — Inventario_Tools
 
-**Documento atualizado em:** 02/09/2026
+**Documento atualizado em:** 13/10/2026
 **Branch de trabalho:** `refatoracao_v3.5`
-**Base do plano:** `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (v5.0)
-**Último commit:** `e99bc97` ("Persist DB credentials and add config UI")
+**Base do plano:** `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (v5.1)
+**Último commit:** `e2c46ce` ("Clean dashboard chart logging") — branch com 13+ commits e trabalho atual (Dashboard implementado)
 
 > **Decisões registradas (fora de escopo da refatoração):**
 > - **SQL Livre (`com_ger`)** — ficará em total responsabilidade do operador. **Não** será aplicada
@@ -20,12 +20,12 @@
 - **Fase 0 (Preparação)** — ✅ concluída.
 - **Fase 1 (Segurança e Configuração)** — ✅ concluída (queries parametrizadas, credenciais em config, AppConfig centralizada).
 - **Fase 2 (Eliminar Código Duplicado)** — ✅ concluída (funções unificadas, factories de tela e listagem).
-- **Fase 3 (Arquitetura e Organização)** — ✅ concluída (inclui imports no topo de `Comandos_Dist_Saldo.py`).
+- **Fase 3 (Arquitetura e Organização)** — ✅ concluída (inclui imports no topo de `Comandos_Dist_Saldo.py` e hardening de threads).
 - **Fase 4 (Type Hints)** — ❌ fora de escopo (decisão do usuário).
 - **Fase 5 (Testes Unitários)** — ✅ 59 testes passando; queries centralizadas cobertas por contrato nominal; pool de BD adicionado aos testes.
 - **Fase 6 (PyInstaller)** — 🔄 config existe mas está desatualizada; build pendente (a fazer por último).
 - **N1–N9 (Novos Problemas)** — ✅ 9/9 corrigidos (inclui N4 com health-check).
-- **Features** — ⬜ Dashboard Visual e Validação Pré-Inventário pendentes (próximas execuções).
+- **Features** — ✅ Dashboard Visual concluído (módulo `Dashboard/` com KPIs e gráficos); ⬜ Validação Pré-Inventário pendente (próxima execução).
 
 A branch `refatoracao_v3.5` acumula **13 commits + trabalho não commitado** desde o estado documentado no status anterior (28/08/2026), consolidando: centralização de queries, factories de UI, unificação de funções, hardening de threads, logging estruturado, persistência de credenciais, health-check do pool, imports no topo e testes de contrato de queries.
 
@@ -161,7 +161,7 @@ plano de ampliação.
 
 | Item | Status | Observação |
 |---|---|---|
-| Logging estruturado | ✅ | `Outros/Logger/Get_Logger.py` — `QueueHandler` + `TimedRotatingFileHandler`, retenção 7 dias, rotação diária. 12 módulos instrumentados. Zero `print()`. |
+| Logging estruturado | ✅ | `Outros/Logger/Get_Logger.py` — `QueueHandler` + `TimedRotatingFileHandler`, retenção 7 dias, rotação diária. 17 módulos instrumentados. Zero `print()`. |
 | `cor_do_tema` case-sensitivity | ✅ | Padronizado em minúsculas em todo o pipeline (config → leitura → uso). |
 
 ---
@@ -170,8 +170,8 @@ plano de ampliação.
 
 | Feature | Status | Observação |
 |---|---|---|
-| Dashboard Visual (`Dashboard/`) | ⬜ | Próxima execução (Etapa B). Depende de `matplotlib` (a adicionar) e das queries/`Query_Operations` já prontas. |
-| Validação Pré-Inventário (`Validacao/`) | ⬜ | Sequência (Etapa C). Reusa queries de problemas existentes. |
+| Dashboard Visual (`Dashboard/`) | ✅ | Implementado em `Dashboard/Dashboard_Screen.py`, `Dashboard_Func.py` e `Dashboard_Charts.py` (KPIs + gráficos com matplotlib/TkAgg, filtros e logs). |
+| Validação Pré-Inventário (`Validacao/`) | ⬜ | Pendente (Etapa C). Reusa queries de problemas existentes. |
 
 ---
 
