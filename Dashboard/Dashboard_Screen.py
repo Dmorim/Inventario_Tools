@@ -7,12 +7,13 @@ from Dashboard.Dashboard_Charts import criar_grafico_tendencia
 
 logger = get_logger(__name__)
 
-COR_BG = '#f0f2f5'
-COR_CARD = '#ffffff'
-COR_TEXTO = '#2c3e50'
-COR_SUBTEXTO = '#7f8c8d'
+COR_BG = ('#f0f2f5', "#3A546E")
+COR_CARD = ('#ffffff', "#11121D")
+COR_TEXTO = ('#2c3e50', "#5fabe9")
+COR_SUBTEXTO = ('#7f8c8d', "#b7e2e6")
 COR_DESTAQUE = '#3498db'
-
+COR_KPI = ("#393B3D", "#3E3F3F")
+COR_KPI_LABEL = ("#b7e2e6", "#ffffff")
 OPCOES_TIPO_GRAFICO = ['Barras', 'Linhas']
 OPCOES_AGRUPAMENTO = ['Mês', 'Ano']
 
@@ -23,13 +24,13 @@ def _fechar_dashboard(screen, button):
 
 
 def _criar_kpi_card(master, titulo, valor, cor_valor=COR_TEXTO):
-    card = ctk.CTkFrame(master, fg_color=COR_CARD,
+    card = ctk.CTkFrame(master, fg_color=COR_KPI,
                         corner_radius=8, border_width=1,
-                        border_color='#e0e0e0')
+                        border_color="#f5f4ff")
     card.pack(side='left', padx=6, pady=4, fill='both', expand=True)
 
     ctk.CTkLabel(card, text=titulo, font=('', 11),
-                 text_color=COR_SUBTEXTO, wraplength=140).pack(
+                 text_color=COR_KPI_LABEL, wraplength=140).pack(
         padx=10, pady=(8, 2), anchor='w')
     ctk.CTkLabel(card, text=str(valor), font=('', 16, 'bold'),
                  text_color=cor_valor).pack(padx=10, pady=(2, 8), anchor='w')
@@ -98,8 +99,8 @@ def Dashboard_Screen(app_self, parent, button):
 
     screen = ctk.CTkToplevel(parent)
     screen.title('Dashboard - Visao Geral do Inventario')
-    screen.geometry('980x720+100+20')
-    screen.minsize(840, 620)
+    screen.geometry('1080x560+80+60')
+    screen.minsize(680, 520)
     screen.resizable(True, True)
     screen.transient(parent)
     screen.focus_set()
@@ -169,5 +170,3 @@ def Dashboard_Screen(app_self, parent, button):
 
     _carregar_dados(screen, cards_frame, on_erro)
     carregar_tendencia()
-
-    logger.info('Tela do Dashboard criada.')
