@@ -96,8 +96,11 @@ def _previa_inventario(valor_inventario, fim):
     """
 
     ano = int(fim[-4:])
-    valor_diferenca_anterior, valor_diferenca_atual = _executar_consulta(
+    valores = _executar_select(
         QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL, (ano - 1, ano))
+
+    valor_diferenca_anterior = valores[0][0] if valores else 0
+    valor_diferenca_atual = valores[1][0] if len(valores) > 1 else 0
 
     diferenca_em_diferenca = valor_diferenca_atual - valor_diferenca_anterior
     valor_previa = valor_inventario - diferenca_em_diferenca
@@ -107,7 +110,8 @@ def _previa_inventario(valor_inventario, fim):
 def _executar_consulta(query, params=None):
     try:
         rows = query_executor(query_selector, query, params)
-        return rows[0][0] if rows else 0
+        valor = rows[0][0] if rows else None
+        return valor if valor is not None else 0
     except Exception:
         logger.exception('Erro ao executar query do dashboard: %s',
                          _nome_query(query))
@@ -202,8 +206,7 @@ def carregar_kpis(ini=None, fim=None):
         valor_vendas = _executar_consulta(QUERY_VENDAS, (ini, fim))
         valor_entradas = _executar_consulta(
             QUERY_ENTRADAS.format(placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim))
-        valor_distorcao = _executar_consulta(QUERY_DISTORCAO_SALDO, (ini, fim))
-        valor_vendas_130 = valor_vendas * 1.3
+        valor_vendas_130 = float(valor_vendas) * 1.3
         valor_previa_inventario = _previa_inventario(valor_inventario, fim)
 
         valor_fmt_inventario = banco_codigo_valueform(
@@ -212,6 +215,8 @@ def carregar_kpis(ini=None, fim=None):
             valor_vendas) if valor_vendas else '0,00'
         valor_fmt_entradas = banco_codigo_valueform(
             valor_entradas) if valor_entradas else '0,00'
+        valor_fmt_vendas_130 = banco_codigo_valueform(
+            valor_vendas_130) if valor_vendas_130 else '0,00'
         valor_fmt_previa_inventario = banco_codigo_valueform(
             valor_previa_inventario) if valor_previa_inventario else '0,00'
 
@@ -219,8 +224,7 @@ def carregar_kpis(ini=None, fim=None):
             'valor_inventario': valor_fmt_inventario,
             'valor_vendas': valor_fmt_vendas,
             'valor_entradas': valor_fmt_entradas,
-            'valor_distorcao': valor_distorcao,
-            'vendas_130': valor_vendas_130,
+            'vendas_130': valor_fmt_vendas_130,
             'previa_inventario': valor_fmt_previa_inventario,
         }
         return kpis
@@ -231,7 +235,6 @@ def carregar_kpis(ini=None, fim=None):
             'valor_inventario': 'Erro',
             'valor_vendas': 0,
             'valor_entradas': 0,
-            'valor_distorcao': 0,
-            'vendas_130': 0,
+            'vendas_130': '0,00',
             'previa_inventario': 'Erro',
         }

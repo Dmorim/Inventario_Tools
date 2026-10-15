@@ -47,8 +47,6 @@ def _atualizar_dashboard(screen, kpis, cards_frame):
                     kpis['valor_vendas'], COR_TEXTO, 'R$ ')
     _criar_kpi_card(cards_frame, 'Total de Entradas',
                     kpis['valor_entradas'], COR_TEXTO, 'R$ ')
-    _criar_kpi_card(cards_frame, 'Distorção de Saldo',
-                    kpis['valor_distorcao'], COR_TEXTO, 'R$ ')
     _criar_kpi_card(cards_frame, 'Vendas 1.3',
                     kpis['vendas_130'], COR_TEXTO, 'R$ ')
     _criar_kpi_card(cards_frame, 'Previsão de Inventario',
@@ -58,13 +56,13 @@ def _atualizar_dashboard(screen, kpis, cards_frame):
     screen.geometry(f'{screen.winfo_width()}x{screen.winfo_height()}')
 
 
-def _carregar_dados(screen, cards_frame, on_erro=None):
+def _carregar_dados(screen, cards_frame, on_erro, ini, fim):
     logger.info('Iniciando carregamento assincrono dos dados do dashboard.')
 
     def callback(kpis):
         _atualizar_dashboard(screen, kpis, cards_frame)
 
-    thread_execução(screen, carregar_kpis, callback, on_erro)
+    thread_execução(screen, carregar_kpis, callback, on_erro, ini, fim)
 
 
 def _recarregar_tendencia(app_self, screen, trend_frame, tipo_var, agrupamento_var, estado):
@@ -101,7 +99,7 @@ def Dashboard_Screen(app_self, parent, button):
 
     screen = ctk.CTkToplevel(parent)
     screen.title('Dashboard - Visao Geral do Inventario')
-    screen.geometry('960x560+80+60')
+    screen.geometry('1080x560+80+60')
     screen.minsize(680, 520)
     screen.resizable(True, True)
     screen.transient(parent)
@@ -170,5 +168,7 @@ def Dashboard_Screen(app_self, parent, button):
         loading_label.configure(text=f'Erro ao carregar dados: {exc}')
         logger.exception('Erro ao carregar dados do dashboard.')
 
-    _carregar_dados(screen, cards_frame, on_erro)
+    _carregar_dados(
+        screen, cards_frame, on_erro,
+        app_self.data_banco_inicial, app_self.data_banco_final)
     carregar_tendencia()
