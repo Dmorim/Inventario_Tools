@@ -7,13 +7,13 @@ from Dashboard.Dashboard_Charts import criar_grafico_tendencia
 
 logger = get_logger(__name__)
 
-COR_BG = ('#f0f2f5', "#3A546E")
-COR_CARD = ('#ffffff', "#11121D")
+COR_BG = ('#f0f2f5', "#171E25")
+COR_CARD = ('#ffffff', "#2A2C3D")
 COR_TEXTO = ('#2c3e50', "#5fabe9")
 COR_SUBTEXTO = ('#7f8c8d', "#b7e2e6")
 COR_DESTAQUE = '#3498db'
 COR_KPI = ("#393B3D", "#3E3F3F")
-COR_KPI_LABEL = ("#b7e2e6", "#ffffff")
+COR_KPI_LABEL = ("#b7e2e6", "#e1e6ec")
 OPCOES_TIPO_GRAFICO = ['Barras', 'Linhas']
 OPCOES_AGRUPAMENTO = ['Mês', 'Ano']
 
@@ -23,17 +23,17 @@ def _fechar_dashboard(screen, button):
     screen.destroy()
 
 
-def _criar_kpi_card(master, titulo, valor, cor_valor=COR_TEXTO):
+def _criar_kpi_card(master, titulo, valor, cor_valor=COR_TEXTO, prefix = ''):
     card = ctk.CTkFrame(master, fg_color=COR_KPI,
                         corner_radius=8, border_width=1,
-                        border_color="#f5f4ff")
+                        border_color="#e9e8fa")
     card.pack(side='left', padx=6, pady=4, fill='both', expand=True)
 
-    ctk.CTkLabel(card, text=titulo, font=('', 11),
+    ctk.CTkLabel(card, text=titulo, font=('', 12),
                  text_color=COR_KPI_LABEL, wraplength=140).pack(
-        padx=10, pady=(8, 2), anchor='w')
-    ctk.CTkLabel(card, text=str(valor), font=('', 16, 'bold'),
-                 text_color=cor_valor).pack(padx=10, pady=(2, 8), anchor='w')
+        padx=10, pady=(8, 2), anchor='center')
+    ctk.CTkLabel(card, text=prefix + str(valor), font=('', 20, 'bold'),
+                 text_color=cor_valor).pack(padx=10, pady=(2, 8), anchor='center')
     return card
 
 
@@ -42,7 +42,7 @@ def _atualizar_dashboard(screen, kpis, cards_frame):
         widget.destroy()
 
     _criar_kpi_card(cards_frame, 'Valor do Inventario',
-                    kpis['valor_inventario'], COR_DESTAQUE)
+                    kpis['valor_inventario'], COR_DESTAQUE, 'R$ ')
     _criar_kpi_card(cards_frame, 'Total de Produtos',
                     kpis['total_produtos'])
     _criar_kpi_card(cards_frame, 'Produtos Ativos',
@@ -50,7 +50,7 @@ def _atualizar_dashboard(screen, kpis, cards_frame):
     _criar_kpi_card(cards_frame, 'Produtos Zerados',
                     kpis['total_zerados'], '#e74c3c')
     _criar_kpi_card(cards_frame, 'Total de Movimentacoes',
-                    kpis['total_movimentacoes'])
+                    kpis['total_movimentacoes'], COR_TEXTO, 'R$ ')
 
     screen.update_idletasks()
     screen.geometry(f'{screen.winfo_width()}x{screen.winfo_height()}')
@@ -99,7 +99,7 @@ def Dashboard_Screen(app_self, parent, button):
 
     screen = ctk.CTkToplevel(parent)
     screen.title('Dashboard - Visao Geral do Inventario')
-    screen.geometry('1080x560+80+60')
+    screen.geometry('960x560+80+60')
     screen.minsize(680, 520)
     screen.resizable(True, True)
     screen.transient(parent)

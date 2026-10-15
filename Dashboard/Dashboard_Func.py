@@ -4,27 +4,12 @@ from Consultas.Generics_Functions.Gen_Funcs_Consulta import banco_codigo_valuefo
 from Queries.Consulta_Queries import (
     QUERY_INVENTARIO,
     CFOP_LIST,
+    QUERY_VENDAS,
+    QUERY_ENTRADAS,
+    QUERY_DISTORCAO_SALDO,
 )
 
 logger = get_logger(__name__)
-
-QUERY_TOTAL_PRODUTOS = """
-    SELECT COUNT(*) FROM in01pro
-    WHERE classificacao_produto IN ('00','01','02','03','04','05','06')
-"""
-QUERY_TOTAL_PRODUTOS_ATIVOS = """
-    SELECT COUNT(*) FROM in01pro
-    WHERE saldo > 0
-    AND classificacao_produto IN ('00','01','02','03','04','05','06')
-"""
-QUERY_TOTAL_PRODUTOS_ZERADOS = """
-    SELECT COUNT(*) FROM in01pro
-    WHERE saldo <= 0
-    AND classificacao_produto IN ('00','01','02','03','04','05','06')
-"""
-QUERY_TOTAL_MOVIMENTACOES = """
-    SELECT COUNT(*) FROM in01lan
-"""
 
 QUERY_VENDAS_MES_ANO_AGRUPADO = """
     SELECT mes, ano, sum(valor_saida) AS valor
@@ -93,7 +78,23 @@ GROUP BY 1
 ORDER BY 1
 """
 
+QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL = """
+select SUM(valor_diff) AS valor_diff
+from V_DIFF_ENTRADA_SAIDA_MES
+where ano in (?, ?)
+group by ano
+order by ano ASC
+"""
+
+
 _PLACEHOLDERS_CFOP = ', '.join(['?'] * len(CFOP_LIST))
+
+
+def _previa_inventario(valor_inventario):
+    """
+    Calcula a previsão do inventário gerado subtraindo do valor do inventario atual a diferença de entradas/saídas do ano do inventário e anterior"""
+    valor_diferenca_anterior, valor_diferenca_atual = _executar_consulta(QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL)
+    pass
 
 
 def _executar_consulta(query, params=None):
@@ -190,21 +191,30 @@ def carregar_dados_tendencia(ini, fim, granularidade):
 def carregar_kpis(ini=None, fim=None):
     logger.info('Carregando KPIs do dashboard.')
     try:
-        total_produtos = _executar_consulta(QUERY_TOTAL_PRODUTOS)
-        total_ativos = _executar_consulta(QUERY_TOTAL_PRODUTOS_ATIVOS)
-        total_zerados = _executar_consulta(QUERY_TOTAL_PRODUTOS_ZERADOS)
         valor_inventario = _executar_consulta(QUERY_INVENTARIO)
-        total_movimentacoes = _executar_consulta(QUERY_TOTAL_MOVIMENTACOES)
+        valor_vendas = _executar_consulta(QUERY_VENDAS, (ini, fim))
+        valor_entradas = _executar_consulta(
+            QUERY_ENTRADAS.format(placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim))
+        valor_distorcao = _executar_consulta(QUERY_DISTORCAO_SALDO, (ini, fim))
+        valor_vendas_130 = valor_vendas * 1.3
+        valor_previa_inventario = _previa_inventario(valor_inventario)
 
-        valor_fmt = banco_codigo_valueform(
-            valor_inventario) if valor_inventario else 'R$ 0,00'
+        valor_fmt_inventario = banco_codigo_valueform(
+            valor_inventario) if valor_inventario else '0,00'
+        valor_fmt_vendas = banco_codigo_valueform(
+            valor_vendas) if valor_vendas else '0,00'
+        valor_fmt_entradas = banco_codigo_valueform(
+            valor_entradas) if valor_entradas else '0,00'
+        valor_fmt_previa_inventario = banco_codigo_valueform(
+            valor_previa_inventario) if valor_previa_inventario else '0,00'
 
         kpis = {
-            'valor_inventario': valor_fmt,
-            'total_produtos': total_produtos,
-            'total_ativos': total_ativos,
-            'total_zerados': total_zerados,
-            'total_movimentacoes': total_movimentacoes,
+            'valor_inventario': valor_fmt_inventario,
+            'valor_vendas': valor_fmt_vendas,
+            'valor_entradas': valor_fmt_entradas,
+            'valor_distorcao': valor_distorcao,
+            'vendas_130': valor_vendas_130,
+            'previa_inventario': valor_fmt_previa_inventario,
         }
         return kpis
 
