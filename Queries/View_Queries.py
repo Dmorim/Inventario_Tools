@@ -73,20 +73,28 @@ VIEW_V_DIFF_ENTRADA_SAIDA_MES = """
 CREATE OR ALTER VIEW V_DIFF_ENTRADA_SAIDA_MES AS
 WITH entradas AS (
     SELECT
-        l.notfi,
-        l.cdfrn,
-        l.modelonota,
+        l.notfi, l.cdfrn, l.modelonota,
         extract(month from l.dtpro) AS mes,
         extract(year from l.dtpro) AS ano,
-        MIN(l.dtpro) AS dt,
-        COALESCE(MAX(c.com_valno), 0) AS valor_entrada
+        MIN(l.dtpro) AS dt
     FROM in01lan l
-    LEFT JOIN V_LAN_COM c
-           ON c.notfi = l.notfi
-          AND c.cdfrn = l.cdfrn
-          AND c.modelonota = l.modelonota
     WHERE COALESCE(l.controlaestoque, 'S') = 'S'
     GROUP BY 1, 2, 3, 4, 5
+), entradas_com_valor AS (
+    SELECT
+        e.mes,
+        e.ano,
+        e.dt,
+        e.notfi,
+        e.cdfrn,
+        e.modelonota,
+        COALESCE(MAX(c.valno), 0) AS valor_entrada
+    FROM entradas e
+    LEFT JOIN in01com c
+           ON c.notfi = e.notfi
+          AND c.cdfrn = e.cdfrn
+          AND c.modelonota = e.modelonota
+    GROUP BY 1, 2, 3, 4, 5, 6
 ), saidas AS (
     SELECT
         vs.fatur,
@@ -102,9 +110,8 @@ SELECT
     SUM(e.valor_entrada) AS valor_entrada,
     SUM(COALESCE(s.valor_saida, 0)) AS valor_saida,
     SUM(e.valor_entrada) - SUM(COALESCE(s.valor_saida, 0)) AS valor_diff
-FROM entradas e
+FROM entradas_com_valor e
 LEFT JOIN saidas s
        ON s.fatur = e.notfi
 GROUP BY 1, 2
-ORDER BY 2, 1
 """
