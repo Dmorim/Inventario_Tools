@@ -23,7 +23,7 @@ def _fechar_dashboard(screen, button):
     screen.destroy()
 
 
-def _criar_kpi_card(master, titulo, valor, cor_valor=COR_TEXTO, prefix = ''):
+def _criar_kpi_card(master, titulo, valor, cor_valor=COR_TEXTO, prefix=''):
     card = ctk.CTkFrame(master, fg_color=COR_KPI,
                         corner_radius=8, border_width=1,
                         border_color="#e9e8fa")
@@ -43,14 +43,16 @@ def _atualizar_dashboard(screen, kpis, cards_frame):
 
     _criar_kpi_card(cards_frame, 'Valor do Inventario',
                     kpis['valor_inventario'], COR_DESTAQUE, 'R$ ')
-    _criar_kpi_card(cards_frame, 'Total de Produtos',
-                    kpis['total_produtos'])
-    _criar_kpi_card(cards_frame, 'Produtos Ativos',
-                    kpis['total_ativos'], '#2ecc71')
-    _criar_kpi_card(cards_frame, 'Produtos Zerados',
-                    kpis['total_zerados'], '#e74c3c')
-    _criar_kpi_card(cards_frame, 'Total de Movimentacoes',
-                    kpis['total_movimentacoes'], COR_TEXTO, 'R$ ')
+    _criar_kpi_card(cards_frame, 'Total de Vendas',
+                    kpis['valor_vendas'], COR_TEXTO, 'R$ ')
+    _criar_kpi_card(cards_frame, 'Total de Entradas',
+                    kpis['valor_entradas'], COR_TEXTO, 'R$ ')
+    _criar_kpi_card(cards_frame, 'Distorção de Saldo',
+                    kpis['valor_distorcao'], COR_TEXTO, 'R$ ')
+    _criar_kpi_card(cards_frame, 'Vendas 1.3',
+                    kpis['vendas_130'], COR_TEXTO, 'R$ ')
+    _criar_kpi_card(cards_frame, 'Previsão de Inventario',
+                    kpis['previa_inventario'], COR_TEXTO, 'R$ ')
 
     screen.update_idletasks()
     screen.geometry(f'{screen.winfo_width()}x{screen.winfo_height()}')

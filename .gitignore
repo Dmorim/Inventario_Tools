@@ -168,3 +168,4 @@ config.ini
 config.ini
 *.ini
 /logs
+/ignore

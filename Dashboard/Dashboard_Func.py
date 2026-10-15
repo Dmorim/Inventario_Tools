@@ -79,7 +79,7 @@ ORDER BY 1
 """
 
 QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL = """
-select SUM(valor_diff) AS valor_diff
+select SUM(abs(valor_diff)) AS valor_diff
 from V_DIFF_ENTRADA_SAIDA_MES
 where ano in (?, ?)
 group by ano
@@ -90,11 +90,18 @@ order by ano ASC
 _PLACEHOLDERS_CFOP = ', '.join(['?'] * len(CFOP_LIST))
 
 
-def _previa_inventario(valor_inventario):
+def _previa_inventario(valor_inventario, fim):
     """
-    Calcula a previsão do inventário gerado subtraindo do valor do inventario atual a diferença de entradas/saídas do ano do inventário e anterior"""
-    valor_diferenca_anterior, valor_diferenca_atual = _executar_consulta(QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL)
-    pass
+    Calcula a previsão do inventário gerado subtraindo do valor do inventario atual a diferença de entradas/saídas do ano do inventário e anterior
+    """
+
+    ano = int(fim[-4:])
+    valor_diferenca_anterior, valor_diferenca_atual = _executar_consulta(
+        QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL, (ano - 1, ano))
+
+    diferenca_em_diferenca = valor_diferenca_atual - valor_diferenca_anterior
+    valor_previa = valor_inventario - diferenca_em_diferenca
+    return valor_previa
 
 
 def _executar_consulta(query, params=None):
@@ -197,7 +204,7 @@ def carregar_kpis(ini=None, fim=None):
             QUERY_ENTRADAS.format(placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim))
         valor_distorcao = _executar_consulta(QUERY_DISTORCAO_SALDO, (ini, fim))
         valor_vendas_130 = valor_vendas * 1.3
-        valor_previa_inventario = _previa_inventario(valor_inventario)
+        valor_previa_inventario = _previa_inventario(valor_inventario, fim)
 
         valor_fmt_inventario = banco_codigo_valueform(
             valor_inventario) if valor_inventario else '0,00'
@@ -222,8 +229,9 @@ def carregar_kpis(ini=None, fim=None):
         logger.exception('Erro ao carregar KPIs do dashboard.')
         return {
             'valor_inventario': 'Erro',
-            'total_produtos': 0,
-            'total_ativos': 0,
-            'total_zerados': 0,
-            'total_movimentacoes': 0,
+            'valor_vendas': 0,
+            'valor_entradas': 0,
+            'valor_distorcao': 0,
+            'vendas_130': 0,
+            'previa_inventario': 'Erro',
         }
