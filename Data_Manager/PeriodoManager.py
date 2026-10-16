@@ -13,6 +13,14 @@ class PeriodoManager:
     def obter_periodo(self) -> PeriodoInventario:
         return self._periodo
 
+    @property
+    def data_banco_inicial(self) -> str:
+        return self._periodo.inicio_formatado
+
+    @property
+    def data_banco_final(self) -> str:
+        return self._periodo.fim_formatado
+
     def atualizar_periodo(self, novo_periodo: PeriodoInventario):
         if novo_periodo == self._periodo:
             return  # Não há alteração no período, não notificar os listeners

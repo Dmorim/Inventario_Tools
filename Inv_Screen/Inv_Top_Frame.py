@@ -11,6 +11,7 @@ from Dashboard.Dashboard_Screen import Dashboard_Screen
 from Outros.Banco_Images import TelaInicial
 from Outros.Periodo_Inventario import TIPO_ANUAL, TIPO_MENSAL, TIPO_PERSONALIZADO, MESES, MESES_REVERSO, periodo_padrao, calcular_periodo
 from Consultas.Generics_Functions.Gen_Funcs_Consulta import event_invoke_button
+from Data_Manager.PeriodoInventario import PeriodoInventario
 
 
 def _alternar_controles_periodo(grupo_controles, posicoes, data_setada):
@@ -39,8 +40,17 @@ def _create_command_buttons(periodo_manager, master, root, entrys_list: list):
             ano = int(ano_combo.get()) if ano_combo.get(
             ) else datetime.date.today().year
             return calcular_periodo(TIPO_ANUAL, ano=ano)
-        
-        
+
+        return periodo_padrao()
+
+    def atualizar_periodo_manager():
+        inicio, fim = obter_periodo_dos_controles()
+        periodo_manager.atualizar_periodo(PeriodoInventario(inicio, fim))
+
+    def abrir_tela(tela, *args):
+        atualizar_periodo_manager()
+        tela(periodo_manager, *args)
+
     def exibir_periodo_atual():
         _alternar_controles_periodo(grupo_controles, posicoes, data_setada)
 
@@ -50,18 +60,15 @@ def _create_command_buttons(periodo_manager, master, root, entrys_list: list):
         TelaInicial.help_image_tela_inicial, size=(14, 14))
 
     consulta = CTkButton(master, text='Consultas (F1)', width=80, height=48,
-                         command=lambda: Consulta_Total_Screen(master), state='normal')
+                         command=lambda: abrir_tela(Consulta_Total_Screen, root), state='normal')
     comando = CTkButton(master, text='Comandos (F2)', width=60, height=48,
-                        command=lambda: Comandos_Screen(master), state='disabled')
+                        command=lambda: abrir_tela(Comandos_Screen, root), state='disabled')
     database = CTkButton(master, text='Selecione o Banco de Dados', width=100,
                          height=48, command=lambda: Interface_Banco(master, entrys_list, [consulta, comando, dashboard]))
     dashboard = CTkButton(master, text='Dashboard (F3)', width=70, height=48,
-                          command=lambda: Dashboard_Screen(master, dashboard), state='disabled')
+                          command=lambda: abrir_tela(Dashboard_Screen, root, dashboard), state='disabled')
 
     data_setada = IntVar(value=TIPO_ANUAL)
-
-
-    exibir_periodo_atual()
 
     radio_ano = CTkRadioButton(
         master, text='Inv. Anual', variable=data_setada, radiobutton_height=14, radiobutton_width=14, height=10, corner_radius=55, font=('', 11, 'bold'), border_width_checked=10, hover_color='lightblue', value=TIPO_ANUAL, command=exibir_periodo_atual)
@@ -81,27 +88,23 @@ def _create_command_buttons(periodo_manager, master, root, entrys_list: list):
         MESES[12]]
 
     ano_combo = CTkComboBox(master, values=anos,
-                                     width=90, height=13, font=('', 13), state='readonly')
+                            width=90, height=13, font=('', 13), state='readonly')
     ano_combo.set(str(hoje.year - 1))
 
     mes_combo = CTkComboBox(master, values=meses,
-                                     width=90, height=13, font=('', 13), state='readonly')
+                            width=90, height=13, font=('', 13), state='readonly')
     mes_combo.set(MESES.get(hoje.month - 1, '')
-                           if hoje.month > 1 else MESES.get(12, ''))
+                  if hoje.month > 1 else MESES.get(12, ''))
 
     ini_date = StringVar()
     end_date = StringVar()
 
     dat_ini_label = CTkLabel(master, text='De:', width=2, font=('', 12))
     date_entry_ini = DateEntry(master, width=11, background='darkblue', foreground='white',
-                                 borderwidth=2, textvariable=ini_date, date_pattern='dd/mm/yyyy', firstweekday='sunday')
+                               borderwidth=2, textvariable=ini_date, date_pattern='dd/mm/yyyy', firstweekday='sunday')
     dat_fim_label = CTkLabel(master, text='Até:', width=2, font=('', 12))
     date_entry_fim = DateEntry(master, width=11, background='darkblue', foreground='white',
-                                 borderwidth=2, textvariable=end_date, date_pattern='dd/mm/yyyy', firstweekday='sunday')
-
-    inicio, fim = periodo_padrao()
-    date_entry_ini.set_date(inicio)
-    date_entry_fim.set_date(fim)
+                               borderwidth=2, textvariable=end_date, date_pattern='dd/mm/yyyy', firstweekday='sunday')
 
     database._text_label.configure(wraplength=100)
     consulta._text_label.configure(wraplength=70)
@@ -130,6 +133,7 @@ def _create_command_buttons(periodo_manager, master, root, entrys_list: list):
         dat_fim_label: dict(relx=0.745, rely=0.50, anchor='nw'),
         date_entry_fim: dict(relx=0.795, rely=0.53, anchor='nw'),
     }
+
     exibir_periodo_atual()
 
     gear_btt.place(relx=0.933, rely=0.1, anchor='nw')
@@ -145,9 +149,9 @@ def _create_command_buttons(periodo_manager, master, root, entrys_list: list):
         'B', lambda event: event_invoke_button(event, database))
 
 
-def criar_top_frame(periodo_manager, master, entry_list: list, *args, **kwargs):
+def criar_top_frame(periodo_manager, master, root, entry_list: list, *args, **kwargs):
     top_frame = CTkFrame(master, *args, **kwargs)
     top_frame.pack()
-    _create_command_buttons(periodo_manager, top_frame, entry_list)
+    _create_command_buttons(periodo_manager, top_frame, root, entry_list)
 
     return top_frame

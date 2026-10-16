@@ -1,10 +1,8 @@
-import datetime
 from datetime import date
 import customtkinter as ctk
 
 from Outros.Logger.Get_Logger import get_logger
-from Outros.Periodo_Inventario import (TIPO_ANUAL, TIPO_MENSAL, TIPO_PERSONALIZADO,
-                                       calcular_periodo, periodo_padrao, formatar_banco, MESES_REVERSO)
+from Outros.Periodo_Inventario import periodo_padrao, formatar_banco
 from Inv_Screen.Inv_Top_Frame import criar_top_frame
 from Inv_Screen.Inv_Bot_Frame import criar_bot_frame
 from Configuracoes.Config_Manager import get_config
@@ -30,46 +28,29 @@ class Inventario:
         self.root.resizable(False, False)
         self.root.focus_set()
 
-        self.entry_alter_list = []
+        entry_alter_list = []
 
         inicio, fim = periodo_padrao()
 
-        periodo_manager = PeriodoManager(PeriodoInventario(inicio, fim))
+        self.periodo_manager = PeriodoManager(PeriodoInventario(inicio, fim))
 
-        self.frame_top = criar_top_frame(periodo_manager, root, self.root, self.entry_alter_list, width=620,
+        self.frame_top = criar_top_frame(self.periodo_manager, root, self.root, entry_alter_list, width=620,
                                          height=60, border_width=2, border_color='silver', corner_radius=2)
 
-        self.frame_bot = criar_bot_frame(root, self.entry_alter_list, width=620,
+        self.frame_bot = criar_bot_frame(root, entry_alter_list, width=620,
                                          height=140, border_width=2, border_color='silver', corner_radius=5)
 
     def _periodo_selecionado(self):
-        tipo = self.data_setada.get()
-
-        if tipo == TIPO_MENSAL:
-            mes = MESES_REVERSO.get(self.mes_combo.get())
-            if mes is None:
-                mes = datetime.date.today().month
-            return calcular_periodo(TIPO_MENSAL, mes=mes)
-
-        if tipo == TIPO_PERSONALIZADO:
-            return calcular_periodo(TIPO_PERSONALIZADO,
-                                    ini=self.dat_ini.get_date(),
-                                    fim=self.dat_fim.get_date())
-
-        if tipo == TIPO_ANUAL:
-            ano = int(self.ano_combo.get()) if self.ano_combo.get(
-            ) else datetime.date.today().year
-            return calcular_periodo(TIPO_ANUAL, ano=ano)
-
-        return periodo_padrao()
+        periodo = self.periodo_manager.obter_periodo()
+        return periodo.inicio, periodo.fim
 
     @property
     def data_banco_inicial(self):
-        return formatar_banco(self._periodo_selecionado()[0])
+        return self.periodo_manager.data_banco_inicial
 
     @property
     def data_banco_final(self):
-        return formatar_banco(self._periodo_selecionado()[1])
+        return self.periodo_manager.data_banco_final
 
 
 if __name__ == '__main__':
