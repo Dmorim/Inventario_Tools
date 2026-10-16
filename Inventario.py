@@ -57,7 +57,6 @@ if __name__ == '__main__':
     try:
         root = ctk.CTk()
         app = Inventario(root)
-        logger.info('Janela principal criada com sucesso.')
         root.mainloop()
     except Exception:
         logger.exception('Erro ao iniciar a aplicação.')

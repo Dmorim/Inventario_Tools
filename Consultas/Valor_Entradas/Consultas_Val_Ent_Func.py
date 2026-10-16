@@ -8,11 +8,8 @@ from Queries.Consulta_Queries import QUERY_ENTRADAS, CFOP_LIST
 logger = get_logger(__name__)
 
 
-def ent_get(self):
+def ent_get(periodo):
     cfop_list = CFOP_LIST
-
-    logger.info('Consultando valor de entradas no período: %s até %s. query=%s',
-                self.data_banco_inicial, self.data_banco_final, 'QUERY_ENTRADAS')
 
     # Criação da string com os cfops que serão excluidos da busca
     placeholders = ', '.join(['?'] * len(cfop_list))
@@ -21,7 +18,7 @@ def ent_get(self):
     query = QUERY_ENTRADAS.format(placeholders=placeholders)
     nome_query = _nome_query(query)
 
-    params = (*cfop_list, self.data_banco_inicial, self.data_banco_final)
+    params = (*cfop_list, periodo.inicio_formatado, periodo.fim_formatado)
     # Tenta executar a query no banco de dados
     try:
         rows = query_executor(query_selector, query, params)

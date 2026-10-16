@@ -3,7 +3,7 @@ from Interface_Tools.Container_Screen_Managment.Container_Manager import Contain
 from Interface_Tools.Consulta_Screen.Consulta_Screen import criar_tela_consulta
 
 
-def Val_Ent_Screen(self, Consulta_Screen, consulta_button, container_manager: ContainerManager):
+def Val_Ent_Screen(periodo, Consulta_Screen, consulta_button, container_manager: ContainerManager):
     return criar_tela_consulta(Consulta_Screen, consulta_button, container_manager,
                                titulo="Valor das Compras",
                                label_texto="Valor das Compras:",

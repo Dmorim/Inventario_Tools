@@ -8,14 +8,11 @@ from Queries.Consulta_Queries import QUERY_VENDAS
 logger = get_logger(__name__)
 
 
-def ven_get(self) -> str:
+def ven_get(periodo) -> str:
     query = QUERY_VENDAS
     nome_query = _nome_query(query)
     # Define os parâmetros da query
-    params = (self.data_banco_inicial, self.data_banco_final)
-    logger.info('Consultando valor de vendas no período: %s até %s. query=%s',
-                self.data_banco_inicial, self.data_banco_final, nome_query)
-
+    params = (periodo.inicio_formatado, periodo.fim_formatado)
     # Tenta executar a query no banco de dados
     try:
         rows = query_executor(query_selector, query, params)

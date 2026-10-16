@@ -49,7 +49,8 @@ def _create_command_buttons(periodo_manager, master, root, entrys_list: list):
 
     def abrir_tela(tela, *args):
         atualizar_periodo_manager()
-        tela(periodo_manager, *args)
+        periodo = periodo_manager.obter_periodo()
+        tela(periodo, *args)
 
     def exibir_periodo_atual():
         _alternar_controles_periodo(grupo_controles, posicoes, data_setada)
