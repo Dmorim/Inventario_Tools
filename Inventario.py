@@ -1,4 +1,5 @@
 import datetime
+from datetime import date
 import customtkinter as ctk
 
 from Outros.Logger.Get_Logger import get_logger
@@ -9,6 +10,8 @@ from Inv_Screen.Inv_Bot_Frame import criar_bot_frame
 from Configuracoes.Config_Manager import get_config
 from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
 from Queries.Create_Views import deletar_views
+from Data_Manager.PeriodoInventario import PeriodoInventario
+from Data_Manager.PeriodoManager import PeriodoManager
 
 logger = get_logger(__name__)
 
@@ -29,7 +32,11 @@ class Inventario:
 
         self.entry_alter_list = []
 
-        self.frame_top = criar_top_frame(self, root, self.entry_alter_list, width=620,
+        inicio, fim = periodo_padrao()
+
+        periodo_manager = PeriodoManager(PeriodoInventario(inicio, fim))
+
+        self.frame_top = criar_top_frame(periodo_manager, root, self.root, self.entry_alter_list, width=620,
                                          height=60, border_width=2, border_color='silver', corner_radius=2)
 
         self.frame_bot = criar_bot_frame(root, self.entry_alter_list, width=620,

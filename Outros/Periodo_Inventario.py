@@ -45,7 +45,7 @@ def calcular_periodo(tipo, *, ano=None, mes=None, ini=None, fim=None):
     if tipo == TIPO_PERSONALIZADO:
         if ini and fim and fim < ini:
             ini, fim = fim, ini
-        return ini, fim
+        return datetime.date(ini.year, ini.month, ini.day), datetime.date(fim.year, fim.month, fim.day)
 
     return periodo_padrao()
 
