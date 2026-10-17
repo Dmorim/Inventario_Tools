@@ -10,11 +10,14 @@ from Thread_Manager.Thread_Executor import thread_execução
 from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 from Thread_Manager.Query_Operations import query_selector, query_executor
 from Outros.Logger.Get_Logger import get_logger
+from Distorcao_Manager import DistorcaoManager, DistorcaoInventario
 
 logger = get_logger(__name__)
 
+distorcao_manager = DistorcaoManager(DistorcaoInventario([], [], [], []))
 
-def dist_saldo_screen(self, periodo, Consulta_Screen, consulta_button, container_manager: ContainerManager):
+
+def dist_saldo_screen(periodo, Consulta_Screen, consulta_button, container_manager: ContainerManager):
     def centraliza_tela():
         # Calcula a posição central da tela para o progress bar
         screen_width = Consulta_Screen.winfo_screenwidth()
@@ -59,7 +62,7 @@ def dist_saldo_screen(self, periodo, Consulta_Screen, consulta_button, container
     def on_query_complete(empty):
         logger.info("Consulta de distorção de saldo concluída com sucesso.")
         progress_bar.finalizar()
-        val_ven_text.configure(text=len(self.dist_saldo_list))
+        val_ven_text.configure(text=len(dist_saldo_list))
         val_ven_button.configure(state='normal')
         listagem_button.configure(state='normal')
 
@@ -73,15 +76,27 @@ def dist_saldo_screen(self, periodo, Consulta_Screen, consulta_button, container
             "Erro", f"Ocorreu um erro ao gerar a consulta: {error}", parent=hub)
 
     def execute_query(self):
-        logger.info("Iniciando consulta de distorção de saldo.")
         query = QUERY_DISTORCAO_SALDO
 
         rows = query_executor(query_selector, query)
 
-        self.dist_saldo_list = [
-            [cdpro, nmpro, saldo_lan, saldo_pro]
-            for cdpro, nmpro, saldo_lan, saldo_pro in rows
-        ]
+        cdpro = []
+        nmpro = []
+        saldo_lan = []
+        saldo_pro = []
+
+        for row in rows:
+            cdpro.append(row[0])
+            nmpro.append(row[1])
+            saldo_lan.append(float(row[2]))
+            saldo_pro.append(float(row[3]))
+
+        distorcao_manager.atualizar_distorcao(DistorcaoInventario(
+            cdpro=cdpro,
+            nmpro=nmpro,
+            saldo_lan=saldo_lan,
+            saldo_pro=saldo_pro
+        ))
 
     thread_execução(hub, execute_query, on_query_complete,
-                    on_query_error, self)
+                    on_query_error)
