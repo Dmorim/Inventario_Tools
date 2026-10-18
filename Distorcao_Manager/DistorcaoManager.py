@@ -13,12 +13,17 @@ class DistorcaoManager:
         if getattr(self, "_inicializado", False):
             return
 
-        self._distorcoes: list[DistorcaoInventario] = [distorcao]
+        self._distorcao = distorcao
         self._inicializado = True
 
-    def obter_distorcao(self) -> list:
-        return [distorcao.campos_em_lista for distorcao in self._distorcoes]
+    def obter_distorcao(self) -> DistorcaoInventario:
+        return self._distorcao
 
-    def atualizar_distorcao(self, nova_distorcao: DistorcaoInventario):
-        if nova_distorcao != self._distorcoes[-1]:
-            self._distorcoes.append(nova_distorcao)
+    def atualizar_distorcao(
+        self,
+        nova_distorcao: DistorcaoInventario
+    ) -> None:
+        self._distorcao = nova_distorcao
+
+    def possui_itens(self) -> bool:
+        return self._distorcao.tamanho > 0

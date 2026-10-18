@@ -4,10 +4,10 @@ from Thread_Manager.Query_Operations import query_selector, query_executor
 from Thread_Manager.Thread_Executor import thread_execução
 
 
-def criar_tela_listagem(parent, titulo, colunas, query, params=None, geometry: str = "500x300") -> CTkToplevel:
+def criar_tela_listagem(parent, titulo, colunas, dados, params=None, geometry: str = "500x300") -> CTkToplevel:
 
     def buscar():
-        return query_executor(query_selector, query, params)
+        return query_executor(query_selector, dados, params)
 
     def ao_terminar(rows):
         for row in rows:
@@ -46,6 +46,10 @@ def criar_tela_listagem(parent, titulo, colunas, query, params=None, geometry: s
     treeview.bind("<Double-1>", lambda event: treeview.selection())
     treeview.bind("<Escape>", lambda event: toplevel.destroy())
 
-    thread_execução(toplevel, buscar, ao_terminar)
+    if isinstance(dados, str):
+        thread_execução(toplevel, buscar, ao_terminar)
+
+    else:
+        ao_terminar(dados)
 
     return toplevel, treeview

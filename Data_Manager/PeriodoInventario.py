@@ -14,8 +14,8 @@ class PeriodoInventario:
 
     @property
     def inicio_formatado(self) -> str:
-        return self.inicio.strftime("%d/%m/%Y")
+        return self.inicio.strftime("%d.%m.%Y")
 
     @property
     def fim_formatado(self) -> str:
-        return self.fim.strftime("%d/%m/%Y")
+        return self.fim.strftime("%d.%m.%Y")

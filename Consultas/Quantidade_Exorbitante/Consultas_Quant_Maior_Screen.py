@@ -5,9 +5,9 @@ from Consultas.Quantidade_Exorbitante.Consultas_Quant_Maior_List import List_Tre
 from Queries.Consulta_Queries import QUERY_QUANTIDADE_EXORBITANTE
 
 
-def Quant_Maior_Screen(self, Consulta_Screen, consulta_button, container_manager: ContainerManager):
+def Quant_Maior_Screen(periodo, Consulta_Screen, consulta_button, container_manager: ContainerManager):
     query = QUERY_QUANTIDADE_EXORBITANTE
-    params = (self.data_banco_inicial, self.data_banco_final)
+    params = (periodo.inicio_formatado, periodo.fim_formatado)
     return criar_tela_consulta(Consulta_Screen, consulta_button, container_manager,
                                titulo="Produtos com Quantidade Maior que 999999",
                                label_texto="Produtos com Quant > 999999:",
@@ -16,6 +16,6 @@ def Quant_Maior_Screen(self, Consulta_Screen, consulta_button, container_manager
                                params=params,
                                prefix_copy=None,
                                on_listar=lambda: List_Treeview_Screen(
-                                   self, Consulta_Screen),
+                                   periodo, Consulta_Screen),
                                texto_inicial="Gerando Quantidade...",
                                )

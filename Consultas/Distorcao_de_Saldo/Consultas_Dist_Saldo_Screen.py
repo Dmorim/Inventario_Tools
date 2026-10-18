@@ -10,14 +10,15 @@ from Thread_Manager.Thread_Executor import thread_execução
 from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 from Thread_Manager.Query_Operations import query_selector, query_executor
 from Outros.Logger.Get_Logger import get_logger
-from Distorcao_Manager import DistorcaoManager, DistorcaoInventario
+from Distorcao_Manager.DistorcaoInventario import DistorcaoInventario
+from Distorcao_Manager.DistorcaoManager import DistorcaoManager
 
 logger = get_logger(__name__)
 
 distorcao_manager = DistorcaoManager(DistorcaoInventario([], [], [], []))
 
 
-def dist_saldo_screen(periodo, Consulta_Screen, consulta_button, container_manager: ContainerManager):
+def dist_saldo_screen(Consulta_Screen, consulta_button, container_manager: ContainerManager):
     def centraliza_tela():
         # Calcula a posição central da tela para o progress bar
         screen_width = Consulta_Screen.winfo_screenwidth()
@@ -48,7 +49,7 @@ def dist_saldo_screen(periodo, Consulta_Screen, consulta_button, container_manag
     val_ven_button = ctk.CTkButton(
         hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_ven_text), state='disabled')
     listagem_button = ctk.CTkButton(hub, text='Listar Produtos', width=15,
-                                    height=20, command=lambda: List_Treeview_Screen(periodo, hub), state='disabled')
+                                    height=20, command=lambda: List_Treeview_Screen(hub, distorcao_manager), state='disabled')
 
     # Posiciona os labels e botões na tela
     val_ven_label.place(relx=0.5, y=15, anchor='center')
@@ -59,10 +60,12 @@ def dist_saldo_screen(periodo, Consulta_Screen, consulta_button, container_manag
     progress_bar.create_screen()
     progress_bar.atualizar_status("Consultando distorções de saldo...")
 
-    def on_query_complete(empty):
+    def on_query_complete(_):
         logger.info("Consulta de distorção de saldo concluída com sucesso.")
         progress_bar.finalizar()
-        val_ven_text.configure(text=len(dist_saldo_list))
+        val_ven_text.configure(
+            text=str(distorcao_manager.obter_distorcao().tamanho)
+        )
         val_ven_button.configure(state='normal')
         listagem_button.configure(state='normal')
 
@@ -75,7 +78,7 @@ def dist_saldo_screen(periodo, Consulta_Screen, consulta_button, container_manag
         messagebox.showerror(
             "Erro", f"Ocorreu um erro ao gerar a consulta: {error}", parent=hub)
 
-    def execute_query(self):
+    def execute_query():
         query = QUERY_DISTORCAO_SALDO
 
         rows = query_executor(query_selector, query)

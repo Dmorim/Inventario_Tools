@@ -8,7 +8,7 @@ def Val_Ent_Screen(periodo, Consulta_Screen, consulta_button, container_manager:
                                titulo="Valor das Compras",
                                label_texto="Valor das Compras:",
                                get_func=ent_get,
-                               self=self,
+                               periodo=periodo,
                                prefix_copy="R$ ",
                                on_listar=None,
                                texto_inicial="Gerando Valor...",
