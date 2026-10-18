@@ -4,7 +4,7 @@ from tkinter import messagebox
 from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Func import Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir, on_click_confirm, validar_credenciais
 
 
-def Interface_Banco(self, root, entry_alter_list, button_list):
+def Interface_Banco(root, entry_alter_list, button_list):
     # Cria a tela Banco_Screen como TopLevel e define suas configurações
     Banco_Screen = ctk.CTkToplevel(root)
     Banco_Screen.title("Configurações de Banco de Dados")
