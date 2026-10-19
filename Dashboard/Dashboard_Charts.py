@@ -1,12 +1,9 @@
 from customtkinter import CTkLabel
-from Outros.Logger.Get_Logger import get_logger
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib
 matplotlib.use('Agg')
 
-
-logger = get_logger(__name__)
 
 COR_SERIES_VENDAS = '#3498db'
 COR_SERIES_ENTRADAS = '#2ecc71'
@@ -14,7 +11,6 @@ COR_SERIES_DIFERENCA = '#e74c3c'
 
 
 def criar_grafico_tendencia(master, dados, tipo='Barras'):
-    logger.info('Criando gráfico de tendência. tipo=%s', tipo)
     if not dados or not dados.get('labels'):
         CTkLabel(master, text='Nenhum dado encontrado para o período!',
                  font=('', 13, 'bold'), text_color='#7f8c8d').pack(

@@ -1,7 +1,7 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 19/10/2026 — **Refatoração de datas CONCLUÍDA**: E5 (Dashboard), E6a/E6b (Comandos → classe `Funcoes_Comandos`), E7 (legado removido de `Inventario.py`), E1a (`tests/test_periodo_manager.py` — 16 testes) e E8 (regressão final). Suíte completa: **85 passed**.
+**Última sessão:** 19/10/2026 — **Refatoração de datas CONCLUÍDA**: E5 (Dashboard), E6a/E6b (Comandos → classe `Funcoes_Comandos`), E7 (legado removido de `Inventario.py`), E1a (`tests/test_periodo_manager.py` — 16 testes) e E8 (regressão final). Suíte completa: **85 passed**. Nesta mesma data: **revisão do item 6.2 aplicada** — remoção dos logs de início/execução (67 → 53 chamadas de logger) e nível de log configurável.
 **Próximo passo (pendente):** nenhuma etapa aberta na refatoração de datas. Restam apenas **testes manuais** (troca de período + reabertura das telas) e o **encerramento/commit pelo usuário**.
 **Branch:** `refatoracao_v3.5`
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
@@ -117,6 +117,15 @@ Se testes falharem após mudança, o plano foi executado incorretamente — info
   "chamado por..." nem qualquer linha de entrada/execução).
 - Quando um logger for adicionado a uma função, ele deve aparecer **uma única vez**, no
   ponto de retorno/conclusão ou no tratamento de erro — não na abertura do corpo.
+- **Uma única camada registra cada evento:** a infraestrutura (`Query_Operations`,
+  `Thread_Executor`) registra conclusões de query/thread em `debug`; o módulo de negócio
+  (ex.: `ven_get`, `prod_get`, `carregar_kpis`) registra o resultado final em `info`.
+  Nunca ambos em `info` para o mesmo evento (duplicação de linha no arquivo de log).
+- **Nível de log configurável por env var:** `INVENTARIO_LOG_LEVEL` (`DEBUG`, `INFO`...)
+  com fallback `INFO` — lido em `Outros/Logger/Get_Logger.py`. Para diagnóstico, rodar a
+  aplicação com `$env:INVENTARIO_LOG_LEVEL='DEBUG'` (PowerShell) sem alterar código.
+- Estado atual (19/10/2026): **53 chamadas de logger** no código de produção
+  (24 exception, 15 info, 6 warning, 5 debug, 3 error) — todas de saída/conclusão/erro.
 
 ### 6.3 Segurança e dados
 - **Nunca** gravar credenciais em arquivo versionado; `Config.ini` está no `.gitignore`.

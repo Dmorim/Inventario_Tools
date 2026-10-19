@@ -12,7 +12,6 @@ def inv_get():
     # Função que executa a query de valor de inventário e retorna o valor obtido
     query = QUERY_INVENTARIO
     nome_query = _nome_query(query)
-    logger.info('Consultando valor de inventário. query=%s', nome_query)
     try:
         rows = query_executor(query_selector, query)
         val = rows[0][0] if rows else None

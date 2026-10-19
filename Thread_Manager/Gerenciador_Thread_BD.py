@@ -64,8 +64,6 @@ class GerenciadorThreadBD:
     def _pegar_conexao(self, timeout=5, tentativas=3):
         for tentativa_conexao in range(tentativas + 1):
             try:
-                self.logger.debug(
-                    f"Tentativa {tentativa_conexao + 1} de obter conexão do pool.")
                 conexao = self.__pool.get(timeout=timeout)
             except Empty:
                 if tentativa_conexao == tentativas:

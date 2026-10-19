@@ -168,9 +168,6 @@ def carregar_dados_tendencia(ini, fim, granularidade):
         diff_ano = _executar_select(QUERY_DIFERENCA_ANO_AGRUPADO, (ini, fim))
         return vendas_ano, entradas_ano, diff_ano
 
-    logger.info('Carregando dados de tendência. granularidade=%s | período=%s..%s',
-                granularidade, ini, fim)
-
     try:
         vendas_rows, entradas_rows, diff_rows = __executar_consulta_mes(
         ) if granularidade == 'mes' else __executar_consulta_ano()
@@ -200,7 +197,6 @@ def carregar_dados_tendencia(ini, fim, granularidade):
 
 
 def carregar_kpis(ini=None, fim=None):
-    logger.info('Carregando KPIs do dashboard.')
     try:
         valor_inventario = _executar_consulta(QUERY_INVENTARIO)
         valor_vendas = _executar_consulta(QUERY_VENDAS, (ini, fim))

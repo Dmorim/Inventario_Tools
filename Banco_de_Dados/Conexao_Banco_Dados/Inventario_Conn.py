@@ -38,8 +38,8 @@ class BancoDeDados:
         if cls._gerenciador is not None:
             return cls._gerenciador
 
-        logger.info('Inicializando pool de conexões do banco de dados.')
         cls._gerenciador = GerenciadorThreadBD(cls._criar_conexao)
+        logger.info('Pool de conexões do banco criado com sucesso.')
         return cls._gerenciador
 
     @staticmethod

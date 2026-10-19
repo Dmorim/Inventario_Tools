@@ -58,8 +58,6 @@ def _atualizar_dashboard(screen, kpis, cards_frame):
 
 
 def _carregar_dados(screen, cards_frame, on_erro, ini, fim):
-    logger.info('Iniciando carregamento assincrono dos dados do dashboard.')
-
     def callback(kpis):
         _atualizar_dashboard(screen, kpis, cards_frame)
 

@@ -2,6 +2,7 @@ import atexit
 import datetime
 import logging
 import logging.handlers
+import os
 import queue
 from pathlib import Path
 
@@ -32,7 +33,8 @@ def _configurar_logger() -> logging.Logger:
     global _LOG_LISTENER
 
     logger = logging.getLogger("InventarioTools")
-    logger.setLevel(logging.INFO)
+    nivel = os.environ.get("INVENTARIO_LOG_LEVEL", "INFO").upper()
+    logger.setLevel(getattr(logging, nivel, logging.INFO))
     logger.propagate = False
 
     if logger.handlers:

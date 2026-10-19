@@ -27,12 +27,11 @@ def _nome_query(query):
 
 def query_selector(conexao, query, params=None):
     nome_query = _nome_query(query)
-    logger.info('Iniciando SELECT: %s | params=%s', nome_query, params)
     try:
         cursor = conexao.cursor()
         cursor.execute(query, params)
         resultado = cursor.fetchall()
-        logger.info(
+        logger.debug(
             'SELECT concluído com sucesso. query=%s | linhas=%s', nome_query, len(resultado))
         return resultado
     except DatabaseError as e:
@@ -46,12 +45,11 @@ def query_selector(conexao, query, params=None):
 
 def query_updater(conexao, query, params=None):
     nome_query = _nome_query(query)
-    logger.info('Iniciando UPDATE/DDL: %s | params=%s', nome_query, params)
     try:
         cursor = conexao.cursor()
         cursor.execute(query, params)
         conexao.commit()
-        logger.info('Operação de banco confirmada com sucesso: %s', nome_query)
+        logger.debug('Operação de banco confirmada com sucesso: %s', nome_query)
         return
     except DatabaseError as e:
         conexao.rollback()
@@ -64,7 +62,5 @@ def query_updater(conexao, query, params=None):
 
 
 def query_executor(funcao, query, params=None):
-    nome_query = _nome_query(query)
-    logger.info('Executando operação via pool de conexões: %s', nome_query)
     gerenciador = BancoDeDados.gerenciador()
     return gerenciador.executar(funcao, query, params)

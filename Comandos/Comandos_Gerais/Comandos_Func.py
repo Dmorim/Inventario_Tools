@@ -81,14 +81,12 @@ class Funcoes_Comandos:
                 comando,
                 lambda i=idx, n=n: status_label.configure(
                     text=f'Executando {i + 1} de {total}: {n}'))
-            logger.info(f'Executando comando: {nome}')
             query_executor(query_updater, query, params)
             resultados.append(nome)
         return resultados
 
     def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, status_label):
         def update_finalizado(_):
-            logger.info('Update realizado com sucesso')
             atualizar_ui_main(comando, progress_bar.finalizar)
             status_label.configure(
                 text=f'{total} comando(s) executado(s) com sucesso.')

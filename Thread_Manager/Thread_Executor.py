@@ -42,15 +42,13 @@ def thread_execução(master, func, callback, on_erro=None, *args, **kwargs):
     """
 
     fila = queue.Queue()
-    logger.info('Iniciando thread para %s.',
-                getattr(func, '__name__', repr(func)))
 
     def thread_target(*args, **kwargs):
         try:
             result = func(*args, **kwargs)
             fila.put((True, result))
-            logger.info('Thread %s concluída com sucesso.',
-                        getattr(func, '__name__', repr(func)))
+            logger.debug('Thread %s concluída com sucesso.',
+                         getattr(func, '__name__', repr(func)))
         except Exception as exc:
             logger.exception('Thread %s falhou.', getattr(
                 func, '__name__', repr(func)))
