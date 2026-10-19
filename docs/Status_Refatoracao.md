@@ -20,10 +20,10 @@
 - **Fase 2 (Eliminar Código Duplicado)** — ✅ concluída (funções unificadas, factories de tela e listagem).
 - **Fase 3 (Arquitetura e Organização)** — ✅ concluída (imports no topo, hardening de threads, logging estruturado).
 - **Fase 4 (Type Hints)** — ❌ fora de escopo (decisão do usuário).
-- **Fase 5 (Testes Unitários)** — ✅ 69 testes passando (59 originais + 10 de distorção de saldo); queries centralizadas cobertas por contrato nominal; pool de BD adicionado aos testes.
+- **Fase 5 (Testes Unitários)** — ✅ 85 testes passando (69 originais + 16 de `PeriodoManager`); queries centralizadas cobertas por contrato nominal; pool de BD adicionado aos testes.
 - **Fase 6 (PyInstaller)** — 🔄 config existe mas desatualizada; build pendente (a fazer por último).
 - **N1–N9 (Novos Problemas)** — ✅ 9/9 corrigidos (inclui N4 com health-check).
-- **Refatoração de Datas (PeriodoManager)** — 🔄 **em andamento**: modelo (`PeriodoInventario/PeriodoManager`) pronto, Top Frame integrado ao manager, **telas de consulta**, **Comandos** (refatorado para classe `Funcoes_Comandos` + período snapshot) e **Dashboard** (snapshot + gráfico de tendência com janela fixa de 5 anos-calendário até a data final) migrados. Restam E7 (remover legado), E1a (testes do manager) e E8 (regressão final).
+- **Refatoração de Datas (PeriodoManager)** — ✅ **concluída**: modelo (`PeriodoInventario/PeriodoManager`) pronto e com testes (`tests/test_periodo_manager.py`), Top Frame integrado ao manager, telas de consulta/Comandos/Dashboard migradas para snapshot de período; legado `data_banco_*` removido de `Inventario.py`. Gráfico de tendência do Dashboard com janela fixa de 5 anos-calendário.
 
 ## 5. Checklist de Migração (anexo ao Mapeamento de Datas) — Status de Execução
 
@@ -56,7 +56,7 @@ Baseado em `docs/roadmap/roadmap_refatoracao_datas.html` (15/10/2026).
 |---|---|---|
 | `PeriodoInventario` (frozen) + validação | ✅ | `Data_Manager/PeriodoInventario.py` — valida período invertido. |
 | `PeriodoManager` (single source + listeners) | ✅ | `Data_Manager/PeriodoManager.py` — `obter_periodo`, `atualizar_periodo`, `adicionar/remover/_notificar_listeners`. |
-| Testes do modelo/manager | ⬜ | **Faltam** testes para `PeriodoInventario` e `PeriodoManager` (equality, imutabilidade, notificação, idempotência). |
+| Testes do modelo/manager | ✅ | `tests/test_periodo_manager.py` — igualdade, imutabilidade, notificação, idempotência, remoção de listeners (16 testes). |
 
 ### Fase 2 — Integração à inicialização ✅
 | Item | Status | Observação |
@@ -90,33 +90,36 @@ Baseado em `docs/roadmap/roadmap_refatoracao_datas.html` (15/10/2026).
 | **Consultas (sob demanda)** | ✅ **Concluído** | Todas as telas recebem `periodo` (snapshot). Corrigido `Quant_Maior` (Screen+List), `Contr_Estq` (chamada), `Val_Ent` (`periodo=periodo`). `Distorção` concluída com manager próprio. |
 | **Comandos** | ✅ **Concluído** | `Comandos_Screen(periodo, parent)`; `Comandos_Func` migrado para classe `Funcoes_Comandos` com período snapshot (sem `self.data_banco_inicial`); check de distorção usa `DistorcaoManager.possui_itens()`; aliases de compatibilidade mantidos para legado/tests. |
 
-### Fase 7 — Remover compatibilidade legada ⬜
+### Fase 7 — Remover compatibilidade legada ✅
 | Item | Status | Observação |
 |---|---|---|
-| Remover `data_banco_inicial/final` e `_periodo_selecionado` de `Inventario.py` | ⬜ | Aguardando migração completa (Comandos/Dashboard). |
-| Remover imports mortos | ⬜ | Após limpeza. |
-| Busca global de `app_self.data_banco_*` | ⬜ | Verificar 0 usos fora do legado. |
+| Remover `data_banco_inicial/final` e `_periodo_selecionado` de `Inventario.py` | ✅ | Removidos; `__init__` usa apenas `self.periodo_manager`. |
+| Remover imports mortos | ✅ | Verificado após limpeza. |
+| Busca global de `app_self.data_banco_*` | ✅ | 0 usos (varredura concluída; única menção restante é a propriedade `data_banco_*` do próprio `PeriodoManager`, mantida como API de conveniência sem uso atual). |
 
-### Fase 8 — Testes, regressão e documentação 🔄
+### Fase 8 — Testes, regressão e documentação ✅
 | Item | Status | Observação |
 |---|---|---|
-| Testes `PeriodoInventario/PeriodoManager` | ⬜ | Criar `tests/test_periodo_manager.py` (igualdade, imutabilidade, período invertido, formatação dd.mm.yyyy, notificação, idempotência, registro/remoção de listeners). |
+| Testes `PeriodoInventario/PeriodoManager` | ✅ | `tests/test_periodo_manager.py` criado (16 testes: snapshot, formatação dd.mm.yyyy, período invertido, igualdade, notificação/idempotência, registro/remoção de listeners). |
 | Ajustar fakes legados | ✅ | `test_comandos_func.py` migrado para `Funcoes_Comandos` com `FakePeriodo` (novo contrato de período). `test_validacao.py` usa wrapper de compatibilidade. |
 | Testes manuais de troca de período | ⬜ | Sem listener no Dashboard; validar troca de período e reabertura das telas. |
-| Atualizar este Status | 🔄 | Em andamento. |
+| Atualizar este Status | ✅ | Atualizado em 19/10/2026 (encerramento da refatoração de datas). |
 
 ---
 
 ## Próximos passos (recomendados)
 
-**Concluídas nesta sessão (19/10/2026):** E6a + E6b (Comandos migrado para classe `Funcoes_Comandos` + período snapshot; testes atualizados para o novo contrato, 69 passed) e E5 (Dashboard migrado para snapshot + janela fixa de 5 anos-calendário no gráfico de tendência).
+**✅ Refatoração de datas CONCLUÍDA (19/10/2026):** E5, E6a, E6b, E7, E1a e E8 concluídos.
+Suíte completa: **85 passed** (inclui 16 testes novos de `PeriodoManager`), `compileall` sem erros.
 
-Ordem pragmática restante (fecha a refatoração de datas):
-
-| Etapa | Ação | Estimativa |
+| Etapa | Ação | Status |
 |---|---|---|
-| **E7** | Remover propriedades legadas de `Inventario.py`, buscar usos restantes de `app_self.data_banco_*`. | 15–30 min |
-| **E1a** | Criar `tests/test_periodo_manager.py` (cobrir Fase 1). | 30 min |
-| **E8** | Testes de regressão + commit consolidado + atualizar Status/roadmap. | 20 min |
+| **E5** | Dashboard migrado para snapshot + janela fixa de 5 anos-calendário no gráfico de tendência. | ✅ |
+| **E6a/E6b** | Comandos migrado para classe `Funcoes_Comandos` + período snapshot; testes atualizados. | ✅ |
+| **E7** | Propriedades legadas de `Inventario.py` removidas; 0 usos de `app_self.data_banco_*`. | ✅ |
+| **E1a** | `tests/test_periodo_manager.py` criado (16 testes). | ✅ |
+| **E8** | Regressão final + docs sincronizados (sem commit automático). | ✅ |
 
-**Próximo passo imediato:** **E7 — Remover propriedades legadas de `Inventario.py`** (verificar 0 usos restantes de `app_self.data_banco_*`).
+**Restam apenas testes manuais** (troca de período + reabertura das telas), que exigem execução da aplicação com banco de dados real — fora do escopo automatizado.
+
+**Aviso:** as alterações estão no **working tree** para revisão manual. Nenhum commit foi realizado (regra de ouro da sessão). O encerramento/commit fica a cargo do usuário.

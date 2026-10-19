@@ -106,7 +106,7 @@ QUERY_UPDATE_CONTROLAESTOQUE_S = """
 """
 Ativa controle de estoque a partir de uma data informada.
 Tela: Comandos/Comandos_Gerais/Comandos_Func.py
-Parâmetros: (data_banco_inicial,)
+Parâmetros: (periodo inicial formatado,)
 Retorna: atualização em massa de IN01LAN
 """
 

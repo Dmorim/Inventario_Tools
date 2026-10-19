@@ -1,8 +1,8 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 19/10/2026 — E6a/E6b (Comandos → classe `Funcoes_Comandos` + período snapshot; testes atualizados) e E5 (Dashboard → snapshot + gráfico de tendência com janela fixa de 5 anos-calendário até a data final) concluídos; 69 testes passando.
-**Próxima sessão (pendente):** etapa **E7** — remover propriedades legadas `data_banco_*` de `Inventario.py` (verificar 0 usos restantes).
+**Última sessão:** 19/10/2026 — **Refatoração de datas CONCLUÍDA**: E5 (Dashboard), E6a/E6b (Comandos → classe `Funcoes_Comandos`), E7 (legado removido de `Inventario.py`), E1a (`tests/test_periodo_manager.py` — 16 testes) e E8 (regressão final). Suíte completa: **85 passed**.
+**Próximo passo (pendente):** nenhuma etapa aberta na refatoração de datas. Restam apenas **testes manuais** (troca de período + reabertura das telas) e o **encerramento/commit pelo usuário**.
 **Branch:** `refatoracao_v3.5`
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
@@ -75,22 +75,18 @@ Se testes falharem após mudança, o plano foi executado incorretamente — info
 
 ---
 
-## 5. ESTADO ATUAL DA REFATORAÇÃO DE DATAS
+## 5. ESTADO ATUAL DA REFATORAÇÃO DE DATAS — ✅ CONCLUÍDA (19/10/2026)
 
-**Concluído (resumo):**
+**Resumo das etapas concluídas:**
 - Mapeamento dos 11 grupos de consultas vs Plano v2; varredura `dt_ini`/`dt_fim` com **0 resíduos**.
 - Telas de consulta migradas para snapshot de período.
 - **Comandos (E6a/E6b):** `Comandos_Screen(periodo, parent)`; lógica migrada para a classe `Funcoes_Comandos` (período snapshot, sem `self.data_banco_inicial`); check de distorção via `DistorcaoManager.possui_itens()`; aliases de compatibilidade no módulo (`Comandos_Func`, `montar_operacoes`, `comandos_true`, `on_click_confirm`, `precu_porcent_entry_validate`) preservam legado/tests; `tests/test_comandos_func.py` migrado para `Funcoes_Comandos` + `FakePeriodo`.
 - **Dashboard (E5):** `Dashboard_Screen(periodo, parent, button)` — comportamento "sob demanda" (snapshot na abertura, **sem listener**); KPIs usam o período selecionado; **gráfico de tendência usa janela fixa de 5 anos-calendário terminando na data final** (helper `Outros/Periodo_Inventario.periodo_tendencia_ultimos_5_anos`).
-- Testes e `compileall` verdes (**69 passed**).
+- **E7:** propriedades legadas `data_banco_*`/`_periodo_selecionado` removidas de `Inventario.py`; 0 usos de `app_self`/`dist_saldo_list`.
+- **E1a:** `tests/test_periodo_manager.py` criado (16 testes: snapshot, formatação `%d.%m.%Y`, período invertido, igualdade, notificação/idempotência, registro/remoção de listeners).
+- **E8:** regressão final — **85 testes passando**, `compileall` sem erros; docs sincronizados.
 
-**Ainda pendente (próximos passos):**
-
-| Etapa | O que é | Prioridade |
-|---|---|---|
-| **E7** | Remover propriedades legadas `data_banco_*` de `Inventario.py` (linhas ~47-53); confirmar 0 usos de `app_self.data_banco_*` | **Próximo passo imediato** |
-| **E1a** | Criar `tests/test_periodo_manager.py` (igualdade, imutabilidade, notificação de listeners) | pode ser feito a qualquer momento |
-| **E8** | Regressão final + docs (sem commit automático) | ao final |
+**Apenas testes manuais restam** (troca de período + reabertura das telas) — exigem execução da aplicação com banco real. **Nenhum commit realizado** (working tree para revisão do usuário).
 
 **Referências-chave do padrão de período (já migrado — use como modelo):**
 - `Data_Manager/PeriodoInventario.py` — snapshot frozen (`inicio_formatado`/`fim_formatado` com `%d.%m.%Y`).
