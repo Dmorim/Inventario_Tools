@@ -47,6 +47,10 @@ def _create_command_buttons(periodo_manager, master, root, entrys_list: list):
         inicio, fim = obter_periodo_dos_controles()
         periodo_manager.atualizar_periodo(PeriodoInventario(inicio, fim))
 
+    def sincronizar_periodo_por_evento(_event=None):
+        if data_setada.get() == TIPO_PERSONALIZADO:
+            atualizar_periodo_manager()
+
     def abrir_tela(tela, *args):
         atualizar_periodo_manager()
         periodo = periodo_manager.obter_periodo()
@@ -106,6 +110,14 @@ def _create_command_buttons(periodo_manager, master, root, entrys_list: list):
     dat_fim_label = CTkLabel(master, text='Até:', width=2, font=('', 12))
     date_entry_fim = DateEntry(master, width=11, background='darkblue', foreground='white',
                                borderwidth=2, textvariable=end_date, date_pattern='dd/mm/yyyy', firstweekday='sunday')
+
+    for date_entry in (date_entry_ini, date_entry_fim):
+        date_entry.bind(
+            '<<DateEntrySelected>>', sincronizar_periodo_por_evento, add='+')
+        date_entry.bind(
+            '<FocusOut>', sincronizar_periodo_por_evento, add='+')
+        date_entry.bind(
+            '<Return>', sincronizar_periodo_por_evento, add='+')
 
     database._text_label.configure(wraplength=100)
     consulta._text_label.configure(wraplength=70)

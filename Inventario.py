@@ -40,18 +40,6 @@ class Inventario:
         self.frame_bot = criar_bot_frame(root, entry_alter_list, width=620,
                                          height=140, border_width=2, border_color='silver', corner_radius=5)
 
-    def _periodo_selecionado(self):
-        periodo = self.periodo_manager.obter_periodo()
-        return periodo.inicio, periodo.fim
-
-    @property
-    def data_banco_inicial(self):
-        return self.periodo_manager.data_banco_inicial
-
-    @property
-    def data_banco_final(self):
-        return self.periodo_manager.data_banco_final
-
 
 if __name__ == '__main__':
     try:

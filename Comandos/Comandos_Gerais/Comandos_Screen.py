@@ -4,6 +4,9 @@ import customtkinter as ctk
 from Interface_Tools.Tk_Tooltip import ToolTip
 from Comandos.Comandos_Gerais.Comandos_Func import on_click_confirm, precu_porcent_entry_validate
 from Comandos.Distorcao_Saldo.Comandos_Dist_Saldo import on_click_dist_saldo
+from Distorcao_Manager.DistorcaoManager import DistorcaoManager
+
+# Inicializa a instância do DistorcaoManager com None
 
 
 def Comandos_Screen(self, parent):
@@ -15,6 +18,8 @@ def Comandos_Screen(self, parent):
     comando.transient(parent)
     comando.focus_set()
     comando.grab_set()
+
+    distorcao = DistorcaoManager.obter_distorcao()
 
     # Criação dos frames a esquerda(frame_l) e a direita(frame_r) da janela comando
     frame_l = ctk.CTkFrame(comando, width=410, height=260,
@@ -151,12 +156,7 @@ def Comandos_Screen(self, parent):
     precu_igual_cbb.set('Preço de Compra')
 
     # Verificar se a lista de distorção de saldo está vazia ou foi criada
-    if hasattr(self, 'dist_saldo_list'):
-        if len(self.dist_saldo_list) == 0:
-            # Desabilita o botão de distorção de saldo caso não haja produtos com distorções
-            dist_saldo_button.configure(state='disabled')
-    else:
-        # Desabilita o botão de distorção caso a lista de distorção não tenha sido criada
+    if distorcao is None or not distorcao.possui_itens():
         dist_saldo_button.configure(state='disabled')
 
     # Atalhos do teclado para sair da tela e executar a função confirmar

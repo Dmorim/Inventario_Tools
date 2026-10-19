@@ -1,5 +1,9 @@
 # AGENTS.md — Guia para agentes trabalhando no projeto
 
+> **Sessão de refatoração de datas:** leia também `AGENTS_SESSAO.md` (agente **NEXO**) —
+> instruções de sessão: **nunca commitar**, apresentar plano + prévia de código e aguardar
+> confirmação antes de qualquer alteração, estado atual do roadmap de datas e cuidados de ambiente.
+
 ## Visão geral
 
 Ferramenta desktop em Python/Tkinter (customtkinter) para auxiliar técnicos de inventário.

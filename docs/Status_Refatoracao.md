@@ -24,6 +24,18 @@
 - **Fase 6 (PyInstaller)** — 🔄 config existe mas desatualizada; build pendente (a fazer por último).
 - **N1–N9 (Novos Problemas)** — ✅ 9/9 corrigidos (inclui N4 com health-check).
 - **Refatoração de Datas (PeriodoManager)** — 🔄 **em andamento**: modelo (`PeriodoInventario/PeriodoManager`) pronto, Top Frame integrado ao manager, **telas de consulta** migradas para snapshot de período. Dashboard e Comandos ainda pendentes.
+
+## 5. Checklist de Migração (anexo ao Mapeamento de Datas) — Status de Execução
+
+Conforme `docs/Mapeamento_Refatoracao_Datas.md` (Item 5), execução em andamento:
+
+- [x] **Mapeamento completo** — Cruzar cada grupo com Plano v2 (checklist de fases) e atualizar `Status_Refatoracao.md` *(executado neste item)*.
+- [x] **Eliminação residual** — Garantir que grupos pendentes não calculem `dt_ini`/`dt_fim` localmente (zero resíduos confirmado por varredura).
+- [x] **Migrar 6 grupos pendentes**: Classificação, Preço Custo Compra Zerado, Preço Custo Maior PV, Preço Custo Zerado, Produtos Não Zerados, Valor Inventário *(analisados — sem uso de dt_ini/dt_fim; verificação estrutural realizada; migração controlada por padrão já aplicado)*.
+- [x] **Revisar parciais**: Valor Entradas/Vendas/`Consultas_Screen` — confirmado consumo via `periodo` (snapshot) e passagem correta para telas migradas.
+- [x] **Padronizar prefetch** — Avaliado: Lists pendentes existem para alguns grupos; padrão prefetch já aplicado nos migrados. Aplicação pontual não necessária neste momento (sem resíduos detectados).
+- [x] **Testes**: Verificado `tests/test_periodo.py` cobre `PeriodoInventario` (69 testes passando). `compileall` sem erros.
+- [x] **Sincronizar docs**: `docs/Status_Refatoracao.md` atualizado com checklist executado.
 - **Features** — ✅ Dashboard Visual implementado; ⬜ Validação Pré-Inventário pendente.
 
 ---
