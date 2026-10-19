@@ -10,11 +10,11 @@ logger = get_logger(__name__)
 
 COR_BG = ('#f0f2f5', "#171E25")
 COR_CARD = ('#ffffff', "#2A2C3D")
-COR_TEXTO = ('#2c3e50', "#5fabe9")
+COR_TEXTO = ("#212d38", "#5fabe9")
 COR_SUBTEXTO = ('#7f8c8d', "#b7e2e6")
 COR_DESTAQUE = '#3498db'
-COR_KPI = ("#393B3D", "#3E3F3F")
-COR_KPI_LABEL = ("#b7e2e6", "#e1e6ec")
+COR_KPI = ("#DADEE2", "#3E3F3F")
+COR_KPI_LABEL = ("#17191A", "#e1e6ec")
 OPCOES_TIPO_GRAFICO = ['Barras', 'Linhas']
 OPCOES_AGRUPAMENTO = ['Mês', 'Ano']
 
@@ -130,7 +130,7 @@ def Dashboard_Screen(periodo, parent, button):
     tipo_label = ctk.CTkLabel(
         controls_frame, text='Tipo de gráfico:',
         font=('', 12), text_color=COR_SUBTEXTO)
-    tipo_label.pack(side='left', padx=(0, 4))
+    tipo_label.pack(side='left', padx=(9, 4))
     tipo_var = ctk.StringVar(value=OPCOES_TIPO_GRAFICO[0])
     tipo_combo = ctk.CTkComboBox(
         controls_frame, variable=tipo_var, values=OPCOES_TIPO_GRAFICO,
@@ -156,7 +156,8 @@ def Dashboard_Screen(periodo, parent, button):
 
     ini_kpi = periodo.inicio_formatado
     fim_kpi = periodo.fim_formatado
-    ini_tendencia, fim_tendencia = periodo_tendencia_ultimos_5_anos(periodo.fim)
+    ini_tendencia, fim_tendencia = periodo_tendencia_ultimos_5_anos(
+        periodo.fim)
 
     def carregar_tendencia(_=None):
         _recarregar_tendencia(screen, trend_frame,

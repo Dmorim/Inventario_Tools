@@ -4,7 +4,7 @@ import customtkinter as ctk
 from Configuracoes.Config_Func import on_click_confirm, set_default_values
 
 
-def config_screen(self, parent):
+def config_screen(parent):
     # Cria a janela config como um Toplevel do parent
     config = ctk.CTkToplevel(parent)
     config.title('Manutenção')
@@ -42,7 +42,7 @@ def config_screen(self, parent):
     pass_db_entry = ctk.CTkEntry(
         bottom_frame, width=105, height=23, font=('verdana', 12), show='*')
     confirm_button = ctk.CTkButton(bottom_frame, text='Confirmar', width=25, height=2,
-                                   command=lambda: on_click_confirm(self, config, theme_config_cbb, entry_widgets))
+                                   command=lambda: on_click_confirm(config, theme_config_cbb, entry_widgets))
     cancel_button = ctk.CTkButton(
         bottom_frame, text='Cancelar', width=65, height=2, command=lambda: config.destroy())
 

@@ -36,13 +36,8 @@ def set_default_values(entry_widgets):
     entry_widgets[1].insert(0, pass_db)
 
 
-def on_click_confirm(self, config, cbb_entry, entry_widgets):
-
-    if cbb_entry.get() == self.color_theme:
-        return
-    else:
-        _theme_def(cbb_entry)
-
+def on_click_confirm(config, cbb_entry, entry_widgets):
+    _theme_def(cbb_entry)
     _db_def(entry_widgets)
 
     config.grab_release()  # Libera o foco da janela
