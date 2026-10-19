@@ -8,7 +8,7 @@ from Thread_Manager.Thread_Executor import thread_execução
 from Queries.Comando_Queries import QUERY_ATUALIZA_SALDO_PRODUTO, QUERY_INSERE_AJUSTE_LAN
 
 
-def on_click_dist_saldo(self, parent):
+def on_click_dist_saldo(distorcao_saldo, parent):
 
     distorcao = ctk.CTkToplevel(parent)
     distorcao.geometry("330x120+150+135")
@@ -30,7 +30,7 @@ def on_click_dist_saldo(self, parent):
 
     # Criação dos botões confirmar e cancelar
     confirm_button = ctk.CTkButton(distorcao, text='Confirmar', width=60, height=26,
-                                   command=lambda: on_click_confirm_btt(self, distorcao, val_list, confirm_button))
+                                   command=lambda: on_click_confirm_btt(distorcao_saldo, distorcao, val_list, confirm_button))
     cancel_button = ctk.CTkButton(
         distorcao, text='Cancelar', width=75, height=26, command=lambda: distorcao.destroy())
 
@@ -53,17 +53,17 @@ def on_click_dist_saldo(self, parent):
     cancel_button.place(x=175, y=90)
 
 
-def on_click_confirm_btt(self, parent, val_list, confirm_button):
+def on_click_confirm_btt(distorcao_saldo, parent, val_list, confirm_button):
     def executa_distorcao():
         tp_distorc = val_list[0].get()
         if tp_distorc == 'PRO = LAN':  # Verifica se a distorção é PRO = LAN
-            for item in self.dist_saldo_list:  # Para cada item na lista de distorção de saldo
+            for item in distorcao_saldo.campos_em_lista:  # Para cada item na lista de distorção de saldo
                 # Cria a query de distorção de saldo, deixando o saldo do produto igual ao saldo do lançamento, onde o código do produto é informado na lista
                 query = QUERY_ATUALIZA_SALDO_PRODUTO
                 params = (item[2], item[0])  # Define os parâmetros da query
                 query_executor(query_updater, query, params)  # Executa a query
         else:
-            for item in self.dist_saldo_list:  # Para cada item na lista de distorção de saldo"
+            for item in distorcao_saldo.campos_em_lista:  # Para cada item na lista de distorção de saldo
                 # Define o tipo de movimento como N se o saldo do produto for maior que o saldo do lançamento, caso contrário, define como S
                 tpmov = 'N' if item[2] > item[3] else 'S'
                 quant = abs(item[2] - item[3])

@@ -1,10 +1,8 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 19/10/2026 — Checklist Item 5 do `docs/Mapeamento_Refatoracao_Datas.md`
-executado (docs sincronizados); criadas as regras de sessão deste arquivo (sem commits,
-plano+prévia+confirmação, varredura inicial com sync de `docs/` + agents, loggers só de saída).
-**Próxima sessão (pendente):** etapa **E6a** — migrar Comandos para `periodo` (snapshot).
+**Última sessão:** 19/10/2026 — E6a/E6b (Comandos → classe `Funcoes_Comandos` + período snapshot; testes atualizados) e E5 (Dashboard → snapshot + gráfico de tendência com janela fixa de 5 anos-calendário até a data final) concluídos; 69 testes passando.
+**Próxima sessão (pendente):** etapa **E7** — remover propriedades legadas `data_banco_*` de `Inventario.py` (verificar 0 usos restantes).
 **Branch:** `refatoracao_v3.5`
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
@@ -79,25 +77,18 @@ Se testes falharem após mudança, o plano foi executado incorretamente — info
 
 ## 5. ESTADO ATUAL DA REFATORAÇÃO DE DATAS
 
-**Concluído nesta sessão (Mapeamento Item 5, checklist completo):**
-- Mapeamento dos 11 grupos de consultas vs Plano v2 (feito em sessão anterior).
-- Varredura `dt_ini`/`dt_fim`: **0 resíduos** em todo o repositório (excluindo `.venv`).
-- Revisão dos 6 grupos pendentes: sem cálculo local de datas; estrutura compatível com o
-  padrão `periodo` (snapshot) — **nenhuma alteração de código foi necessária**.
-- Revisão dos parciais (Val_Ent, Val_Ven, Consultas_Screen): consumo via `periodo` confirmado.
-- Prefetch avaliado; testes e `compileall` verdes (69 passed).
-- Docs sincronizados: `docs/Status_Refatoracao.md` + `docs/Mapeamento_Refatoracao_Datas.md`.
+**Concluído (resumo):**
+- Mapeamento dos 11 grupos de consultas vs Plano v2; varredura `dt_ini`/`dt_fim` com **0 resíduos**.
+- Telas de consulta migradas para snapshot de período.
+- **Comandos (E6a/E6b):** `Comandos_Screen(periodo, parent)`; lógica migrada para a classe `Funcoes_Comandos` (período snapshot, sem `self.data_banco_inicial`); check de distorção via `DistorcaoManager.possui_itens()`; aliases de compatibilidade no módulo (`Comandos_Func`, `montar_operacoes`, `comandos_true`, `on_click_confirm`, `precu_porcent_entry_validate`) preservam legado/tests; `tests/test_comandos_func.py` migrado para `Funcoes_Comandos` + `FakePeriodo`.
+- **Dashboard (E5):** `Dashboard_Screen(periodo, parent, button)` — comportamento "sob demanda" (snapshot na abertura, **sem listener**); KPIs usam o período selecionado; **gráfico de tendência usa janela fixa de 5 anos-calendário terminando na data final** (helper `Outros/Periodo_Inventario.periodo_tendencia_ultimos_5_anos`).
+- Testes e `compileall` verdes (**69 passed**).
 
-**Ainda pendente (NÃO concluído — próximo front da refatoração):**
-O checklist do Mapeamento foi encerrado, mas o **roadmap de datas** em
-`docs/Status_Refatoracao.md` (seção "Próximos passos") tem etapas abertas:
+**Ainda pendente (próximos passos):**
 
 | Etapa | O que é | Prioridade |
 |---|---|---|
-| **E6a** | Migrar **Comandos** (`Comandos_Screen`/`Comandos_Func`) para `periodo` (snapshot); trocar check `hasattr(self, 'dist_saldo_list')` por `DistorcaoManager.possui_itens()` | Próximo passo imediato |
-| **E6b** | Corrigir fake em `tests/test_comandos_func.py` para novo contrato de período | junto com E6a |
-| **E5** | **Dashboard**: receber `periodo_manager`, snapshot + listener com remoção no fechamento | médio prazo |
-| **E7** | Remover propriedades legadas `data_banco_*` de `Inventario.py` (linhas ~47-53) | após E6/E5 |
+| **E7** | Remover propriedades legadas `data_banco_*` de `Inventario.py` (linhas ~47-53); confirmar 0 usos de `app_self.data_banco_*` | **Próximo passo imediato** |
 | **E1a** | Criar `tests/test_periodo_manager.py` (igualdade, imutabilidade, notificação de listeners) | pode ser feito a qualquer momento |
 | **E8** | Regressão final + docs (sem commit automático) | ao final |
 
@@ -108,6 +99,8 @@ O checklist do Mapeamento foi encerrado, mas o **roadmap de datas** em
   `def Contr_Estq_Screen(periodo, Consulta_Screen, consulta_button, container_manager)` e
   `params = (periodo.inicio_formatado, periodo.fim_formatado)` na linha 10.
 - Hub que injeta período: `Consultas/Consultas_Screen.py:18` (`Consulta_Total_Screen(periodo, root)`).
+- Classe migrada: `Comandos/Comandos_Gerais/Comandos_Func.py` (`Funcoes_Comandos`).
+- Dashboard migrado: `Dashboard/Dashboard_Screen.py`.
 - Suporte a prefetch: `Interface_Tools/Treeview_Table/Listagem_Treeview.py`.
 
 ---

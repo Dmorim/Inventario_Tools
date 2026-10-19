@@ -1,9 +1,9 @@
 # Status da Refatoração — Inventario_Tools
 
-**Documento atualizado em:** 18/10/2026  
+**Documento atualizado em:** 19/10/2026  
 **Branch de trabalho:** `refatoracao_v3.5`  
 **Base do plano:** `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (v5.1)  
-**Últimos commits:** `d6bc0ee` ("Add distortion inventory manager") + mudanças de migração de período nas telas de consulta
+**Últimos commits:** `4bb9fc9` ("Integrate period and distortion managers") + mudanças não commitadas (Comandos migrado para classe + período; Dashboard migrado para período snapshot)
 
 > **Decisões registradas (fora de escopo da refatoração):**
 > - **SQL Livre (`com_ger`)** — ficará em total responsabilidade do operador. **Não** será aplicada whitelist nem qualquer validação programática. Apenas confirmação com aviso de risco.
@@ -23,7 +23,7 @@
 - **Fase 5 (Testes Unitários)** — ✅ 69 testes passando (59 originais + 10 de distorção de saldo); queries centralizadas cobertas por contrato nominal; pool de BD adicionado aos testes.
 - **Fase 6 (PyInstaller)** — 🔄 config existe mas desatualizada; build pendente (a fazer por último).
 - **N1–N9 (Novos Problemas)** — ✅ 9/9 corrigidos (inclui N4 com health-check).
-- **Refatoração de Datas (PeriodoManager)** — 🔄 **em andamento**: modelo (`PeriodoInventario/PeriodoManager`) pronto, Top Frame integrado ao manager, **telas de consulta** migradas para snapshot de período. Dashboard e Comandos ainda pendentes.
+- **Refatoração de Datas (PeriodoManager)** — 🔄 **em andamento**: modelo (`PeriodoInventario/PeriodoManager`) pronto, Top Frame integrado ao manager, **telas de consulta**, **Comandos** (refatorado para classe `Funcoes_Comandos` + período snapshot) e **Dashboard** (snapshot + gráfico de tendência com janela fixa de 5 anos-calendário até a data final) migrados. Restam E7 (remover legado), E1a (testes do manager) e E8 (regressão final).
 
 ## 5. Checklist de Migração (anexo ao Mapeamento de Datas) — Status de Execução
 
@@ -76,18 +76,19 @@ Baseado em `docs/roadmap/roadmap_refatoracao_datas.html` (15/10/2026).
 |---|---|---|
 | Callbacks explícitos | 🔄 | Top Frame chama telas diretamente via `abrir_tela()`. Pode ser refatorado para `TopFrameActions` (opcional). |
 
-### Fase 5 — Dashboard 🔴 Pendente
+### Fase 5 — Dashboard ✅
 | Item | Status | Observação |
 |---|---|---|
-| `Dashboard_Screen` recebe `periodo_manager` | ⬜ | Ainda depende de `app_self.data_banco_*`. |
-| Snapshot na abertura + listener | ⬜ | Necessário (tela longeva, usuário pode trocar período). |
-| Remover listener no fechamento | ⬜ | WM_DELETE_WINDOW/ESC. |
+| `Dashboard_Screen` recebe `periodo_manager` | ✅ | Assinatura `Dashboard_Screen(periodo, parent, button)`; snapshot na abertura; sem `app_self.data_banco_*`. |
+| Snapshot na abertura + listener | ✅ | Comportamento "sob demanda" (como Consultas/Comandos): snapshot único na abertura, **sem listener**. |
+| Remover listener no fechamento | ✅ | Não se aplica (sem listener registrado). |
+| Gráfico de tendência | ✅ | Janela fixa de 5 anos-calendário terminando na `fim` do período (helper `periodo_tendencia_ultimos_5_anos`); KPIs permanecem com o período selecionado. |
 
-### Fase 6 — Consultas e Comandos 🔄 Parcial
+### Fase 6 — Consultas e Comandos ✅ Concluída
 | Item | Status | Observação |
 |---|---|---|
 | **Consultas (sob demanda)** | ✅ **Concluído** | Todas as telas recebem `periodo` (snapshot). Corrigido `Quant_Maior` (Screen+List), `Contr_Estq` (chamada), `Val_Ent` (`periodo=periodo`). `Distorção` concluída com manager próprio. |
-| **Comandos** | ⬜ **Pendente** | `Comandos_Screen/Comandos_Func` usam `self.data_banco_inicial` (herdado de objeto legado). Botão de correção de distorção verifica `hasattr(self, 'dist_saldo_list')` — migrar para `DistorcaoManager.possui_itens()`. Passar `periodo` (snapshot) no clique, sem listener. |
+| **Comandos** | ✅ **Concluído** | `Comandos_Screen(periodo, parent)`; `Comandos_Func` migrado para classe `Funcoes_Comandos` com período snapshot (sem `self.data_banco_inicial`); check de distorção usa `DistorcaoManager.possui_itens()`; aliases de compatibilidade mantidos para legado/tests. |
 
 ### Fase 7 — Remover compatibilidade legada ⬜
 | Item | Status | Observação |
@@ -96,27 +97,26 @@ Baseado em `docs/roadmap/roadmap_refatoracao_datas.html` (15/10/2026).
 | Remover imports mortos | ⬜ | Após limpeza. |
 | Busca global de `app_self.data_banco_*` | ⬜ | Verificar 0 usos fora do legado. |
 
-### Fase 8 — Testes, regressão e documentação ⬜
+### Fase 8 — Testes, regressão e documentação 🔄
 | Item | Status | Observação |
 |---|---|---|
 | Testes `PeriodoInventario/PeriodoManager` | ⬜ | Criar `tests/test_periodo_manager.py` (igualdade, imutabilidade, período invertido, formatação dd.mm.yyyy, notificação, idempotência, registro/remoção de listeners). |
-| Ajustar fakes legados | ⬜ | `test_comandos_func.py` usa `self.data_banco_inicial` (mudar para contrato com `periodo.inicio_formatado`). |
-| Testes manuais de troca de período | ⬜ | Após Dashboard. |
+| Ajustar fakes legados | ✅ | `test_comandos_func.py` migrado para `Funcoes_Comandos` com `FakePeriodo` (novo contrato de período). `test_validacao.py` usa wrapper de compatibilidade. |
+| Testes manuais de troca de período | ⬜ | Sem listener no Dashboard; validar troca de período e reabertura das telas. |
 | Atualizar este Status | 🔄 | Em andamento. |
 
 ---
 
 ## Próximos passos (recomendados)
 
-Ordem pragmática (fecha Fase 6 primeiro, depois reativo):
+**Concluídas nesta sessão (19/10/2026):** E6a + E6b (Comandos migrado para classe `Funcoes_Comandos` + período snapshot; testes atualizados para o novo contrato, 69 passed) e E5 (Dashboard migrado para snapshot + janela fixa de 5 anos-calendário no gráfico de tendência).
+
+Ordem pragmática restante (fecha a refatoração de datas):
 
 | Etapa | Ação | Estimativa |
 |---|---|---|
-| **E6a** | **Comandos**: `Comandos_Screen(periodo, parent)`; `Comandos_Func` receber `periodo` (ou `inicio_formatado`); migrar check de distorção para `DistorcaoManager.possui_itens()`; atualizar chamada em `Inv_Top_Frame`. | 30–40 min |
-| **E6b** | Corrigir fake em `test_comandos_func.py` para novo contrato de período. | 5 min |
-| **E5** | **Dashboard**: `Dashboard_Screen(periodo_manager, parent, button)`; snapshot + listener com remoção no fechamento (WM_DELETE_WINDOW/ESC); manter proteção por `seq`. Ajustar `Inv_Top_Frame` para passar `periodo_manager`. | 1h30–2h |
 | **E7** | Remover propriedades legadas de `Inventario.py`, buscar usos restantes de `app_self.data_banco_*`. | 15–30 min |
 | **E1a** | Criar `tests/test_periodo_manager.py` (cobrir Fase 1). | 30 min |
 | **E8** | Testes de regressão + commit consolidado + atualizar Status/roadmap. | 20 min |
 
-**Próximo passo imediato:** **E6a — Migrar Comandos para usar `periodo` (snapshot)**.
+**Próximo passo imediato:** **E7 — Remover propriedades legadas de `Inventario.py`** (verificar 0 usos restantes de `app_self.data_banco_*`).

@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
 from Outros.Logger.Get_Logger import get_logger
+from Outros.Periodo_Inventario import periodo_tendencia_ultimos_5_anos
 from Thread_Manager.Thread_Executor import thread_execução
 from Dashboard.Dashboard_Func import carregar_kpis, carregar_dados_tendencia
 from Dashboard.Dashboard_Charts import criar_grafico_tendencia
@@ -65,13 +66,11 @@ def _carregar_dados(screen, cards_frame, on_erro, ini, fim):
     thread_execução(screen, carregar_kpis, callback, on_erro, ini, fim)
 
 
-def _recarregar_tendencia(app_self, screen, trend_frame, tipo_var, agrupamento_var, estado):
+def _recarregar_tendencia(screen, trend_frame, tipo_var, agrupamento_var, estado, ini, fim):
     estado['seq'] += 1
     seq = estado['seq']
     tipo = tipo_var.get()
     gran = 'mes' if agrupamento_var.get() == 'Mês' else 'ano'
-    ini = app_self.data_banco_inicial
-    fim = app_self.data_banco_final
 
     def callback(dados):
         if seq != estado['seq']:
@@ -94,7 +93,7 @@ def _recarregar_tendencia(app_self, screen, trend_frame, tipo_var, agrupamento_v
                     ini, fim, gran)
 
 
-def Dashboard_Screen(app_self, parent, button):
+def Dashboard_Screen(periodo, parent, button):
     button.configure(state='disabled')
 
     screen = ctk.CTkToplevel(parent)
@@ -157,9 +156,14 @@ def Dashboard_Screen(app_self, parent, button):
 
     estado = {'seq': 0}
 
+    ini_kpi = periodo.inicio_formatado
+    fim_kpi = periodo.fim_formatado
+    ini_tendencia, fim_tendencia = periodo_tendencia_ultimos_5_anos(periodo.fim)
+
     def carregar_tendencia(_=None):
-        _recarregar_tendencia(app_self, screen, trend_frame,
-                              tipo_var, agrupamento_var, estado)
+        _recarregar_tendencia(screen, trend_frame,
+                              tipo_var, agrupamento_var, estado,
+                              ini_tendencia, fim_tendencia)
 
     tipo_combo.configure(command=carregar_tendencia)
     agrupamento_combo.configure(command=carregar_tendencia)
@@ -170,5 +174,5 @@ def Dashboard_Screen(app_self, parent, button):
 
     _carregar_dados(
         screen, cards_frame, on_erro,
-        app_self.data_banco_inicial, app_self.data_banco_final)
+        ini_kpi, fim_kpi)
     carregar_tendencia()
