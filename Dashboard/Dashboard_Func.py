@@ -6,13 +6,14 @@ from Queries.Consulta_Queries import (
     CFOP_LIST,
     QUERY_VENDAS,
     QUERY_ENTRADAS,
-    QUERY_DISTORCAO_SALDO,
 )
 
 logger = get_logger(__name__)
 
 QUERY_VENDAS_MES_ANO_AGRUPADO = """
-    SELECT mes, ano, sum(valor_saida) AS valor
+    SELECT extract(month FROM dtemi) AS mes,
+       extract(year  FROM dtemi) AS ano,
+       sum(valor_saida) AS valor
 FROM V_FAT_VALOR_SAIDA
 WHERE (cance = 'N' OR cance IS NULL)
   AND fatur <> ''
@@ -56,24 +57,6 @@ WHERE venda = 'C'
   AND CHARACTER_LENGTH(cfop) = 5
   AND cfop NOT IN ({placeholders})
   AND com_dtcom BETWEEN ? AND ?
-GROUP BY 1
-ORDER BY 1
-"""
-
-QUERY_DIFERENCA_ENTRADA_SAIDA_AGRUPADO = """
-SELECT mes, ano, valor_entrada, valor_saida, valor_diff
-FROM V_DIFF_ENTRADA_SAIDA_MES
-WHERE dt BETWEEN ? AND ?
-ORDER BY 2, 1
-"""
-
-QUERY_DIFERENCA_ANO_AGRUPADO = """
-SELECT ano,
-       SUM(valor_entrada) AS valor_entrada,
-       SUM(valor_saida) AS valor_saida,
-       SUM(valor_diff) AS valor_diff
-FROM V_DIFF_ENTRADA_SAIDA_MES
-WHERE dt BETWEEN ? AND ?
 GROUP BY 1
 ORDER BY 1
 """
@@ -127,7 +110,7 @@ def _executar_select(query, params=None):
         raise
 
 
-def _extrair_series(rows, granularidade, com_diferenca=False):
+def _extrair_series(rows, granularidade):
     valores = {}
     rotulos = {}
     for row in rows:
@@ -135,17 +118,14 @@ def _extrair_series(rows, granularidade, com_diferenca=False):
             mes, ano = int(row[0]), int(row[1])
             chave = (ano, mes)
             rotulos[chave] = f'{mes:02d}/{ano}'
-            dados = row[2:]
+            valor = row[2]
         else:
             ano = int(row[0])
             chave = (ano,)
             rotulos[chave] = str(ano)
-            dados = row[1:]
+            valor = row[1]
 
-        if com_diferenca:
-            valores[chave] = [float(v or 0) for v in dados]
-        else:
-            valores[chave] = float(dados[0] or 0)
+        valores[chave] = float(valor or 0)
 
     return valores, rotulos
 
@@ -153,40 +133,36 @@ def _extrair_series(rows, granularidade, com_diferenca=False):
 def carregar_dados_tendencia(ini, fim, granularidade):
 
     def __executar_consulta_mes():
-        vendas_mes_ano = _executar_select(
-            QUERY_VENDAS_MES_ANO_AGRUPADO, (ini, fim))
-        entradas_mes_ano = _executar_select(QUERY_ENTRADAS_MES_ANO_AGRUPADO.format(
-            placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim))
-        diff_mes_ano = _executar_select(
-            QUERY_DIFERENCA_ENTRADA_SAIDA_AGRUPADO, (ini, fim))
-        return vendas_mes_ano, entradas_mes_ano, diff_mes_ano
+        return (_executar_select(QUERY_VENDAS_MES_ANO_AGRUPADO, (ini, fim)),
+                _executar_select(QUERY_ENTRADAS_MES_ANO_AGRUPADO.format(
+                    placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim)))
 
     def __executar_consulta_ano():
-        vendas_ano = _executar_select(QUERY_VENDAS_ANO_AGRUPADO, (ini, fim))
-        entradas_ano = _executar_select(QUERY_ENTRADAS_ANO_AGRUPADO.format(
-            placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim))
-        diff_ano = _executar_select(QUERY_DIFERENCA_ANO_AGRUPADO, (ini, fim))
-        return vendas_ano, entradas_ano, diff_ano
+        return (_executar_select(QUERY_VENDAS_ANO_AGRUPADO, (ini, fim)),
+                _executar_select(QUERY_ENTRADAS_ANO_AGRUPADO.format(
+                    placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim)))
 
     try:
-        vendas_rows, entradas_rows, diff_rows = __executar_consulta_mes(
+        vendas_rows, entradas_rows = __executar_consulta_mes(
         ) if granularidade == 'mes' else __executar_consulta_ano()
-        vendas, rotulos = _extrair_series(vendas_rows, granularidade)
-        entradas, _ = _extrair_series(entradas_rows, granularidade)
-        diffs, rotulos_diff = _extrair_series(
-            diff_rows, granularidade, com_diferenca=True)
 
-        rotulos_merge = dict(rotulos)
-        rotulos_merge.update(rotulos_diff)
+        vendas, rotulos_vendas = _extrair_series(vendas_rows, granularidade)
+        entradas, rotulos_entradas = _extrair_series(
+            entradas_rows, granularidade)
 
-        periodos = sorted(set(vendas) | set(entradas) | set(diffs))
-        labels = [rotulos_merge[periodo] for periodo in periodos]
+        rotulos_merge = {}
+        rotulos_merge.update(rotulos_vendas)
+        rotulos_merge.update(rotulos_entradas)
+
+        periodos = sorted(set(vendas) | set(entradas))
+        labels = [rotulos_merge.get(periodo, str(periodo))
+                  for periodo in periodos]
 
         dados = {
             'labels': labels,
             'vendas': [vendas.get(periodo, 0) for periodo in periodos],
             'entradas': [entradas.get(periodo, 0) for periodo in periodos],
-            'diferenca': [diffs.get(periodo, [0, 0, 0])[2]
+            'diferenca': [entradas.get(periodo, 0) - vendas.get(periodo, 0)
                           for periodo in periodos],
         }
         return dados

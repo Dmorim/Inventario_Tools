@@ -64,19 +64,31 @@ def _carregar_dados(screen, cards_frame, on_erro, ini, fim):
     thread_execução(screen, carregar_kpis, callback, on_erro, ini, fim)
 
 
-def _recarregar_tendencia(screen, trend_frame, tipo_var, agrupamento_var, estado, ini, fim):
+def _renderizar_tendencia(screen, trend_frame, dados, tipo):
+    for widget in trend_frame.winfo_children():
+        widget.destroy()
+    try:
+        criar_grafico_tendencia(trend_frame, dados, tipo)
+    except Exception:
+        logger.exception('Erro ao desenhar gráfico de tendência.')
+        ctk.CTkLabel(trend_frame, text='Erro ao desenhar o gráfico.',
+                     font=('', 12), text_color='#e74c3c').pack(expand=True)
+    screen.update_idletasks()
+
+
+def _granularidade_de(agrupamento_var):
+    return 'mes' if agrupamento_var.get() == 'Mês' else 'ano'
+
+
+def _recarregar_tendencia(screen, trend_frame, tipo_var, estado, gran, ini, fim):
     estado['seq'] += 1
     seq = estado['seq']
-    tipo = tipo_var.get()
-    gran = 'mes' if agrupamento_var.get() == 'Mês' else 'ano'
 
     def callback(dados):
         if seq != estado['seq']:
             return
-        for widget in trend_frame.winfo_children():
-            widget.destroy()
-        criar_grafico_tendencia(trend_frame, dados, tipo)
-        screen.update_idletasks()
+        estado['cache'][gran] = dados
+        _renderizar_tendencia(screen, trend_frame, dados, tipo_var.get())
 
     def on_erro(exc):
         if seq != estado['seq']:
@@ -152,7 +164,7 @@ def Dashboard_Screen(periodo, parent, button):
         border_width=1, border_color='#e0e0e0')
     trend_frame.pack(fill='both', expand=True, pady=(6, 0))
 
-    estado = {'seq': 0}
+    estado = {'seq': 0, 'cache': {}}
 
     ini_kpi = periodo.inicio_formatado
     fim_kpi = periodo.fim_formatado
@@ -160,9 +172,13 @@ def Dashboard_Screen(periodo, parent, button):
         periodo.fim)
 
     def carregar_tendencia(_=None):
-        _recarregar_tendencia(screen, trend_frame,
-                              tipo_var, agrupamento_var, estado,
-                              ini_tendencia, fim_tendencia)
+        gran = _granularidade_de(agrupamento_var)
+        dados = estado['cache'].get(gran)
+        if dados is not None:
+            _renderizar_tendencia(screen, trend_frame, dados, tipo_var.get())
+            return
+        _recarregar_tendencia(screen, trend_frame, tipo_var, estado,
+                              gran, ini_tendencia, fim_tendencia)
 
     tipo_combo.configure(command=carregar_tendencia)
     agrupamento_combo.configure(command=carregar_tendencia)
