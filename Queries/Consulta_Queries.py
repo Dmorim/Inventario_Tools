@@ -43,21 +43,25 @@ Retorna: sum(valor_vendas)
 QUERY_ENTRADAS = """
     SELECT CAST(
         SUM(
-            ((CAST(valor AS NUMERIC(14, 4)) - 
-              (CAST(valor AS NUMERIC(14, 4)) * CAST((despr/100) AS NUMERIC(14,4)))) * 
-              CAST(quant AS NUMERIC(14, 2))) +
-            (valsub) + 
-            (((CAST(valor AS NUMERIC(14, 2)) - 
-               (CAST(valor AS NUMERIC(14, 2)) * CAST((despr/100) AS NUMERIC(14,4)))) * 
-               CAST(quant AS NUMERIC(14, 2))) * 
-             (CAST(alipi_ent AS NUMERIC(14, 2)) / 100))
+            ((CAST(l.valor AS NUMERIC(14, 4)) - 
+              (CAST(l.valor AS NUMERIC(14, 4)) * CAST((l.despr/100) AS NUMERIC(14,4)))) * 
+              CAST(l.quant AS NUMERIC(14, 2))) +
+            (l.valsub) + 
+            (((CAST(l.valor AS NUMERIC(14, 2)) - 
+               (CAST(l.valor AS NUMERIC(14, 2)) * CAST((l.despr/100) AS NUMERIC(14,4)))) * 
+               CAST(l.quant AS NUMERIC(14, 2))) * 
+             (CAST(l.alipi_ent AS NUMERIC(14, 2)) / 100))
         ) AS NUMERIC(14,2)
     ) AS valor
-    FROM V_LAN_COM
-    WHERE venda = 'C'
-    AND cfop NOT IN ({placeholders})
-    AND com_dtcom BETWEEN ? AND ?
-    AND CHARACTER_LENGTH(cfop) = 5
+    FROM in01lan l
+    INNER JOIN in01com c
+            ON c.notfi = l.notfi
+           AND c.cdfrn = l.cdfrn
+           AND c.modelonota = l.modelonota
+    WHERE l.venda = 'C'
+    AND l.cfop NOT IN ({placeholders})
+    AND c.dtcom BETWEEN ? AND ?
+    AND CHARACTER_LENGTH(l.cfop) = 5
 """
 """
 Calcula o valor total de entradas em um período.

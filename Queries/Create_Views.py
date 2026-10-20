@@ -2,16 +2,13 @@
 Criação das views auxiliares no banco de dados Firebird.
 
 Executa as DDLs (CREATE OR REPLACE VIEW) logo após a conexão bem-sucedida.
-As views devem ser criadas em ordem de dependência:
-V_FAT_VALOR_SAIDA e V_LAN_COM antes de V_DIFF_ENTRADA_SAIDA_MES.
+As views devem ser criadas na ordem de dependência de quem as consome.
 """
 
 from Thread_Manager.Query_Operations import query_executor, query_updater
 from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
 from Queries.View_Queries import (
     VIEW_V_FAT_VALOR_SAIDA,
-    VIEW_V_LAN_COM,
-    VIEW_V_DIFF_ENTRADA_SAIDA_MES,
 )
 from Outros.Logger.Get_Logger import get_logger
 
@@ -19,8 +16,6 @@ logger = get_logger(__name__)
 
 VIEW_DDL_ORDER = [
     ('V_FAT_VALOR_SAIDA', VIEW_V_FAT_VALOR_SAIDA),
-    ('V_LAN_COM', VIEW_V_LAN_COM),
-    ('V_DIFF_ENTRADA_SAIDA_MES', VIEW_V_DIFF_ENTRADA_SAIDA_MES),
 ]
 
 # Ordem inversa para deletar as views

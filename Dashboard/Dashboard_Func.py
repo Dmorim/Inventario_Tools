@@ -37,36 +37,73 @@ ORDER BY 1
 """
 
 QUERY_ENTRADAS_MES_ANO_AGRUPADO = """
-SELECT extract(month FROM com_dtcom) AS mes,
-       extract(year  FROM com_dtcom) AS ano,
-       CAST(SUM(COALESCE(valor,0)) AS NUMERIC(14,2)) AS valor
-FROM V_LAN_COM
-WHERE venda = 'C'
-  AND CHARACTER_LENGTH(cfop) = 5
-  AND cfop NOT IN ({placeholders})
-  AND com_dtcom BETWEEN ? AND ?
+SELECT extract(month FROM c.dtcom) AS mes,
+       extract(year  FROM c.dtcom) AS ano,
+       CAST(SUM(COALESCE(l.valor,0)) AS NUMERIC(14,2)) AS valor
+FROM in01lan l
+INNER JOIN in01com c
+        ON c.notfi = l.notfi
+       AND c.cdfrn = l.cdfrn
+       AND c.modelonota = l.modelonota
+WHERE l.venda = 'C'
+  AND CHARACTER_LENGTH(l.cfop) = 5
+  AND l.cfop NOT IN ({placeholders})
+  AND c.dtcom BETWEEN ? AND ?
 GROUP BY 1, 2
 ORDER BY 2, 1
 """
 
 QUERY_ENTRADAS_ANO_AGRUPADO = """
-SELECT extract(year FROM com_dtcom) AS ano,
-       CAST(SUM(COALESCE(valor,0)) AS NUMERIC(14,2)) AS valor
-FROM V_LAN_COM
-WHERE venda = 'C'
-  AND CHARACTER_LENGTH(cfop) = 5
-  AND cfop NOT IN ({placeholders})
-  AND com_dtcom BETWEEN ? AND ?
+SELECT extract(year FROM c.dtcom) AS ano,
+       CAST(SUM(COALESCE(l.valor,0)) AS NUMERIC(14,2)) AS valor
+FROM in01lan l
+INNER JOIN in01com c
+        ON c.notfi = l.notfi
+       AND c.cdfrn = l.cdfrn
+       AND c.modelonota = l.modelonota
+WHERE l.venda = 'C'
+  AND CHARACTER_LENGTH(l.cfop) = 5
+  AND l.cfop NOT IN ({placeholders})
+  AND c.dtcom BETWEEN ? AND ?
 GROUP BY 1
 ORDER BY 1
 """
 
 QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL = """
-select SUM(abs(valor_diff)) AS valor_diff
-from V_DIFF_ENTRADA_SAIDA_MES
-where ano in (?, ?)
-group by ano
-order by ano ASC
+WITH entradas AS (
+    SELECT l.notfi, l.cdfrn, l.modelonota,
+           extract(month from l.dtpro) AS mes,
+           extract(year  from l.dtpro) AS ano
+    FROM in01lan l
+    WHERE COALESCE(l.controlaestoque, 'S') = 'S'
+      AND l.dtpro BETWEEN ? AND ?
+    GROUP BY 1, 2, 3, 4, 5
+), entradas_com_valor AS (
+    SELECT e.mes, e.ano, e.notfi, e.cdfrn, e.modelonota,
+           COALESCE(MAX(c.valno), 0) AS valor_entrada
+    FROM entradas e
+    LEFT JOIN in01com c
+           ON c.notfi = e.notfi
+          AND c.cdfrn = e.cdfrn
+          AND c.modelonota = e.modelonota
+    GROUP BY 1, 2, 3, 4, 5
+), saidas AS (
+    SELECT vs.fatur, SUM(vs.valor_saida) AS valor_saida
+    FROM V_FAT_VALOR_SAIDA vs
+    WHERE COALESCE(vs.cance, 'N') = 'N'
+    GROUP BY 1
+)
+SELECT SUM(ABS(valor_diff)) AS valor_diff
+FROM (
+    SELECT e.mes, e.ano,
+           SUM(e.valor_entrada) - SUM(COALESCE(s.valor_saida, 0)) AS valor_diff
+    FROM entradas_com_valor e
+    LEFT JOIN saidas s ON s.fatur = e.notfi
+    GROUP BY 1, 2
+)
+WHERE ano IN (?, ?)
+GROUP BY ano
+ORDER BY ano ASC
 """
 
 
@@ -79,8 +116,11 @@ def _previa_inventario(valor_inventario, fim):
     """
 
     ano = int(fim[-4:])
+    ini_exato = f'01.01.{ano - 1}'
+    fim_exato = f'31.12.{ano}'
     valores = _executar_select(
-        QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL, (ano - 1, ano))
+        QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL,
+        (ini_exato, fim_exato, ano - 1, ano))
 
     valor_diferenca_anterior = valores[0][0] if valores else 0
     valor_diferenca_atual = valores[1][0] if len(valores) > 1 else 0

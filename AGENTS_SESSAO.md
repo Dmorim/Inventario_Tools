@@ -1,8 +1,8 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 19/10/2026 — **Refatoração de datas CONCLUÍDA**: E5 (Dashboard), E6a/E6b (Comandos → classe `Funcoes_Comandos`), E7 (legado removido de `Inventario.py`), E1a (`tests/test_periodo_manager.py` — 16 testes) e E8 (regressão final). Suíte completa: **85 passed**. Nesta mesma data: **revisão do item 6.2 aplicada** — remoção dos logs de início/execução (67 → 53 chamadas de logger) e nível de log configurável.
-**Próximo passo (pendente):** nenhuma etapa aberta na refatoração de datas. Restam apenas **testes manuais** (troca de período + reabertura das telas) e o **encerramento/commit pelo usuário**.
+**Última sessão:** 20/10/2026 — **Otimização de desempenho do Dashboard CONCLUÍDA**: diagnóstico por script temporário (`%TEMP%\opencode\diag_dashboard.py` e `diag2_dashboard.py`, só SELECTs) apontou que as views `V_LAN_COM` (LEFT JOIN → scan de `in01lan`, 1,03 M linhas) e `V_DIFF_ENTRADA_SAIDA_MES` (agregava histórico inteiro) dominavam o tempo. Correção aplicada: joins diretos `in01lan`/`in01com` em `QUERY_ENTRADAS` + queries de tendência de entradas e pushdown do filtro de ano na `QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL`. Resultados idênticos (conferidos no banco); entradas 7,5 s→0,04 s, tendência 8,5 s→0,04 s, diferença 11,7 s→1,3 s. Suíte: **85 passed**. Sessão anterior (19/10/2026): refatoração de datas concluída (E5, E6a/E6b, E7, E1a, E8) e revisão do item 6.2.
+**Próximo passo (pendente):** nenhuma etapa aberta. Restam **testes manuais** (troca de período + reabertura das telas) e o **encerramento/commit pelo usuário**. Opcional em etapa futura: aplicar `DROP VIEW V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` no banco do cliente (já removidas do código).
 **Branch:** `refatoracao_v3.5`
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
@@ -149,6 +149,23 @@ Se testes falharem após mudança, o plano foi executado incorretamente — info
   `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (este último é a fonte do plano geral) e
   os arquivos de agentes (`AGENTS.md`/`AGENTS_SESSAO.md`) — ver Item 2.
 - Ao concluir etapa de refatoração, marcar checklist correspondente nos docs com justificativa.
+
+### 6.7 Desempenho de queries no Firebird (lições de 20/10/2026)
+- **`LEFT JOIN` em view derruba o planner:** `V_LAN_COM` faz `LEFT JOIN in01com`; usá-la com
+  filtro de data na coluna da `in01com` obriga varredura completa de `in01lan`
+  (~1 M linhas ≈ 8–10 s). Quando o filtro de data pela `in01com` já elimina o que não tem
+  compra, um **`INNER JOIN in01lan`/`in01com` direto** deixa o planner dirigir pela
+  `in01com` (≈ 2 mil linhas) → milissegundos, mesmo resultado.
+- **Pushdown de período em CTE de agregação:** `V_DIFF_ENTRADA_SAIDA_MES` agrega o histórico
+  inteiro; filtrar por ano **dentro** do CTE de entradas (`l.dtpro BETWEEN ? AND ?`) mantém
+  semântica idêntica e cai de ~12 s para ~1,3 s. Filtrar também as saídas **muda o resultado**
+  (notas emitidas fora da janela) — não fazer.
+- **Diagnóstico antes de otimizar:** scripts temporários em `%TEMP%\opencode\` (fora do repo)
+  conectando direto por `fdb` com credenciais do `config.ini` (nunca imprimir senha),
+  medindo frio/morno com `perf_counter` por query. Método que isolou os gargalos.
+- **`RDB$INDEX_FIELDS` não é consultável neste banco** (Firebird 3.0.5 / cliente): falha com
+  "Table unknown". Para inspecionar índices, usar fallback só com `RDB$INDICES`
+  (`RDB$RELATION_NAME`, `RDB$INDEX_NAME`, `RDB$UNIQUE_FLAG`).
 
 ---
 

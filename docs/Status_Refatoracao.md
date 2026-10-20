@@ -1,9 +1,9 @@
 # Status da Refatoração — Inventario_Tools
 
-**Documento atualizado em:** 19/10/2026  
+**Documento atualizado em:** 20/10/2026  
 **Branch de trabalho:** `refatoracao_v3.5`  
 **Base do plano:** `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (v5.1)  
-**Últimos commits:** `4bb9fc9` ("Integrate period and distortion managers") + mudanças não commitadas (Comandos migrado para classe + período; Dashboard migrado para período snapshot)
+**Últimos commits:** `d1f293b` ("Refine dashboard trend data loading") + mudanças não commitadas (otimização das queries do Dashboard: joins diretos em `in01com` + pushdown da query de diferença)
 
 > **Decisões registradas (fora de escopo da refatoração):**
 > - **SQL Livre (`com_ger`)** — ficará em total responsabilidade do operador. **Não** será aplicada whitelist nem qualquer validação programática. Apenas confirmação com aviso de risco.
@@ -83,6 +83,7 @@ Baseado em `docs/roadmap/roadmap_refatoracao_datas.html` (15/10/2026).
 | Snapshot na abertura + listener | ✅ | Comportamento "sob demanda" (como Consultas/Comandos): snapshot único na abertura, **sem listener**. |
 | Remover listener no fechamento | ✅ | Não se aplica (sem listener registrado). |
 | Gráfico de tendência | ✅ | Janela fixa de 5 anos-calendário terminando na `fim` do período (helper `periodo_tendencia_ultimos_5_anos`); KPIs permanecem com o período selecionado. |
+| Desempenho das queries (20/10/2026) | ✅ | Diagnóstico por script temporário (fora do repo, só SELECTs). Gargalos: `V_LAN_COM` (LEFT JOIN forçava scan de `in01lan` — 1,03 M linhas) e `V_DIFF_ENTRADA_SAIDA_MES` (agregava o histórico inteiro). Correção: join direto `in01lan`/`in01com` em `QUERY_ENTRADAS` + tendência e pushdown do filtro de ano na diferença. Resultados idênticos aos anteriores; KPI entradas 7,5 s→0,04 s, tendência 8,5 s→0,04 s, diferença 11,7 s→1,3 s. |
 
 ### Fase 6 — Consultas e Comandos ✅ Concluída
 | Item | Status | Observação |
@@ -121,5 +122,7 @@ Suíte completa: **85 passed** (inclui 16 testes novos de `PeriodoManager`), `co
 | **E8** | Regressão final + docs sincronizados (sem commit automático). | ✅ |
 
 **Restam apenas testes manuais** (troca de período + reabertura das telas), que exigem execução da aplicação com banco de dados real — fora do escopo automatizado.
+
+**Otimização de desempenho do Dashboard (20/10/2026):** identificado que a abertura do Dashboard somava ~31 s (KPIs) + ~8,5 s (tendência). Causa: as views `V_LAN_COM` (LEFT JOIN) e `V_DIFF_ENTRADA_SAIDA_MES` forçavam varredura completa de `in01lan` (1,03 M linhas). Corrigido com joins diretos `in01lan`→`in01com` em `Queries/Consulta_Queries.py` (`QUERY_ENTRADAS`, usada também na tela Valor de Entradas) e em `Dashboard/Dashboard_Func.py` (tendência de entradas, mês/ano), mantendo os parâmetros posicionais. A `QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL` passou a empurrar o filtro de ano para dentro do CTE de entradas (`l.dtpro BETWEEN ? AND ?`), com `_previa_inventario` enviando o intervalo dos 2 anos. Valores conferidos no banco: idênticos aos originais. **Views órfãs removidas:** `V_LAN_COM` e `V_DIFF_ENTRADA_SAIDA_MES` saíram de `Queries/View_Queries.py` e de `Queries/Create_Views.py` (0 referências no código; `V_FAT_VALOR_SAIDA` permanece em uso). As views **físicas** seguem no banco até um `DROP` explícito. Suíte: **85 passed**, `compileall` limpo.
 
 **Aviso:** as alterações estão no **working tree** para revisão manual. Nenhum commit foi realizado (regra de ouro da sessão). O encerramento/commit fica a cargo do usuário.
