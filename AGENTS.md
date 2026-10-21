@@ -66,4 +66,9 @@ tests/             Testes unitários (pytest)
   validação de entrada). Evite que testes importem telas que dependem de display.
 - `Config.ini` e `docs/Plano_Refatoracao_Inventario_Tools_v2.md` estão no `.gitignore`
   (config não deve ser versionado para não expor credenciais).
+  **Atenção (achado em 21/10/2026):** o `config.ini` está no `.gitignore` **mas continua
+  rastreado pelo git** — o `.gitignore` só vale para arquivos não rastreados, e as
+  credenciais (`user_db`/`pass_db`) estão no histórico do repositório. Correção a cargo do
+  usuário: `git rm --cached config.ini` + rotação da senha. **Decidido em 21/10/2026: tratar
+  em sessão dedicada.** Ver `AGENTS_SESSAO.md` Item 6.10.
 - Não commitar credenciais reais em nenhum arquivo.

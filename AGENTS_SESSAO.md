@@ -1,7 +1,9 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 21/10/2026 — **Caça à performance ENCERRADA por medição (decisão do usuário)**.
+**Última sessão:** 21/10/2026 — **Caça à performance ENCERRADA por medição (decisão do usuário)**;
+em seguida, o usuário commitou `d81b381` ("Improve dashboard trend chart visuals"), que entregou
+a **base** do visual do gráfico do Dashboard — complementada nesta sessão (itens A–G do Item 8).
 Medição pós-otimização (script `%TEMP%\opencode\medir_*.py`, só SELECTs, banco = **cópia de cliente**)
 mostrou que **não sobrou correção de SQL de alto retorno**: o que resta em `KPI previa` (~20 s)
 é **I/O**, não defeito de query. Duas hipóteses foram **testadas e derrubadas**:
@@ -17,11 +19,17 @@ e/ou compactar o `.fdb` (`gbak`/`gfix`). Decisão do usuário, não da sessão.
 **Não remedir:** o que foi apurado aqui está consolidado no Item 6.7.
 Sessão anterior (20/10/2026): otimização de desempenho (views `V_LAN_COM`/`V_DIFF_ENTRADA_SAIDA_MES`
 removidas → entradas 22 s→0,04 s, diferença 41 s→1,3 s). Sessão de 19/10/2026: refatoração de datas concluída.
-**Próximo passo (aberto neste momento):** **visual do gráfico do Dashboard** — resize da figura
-(hoje fixa em `7.0x2.8`), rótulos densos com 61 meses, contraste da mensagem "Nenhum dado
-encontrado", formatação do eixo Y e valores nas barras. Ver Item 8.
+**Próximo passo (neste momento):** **visual do gráfico do Dashboard — CONCLUÍDO** (itens A–G
+aplicados nesta sessão, **sem commit**). Nenhuma etapa de código aberta.
+**Pendências herdadas:** testes manuais (troca de período + reabertura das telas);
+`DROP VIEW V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` no banco (SQL a cargo do usuário — Item 6.8);
+`config.ini` versionado → **decidido pelo usuário: tratar em sessão dedicada** (Item 6.10).
 **Pendências herdadas:** testes manuais (troca de período + reabertura das telas);
 `DROP VIEW V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` no banco (SQL a cargo do usuário — Item 6.8).
+**Pendência de segurança (achado em 21/10/2026):** `config.ini` está no `.gitignore` **mas
+continua rastreado pelo git** (`.gitignore` só vale para arquivos não rastreados) — as credenciais
+(`user_db`/`pass_db`) estão no histórico do repositório. Decisão do usuário: desrastrear
+(`git rm --cached config.ini`, mantém o arquivo local) e/ou rotacionar a senha. Ver Item 6.10.
 **Branch:** `refatoracao_v3.5`
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
@@ -223,6 +231,116 @@ DROP VIEW V_LAN_COM;
 
 O app não cria nem recria essas views (`Queries/Create_Views.py` só gerencia
 `V_FAT_VALOR_SAIDA`). Não remover `V_FAT_VALOR_SAIDA` — está em uso.
+
+### 6.10 `config.ini` está versionado apesar do `.gitignore` (achado em 21/10/2026)
+- `.gitignore` lista `config.ini`/`*.ini`, **mas** o arquivo já estava **rastreado** — o
+  `.gitignore` só se aplica a arquivos **não** rastreados. `git ls-files config.ini` confirma.
+- Consequência: `config.ini` (com `user_db`/`pass_db` e `dir_banco`) está no **histórico**
+  do repositório (13+ commits, desde `1a91bfe`).
+- Estado atual no working tree: apenas 1 linha alterada (`dir_banco` apontando para a
+  **cópia do banco do cliente** usada nos testes).
+- Correção (a cargo do usuário): `git rm --cached config.ini` (mantém o arquivo local e
+  passa a respeitar o `.gitignore`) + **rotacionar a senha do banco**. Limpar o histórico
+  exigiria reescrita de histórico — **não fazer sem decisão explícita**.
+- O agente **não** executa comandos de git que alterem índice/histórico sem aprovação.
+- **Decisão do usuário (21/10/2026):** tratar em **sessão dedicada** — não mexer agora.
+
+---
+
+## 8. VISUAL DO GRÁFICO DO DASHBOARD — ✅ CONCLUÍDO em 21/10/2026
+
+**Arquivo-alvo:** `Dashboard/Dashboard_Charts.py` (lógica do gráfico — ver também `Dashboard/Dashboard_Screen.py`).
+
+### 8.1 Já entregue por `d81b381` (commit do usuário)
+- `criar_grafico_tendencia(master, dados, tipo)` — figura com tamanho **responsivo** ao widget
+  hospedeiro via `_dimensoes_figura(master)` (fallback `(4.0, 2.0)` se o widget ainda não
+  foi mapeado).
+- Paleta/ordem das séries: `COR_SERIES_ENTRADAS` (azul), `COR_SERIES_VENDAS` (verde),
+  `COR_SERIES_DIFERENCA` (vermelho).
+- **Vendas representadas como valor negativo** (`vendas_negativo = [-v for v in vendas]`),
+  com `axhline(0)` e grade em Y.
+- `tight_layout()` + `canvas.get_tk_widget().pack(fill='both', expand=True)`.
+
+### 8.2 Itens planejados — ✅ todos entregues em 21/10/2026 (ver 8.2.1)
+1. **Eixo Y formatado** — hoje mostra o número cru (ex.: `3000000.0`); deve exibir
+   compacto em pt-BR (`R$ 1,2 mi`, `R$ 350 mil`) via `matplotlib.ticker.FuncFormatter`.
+2. **Valores nas barras** — anotação do valor por barra; **apenas quando o nº de pontos for
+   pequeno** (≤ 12), para não poluir a visualização com 61 meses.
+3. **Rareamento dos rótulos do X** — com granularidade "Mês" são até **61 rótulos**
+   (`MM/AAAA`); mostrar no máximo ~15-18 (passo calculado), sempre preservando o último.
+4. **Contraste do estado vazio** — "Nenhum dado encontrado para o período!" usa cor fixa
+   `#7f8c8d`; passar a cor **por tema** (tupla claro/escuro), como `COR_SUBTEXTO` no
+   `Dashboard_Screen.py`.
+5. **Re-layout no resize** — o TkAgg do matplotlib 3.11 (`_backend_tk.resize`) redimensiona a
+   figura e redesenha, mas **não** reaplica o `tight_layout`; usar `fig.set_layout_engine('tight')`
+   para o layout ser recalculado a cada draw.
+
+### 8.2.1 Status — ✅ CONCLUÍDO em 21/10/2026 (itens A–G, **sem commit**)
+Alterado `Dashboard/Dashboard_Charts.py` (a função `criar_grafico_tendencia` manteve a assinatura)
+e criado `tests/test_dashboard_charts.py` (**13 testes** → suíte com **98 passed**).
+
+| Item | Entregue |
+|---|---|
+| A | Eixo Y com `FuncFormatter` → `R$ 1,9 mi`, `R$ 500 mil`, `R$ 2,5 bi` (pt-BR, vírgula decimal) |
+| B | `ax.bar_label` nas barras, **só quando ≤ 12 pontos** (`MAX_PONTOS_COM_VALORES`) |
+| C | `_rotulos_eixo_x` rareia os rótulos (61 → 16) e **garante ≤ `maximo`**, preservando o último |
+| D | Estado vazio com cor **por tema** (`CORES_POR_TEMA['*']['subtexto']`) |
+| E | Figura, eixos, grade, títulos, ticks e legenda **por tema** (`ctk.get_appearance_mode()`) |
+| F | `fig.set_layout_engine('tight')` — layout recalculado a cada draw (inclusive no resize) |
+| G | `tests/test_dashboard_charts.py` — 13 casos puros (helpers sem UI) |
+
+**Complemento na mesma sessão (contraste — ver Item 8.4):** mais 3 casos de teste
+(`TestContraste`) → suíte com **101 passed**.
+
+Helpers puros (testáveis sem display): `_valor_compacto(valor, com_simbolo=True)`,
+`_rotulos_eixo_x(labels, maximo=MAX_ROTULOS_EIXO_X)` e `_contraste(cor_a, cor_b)` (WCAG).
+
+### 8.3 Aprendizados desta sessão (gráfico)
+- **Separador decimal pt-BR:** `f'{1.9:.1f}'` gera `1.9`; o projeto usa vírgula
+  (mesma convenção de `banco_codigo_valueform`). Converter com `.replace('.', ',')`.
+- **`ax.bar_label(..., labels=[...])`:** quando `labels` é passado, o `fmt` é **ignorado** —
+  passar a lista já formatada; `color=`/`fontsize=`/`padding=` são repassados ao `ax.text`.
+- **Limite de rótulos estrito:** preservando o último rótulo, a contagem podia passar do limite
+  (12 rótulos com `maximo=4` → 5). A solução escolhida troca o penúltimo pelo último
+  (`indices = indices[:-1] + [total - 1]`), garantindo **≤ `maximo`**.
+- **Verificação sem display:** a figura pode ser inspecionada por código
+  (`ax.get_xticklabels()`, `ax.get_yticklabels()`, `ax.texts`, `figure.get_facecolor()`,
+  `figure.get_layout_engine()`) — script temporário em `%TEMP%\opencode\diagnostico_grafico.py`.
+  Atenção: **não abrir PNG para "validar" o visual** — a verificação é por introspecção.
+
+### 8.4 Correção de contraste do texto do gráfico (21/10/2026, **sem commit**)
+**Sintoma relatado pelo usuário:** "os labels no rótulo do gráfico estão com cores claras que se
+misturam com as cores do próprio rótulo, impedindo sua leitura" — elemento apontado: **legenda**.
+
+**Diagnóstico por medição (WCAG):** o texto claro do gráfico (`#b7e2e6` no dark) tem contraste
+excelente contra a **figura** (9,85:1), mas **insuficiente contra as cores das séries**:
+verde `#2ecc71` → **1,50**, azul `#3498db` → **2,26**, vermelho `#e74c3c` → **2,74**.
+Onde o texto encosta nos marcadores coloridos (legenda) ou nas barras (rótulos de valores),
+o texto se dissolve. No tema light o mesmo vale contra o vermelho (2,87).
+
+**Correção aplicada:**
+| Onde | Antes | Depois |
+|---|---|---|
+| Cor do texto | `#b7e2e6` (dark) / `#2c3e50` (light) — ciano parecido com a série azul | neutro `#ecf0f1` (dark) / `#212d38` (light); o ciano virou `subtexto` (só estado vazio) |
+| Legenda | sem moldura, texto colado nos marcadores | **moldura opaca** (`facecolor` = figura, `edgecolor` = grade, `alpha=1`) + texto 9pt → contraste **11,99:1** (dark) / **14,03:1** (light) |
+| Rótulos de valor das barras | texto direto sobre a barra | **caixa de fundo** (`bbox` na cor da figura, `alpha=0,85`) → legível sobre qualquer série |
+| Estado vazio | chave `estado_vazio` | removida (valor duplicava `subtexto`); passa a usar `subtexto` |
+
+**Regressão garantida por teste:** helper puro `_contraste(cor_a, cor_b)` (WCAG 2.1) em
+`Dashboard_Charts.py` + `TestContraste` em `tests/test_dashboard_charts.py` exigindo
+**≥ 4,5:1** entre `texto`/`subtexto` e a figura, nos **dois** temas → **101 testes**.
+
+**Lição:** em gráfico com séries coloridas, **nunca** usar a cor "de texto do tema" sobre as
+séries — ou dar superfície própria (moldura/caixa), ou garantir contraste por medição.
+
+### 8.5 Ambiente/verificação do gráfico
+- `matplotlib` 3.11.2; o backend Tk foi reorganizado (`backends/backend_tkagg.py` só reexporta;
+  a classe `FigureCanvasTk` está em `backends/_backend_tk.py`).
+- `FigureCanvasTk.resize` → `_resize_figure_for_canvas_size` → `figure.set_size_inches` +
+  `ResizeEvent` + `draw_idle`: o gráfico **acompanha** o redimensionamento da janela.
+- `Dashboard_Charts.py` chama `matplotlib.use('Agg')` **depois** de importar o `backend_tkagg` —
+  inofensivo (o canvas Tk é instanciado explicitamente), mas desnecessário.
+- Testes: manter os helpers de formatação **puros** (sem UI) para permitir `pytest` sem display.
 
 ---
 
