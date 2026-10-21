@@ -5,9 +5,17 @@ import matplotlib
 matplotlib.use('Agg')
 
 
-COR_SERIES_VENDAS = '#3498db'
-COR_SERIES_ENTRADAS = '#2ecc71'
+COR_SERIES_VENDAS = '#2ecc71'
+COR_SERIES_ENTRADAS = '#3498db'
 COR_SERIES_DIFERENCA = '#e74c3c'
+
+
+def _dimensoes_figura(master, dpi=100, minimo=(4.0, 2.0)):
+    largura = master.winfo_width()
+    altura = master.winfo_height()
+    if largura <= 1 or altura <= 1:
+        return minimo
+    return (max(largura / dpi, minimo[0]), max(altura / dpi, minimo[1]))
 
 
 def criar_grafico_tendencia(master, dados, tipo='Barras'):
@@ -23,22 +31,24 @@ def criar_grafico_tendencia(master, dados, tipo='Barras'):
     diffs = dados['diferenca']
     xs = list(range(len(labels)))
 
-    fig = Figure(figsize=(7.0, 2.8), dpi=100, facecolor='white')
+    fig = Figure(figsize=_dimensoes_figura(master), dpi=100, facecolor='white')
     ax = fig.add_subplot(111)
 
+    vendas_negativo = [-v for v in vendas]
+
     if tipo == 'Linhas':
-        ax.plot(xs, vendas, marker='o', label='Vendas',
-                color=COR_SERIES_VENDAS, linewidth=2)
         ax.plot(xs, entradas, marker='s', label='Entradas',
                 color=COR_SERIES_ENTRADAS, linewidth=2)
+        ax.plot(xs, vendas_negativo, marker='o', label='Vendas',
+                color=COR_SERIES_VENDAS, linewidth=2)
         ax.plot(xs, diffs, marker='^', label='Diferenca',
                 color=COR_SERIES_DIFERENCA, linewidth=2)
     else:
         largura = 0.25
-        ax.bar([x - largura for x in xs], vendas, largura,
-               label='Vendas', color=COR_SERIES_VENDAS)
-        ax.bar(xs, entradas, largura,
+        ax.bar([x - largura for x in xs], entradas, largura,
                label='Entradas', color=COR_SERIES_ENTRADAS)
+        ax.bar(xs, vendas_negativo, largura,
+               label='Vendas', color=COR_SERIES_VENDAS)
         ax.bar([x + largura for x in xs], diffs, largura,
                label='Diferenca', color=COR_SERIES_DIFERENCA)
 
@@ -48,10 +58,10 @@ def criar_grafico_tendencia(master, dados, tipo='Barras'):
     ax.grid(axis='y', linestyle='--', alpha=0.4)
     ax.set_axisbelow(True)
     ax.legend(fontsize=8, loc='best')
-    ax.set_title('Vendas x Entradas x Diferenca', fontsize=10,
+    ax.set_title('Entradas x Vendas x Diferenca', fontsize=10,
                  fontweight='bold', color='#2c3e50')
 
-    fig.subplots_adjust(left=0.08, right=0.97, top=0.9, bottom=0.26)
+    fig.tight_layout()
 
     canvas = FigureCanvasTkAgg(fig, master=master)
     canvas.draw()

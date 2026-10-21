@@ -1,8 +1,27 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 20/10/2026 — **Otimização de desempenho do Dashboard CONCLUÍDA**: diagnóstico por script temporário (`%TEMP%\opencode\diag_dashboard.py` e `diag2_dashboard.py`, só SELECTs) apontou que as views `V_LAN_COM` (LEFT JOIN → scan de `in01lan`, 1,03 M linhas) e `V_DIFF_ENTRADA_SAIDA_MES` (agregava histórico inteiro) dominavam o tempo. Correção aplicada: joins diretos `in01lan`/`in01com` em `QUERY_ENTRADAS` + queries de tendência de entradas e pushdown do filtro de ano na `QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL`. Resultados idênticos (conferidos no banco); entradas 7,5 s→0,04 s, tendência 8,5 s→0,04 s, diferença 11,7 s→1,3 s. Suíte: **85 passed**. Sessão anterior (19/10/2026): refatoração de datas concluída (E5, E6a/E6b, E7, E1a, E8) e revisão do item 6.2.
-**Próximo passo (pendente):** nenhuma etapa aberta. Restam **testes manuais** (troca de período + reabertura das telas) e o **encerramento/commit pelo usuário**. Opcional em etapa futura: aplicar `DROP VIEW V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` no banco do cliente (já removidas do código).
+**Última sessão:** 21/10/2026 — **Caça à performance ENCERRADA por medição (decisão do usuário)**.
+Medição pós-otimização (script `%TEMP%\opencode\medir_*.py`, só SELECTs, banco = **cópia de cliente**)
+mostrou que **não sobrou correção de SQL de alto retorno**: o que resta em `KPI previa` (~20 s)
+é **I/O**, não defeito de query. Duas hipóteses foram **testadas e derrubadas**:
+(a) filtrar a CTE `saidas` por período → 23,05 s (pior) **e resultado diferente**
+(2024: 3.190.616,54 → 3.124.194,69), ou seja, **mudaria o KPI** — não fazer;
+(b) join `s.fatur = e.notfi` explodindo → **falso**: `fatur` repetido = 0, pares do join = 111.757,
+maior fan-out = 1 (join um-para-um, limpo).
+Evidência de I/O: `in01fat COUNT total` = 15,13 s frio → **0,17 s morno** (89x); qualquer
+`COUNT(*)` com `GROUP BY` em `in01lan` custa 18–21 s. Servidor com `DefaultDbCachePages = 2048`
+(≈16 MB) para arquivo de **1,3 GB** e máquina com **3,8 GB de RAM**.
+**Alavancas restantes ficam FORA do código** (servidor do cliente): elevar `DefaultDbCachePages`
+e/ou compactar o `.fdb` (`gbak`/`gfix`). Decisão do usuário, não da sessão.
+**Não remedir:** o que foi apurado aqui está consolidado no Item 6.7.
+Sessão anterior (20/10/2026): otimização de desempenho (views `V_LAN_COM`/`V_DIFF_ENTRADA_SAIDA_MES`
+removidas → entradas 22 s→0,04 s, diferença 41 s→1,3 s). Sessão de 19/10/2026: refatoração de datas concluída.
+**Próximo passo (aberto neste momento):** **visual do gráfico do Dashboard** — resize da figura
+(hoje fixa em `7.0x2.8`), rótulos densos com 61 meses, contraste da mensagem "Nenhum dado
+encontrado", formatação do eixo Y e valores nas barras. Ver Item 8.
+**Pendências herdadas:** testes manuais (troca de período + reabertura das telas);
+`DROP VIEW V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` no banco (SQL a cargo do usuário — Item 6.8).
 **Branch:** `refatoracao_v3.5`
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
@@ -166,6 +185,44 @@ Se testes falharem após mudança, o plano foi executado incorretamente — info
 - **`RDB$INDEX_FIELDS` não é consultável neste banco** (Firebird 3.0.5 / cliente): falha com
   "Table unknown". Para inspecionar índices, usar fallback só com `RDB$INDICES`
   (`RDB$RELATION_NAME`, `RDB$INDEX_NAME`, `RDB$UNIQUE_FLAG`).
+- **`EXPLAIN PLAN` INDISPONÍVEL neste ambiente (21/10/2026):** qualquer variante
+  (`EXPLAIN PLAN`, minúsculas, sem `?`) retorna `Token unknown - line 1, column 1 - EXPLAIN`.
+  **Causa:** conflito de versões — a `fbclient.dll` **do projeto** é **3.0.13**
+  (`Recursos/Firebird/fbclient.dll`) e o **servidor** é **3.0.5**. Não é problema do código.
+  Consequência: **não há plano de execução**; diagnosticar só por cronometragem
+  (`perf_counter`), como nos scripts `%TEMP%\opencode\medir_*.py`.
+  Observações correlatas: `MON$SQL_DIALECT` e `fdb.connect(dialect=...)` **não existem**
+  nesta versão do driver; há **dois servidores Firebird rodando** (3.0.5 e um 2.5 Fortes).
+
+### 6.8 Desempenho pós-otimização — o que NÃO remedir (lições de 21/10/2026)
+- **`KPI previa` (`QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL`) ~20 s é I/O, não SQL.** O join é
+  um-para-um (`fatur` repetido = **0**; pares do join = **111.757** < entradas 115.847;
+  maior fan-out = **1**). Nada a otimizar na query.
+- **NÃO filtrar a CTE `saidas` por período.** Testado: fica **mais lento** (23,05 s vs 20,86 s)
+  **e muda o KPI** (2024: 3.190.616,54 → 3.124.194,69; 2025: 3.701.052,83 → 3.596.048,63).
+  Já era alertado no Item 6.7; agora está medido.
+- **Assinatura de I/O:** `in01fat COUNT total` = 15,13 s **frio** → 0,17 s **morno** (89x).
+  Qualquer `COUNT(*)` com `GROUP BY` em `in01lan` custa 18–21 s. `in01lan` **não** melhora
+  com cache (18,51 s → 18,23 s) — pista não investigada (sem `EXPLAIN`).
+- **Contexto de ambiente:** `DefaultDbCachePages = 2048` (≈**16 MB**) para arquivo de **1,3 GB**;
+  máquina com **3,8 GB de RAM**; `.fdb` com 240k linhas em `in01fat` ocupando ~5,4 KB/linha
+  (arquivo inchado).
+- **Alavancas restantes são de SERVIDOR, não de código:** elevar `DefaultDbCachePages`
+  e/ou compactar o `.fdb` (`gbak`+`gfix`). Exigem parar o serviço; **decisão do usuário**.
+- **Banco de teste é cópia de cliente:** nos scripts de diagnóstico, **somente SELECT** —
+  nada de DDL/DML.
+
+### 6.9 SQL de DROP das views órfãs (a executar pelo usuário)
+`V_LAN_COM` e `V_DIFF_ENTRADA_SAIDA_MES` já saíram do código (0 referências) mas seguem
+físicas no banco. Executar **manualmente**, na ordem (a segunda depende da primeira):
+
+```sql
+DROP VIEW V_DIFF_ENTRADA_SAIDA_MES;
+DROP VIEW V_LAN_COM;
+```
+
+O app não cria nem recria essas views (`Queries/Create_Views.py` só gerencia
+`V_FAT_VALOR_SAIDA`). Não remover `V_FAT_VALOR_SAIDA` — está em uso.
 
 ---
 
