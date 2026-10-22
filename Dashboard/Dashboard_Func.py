@@ -6,6 +6,7 @@ from Queries.Consulta_Queries import (
     CFOP_LIST,
     QUERY_VENDAS,
     QUERY_ENTRADAS,
+    EXPR_VALOR_ENTRADA,
 )
 
 logger = get_logger(__name__)
@@ -36,10 +37,10 @@ ORDER BY 1
 
 """
 
-QUERY_ENTRADAS_MES_ANO_AGRUPADO = """
+QUERY_ENTRADAS_MES_ANO_AGRUPADO = f"""
 SELECT extract(month FROM c.dtcom) AS mes,
        extract(year  FROM c.dtcom) AS ano,
-       CAST(SUM(COALESCE(l.valor,0)) AS NUMERIC(14,2)) AS valor
+       CAST(SUM({EXPR_VALOR_ENTRADA}) AS NUMERIC(14,2)) AS valor
 FROM in01lan l
 INNER JOIN in01com c
         ON c.notfi = l.notfi
@@ -47,15 +48,15 @@ INNER JOIN in01com c
        AND c.modelonota = l.modelonota
 WHERE l.venda = 'C'
   AND CHARACTER_LENGTH(l.cfop) = 5
-  AND l.cfop NOT IN ({placeholders})
+  AND l.cfop NOT IN ({{placeholders}})
   AND c.dtcom BETWEEN ? AND ?
 GROUP BY 1, 2
 ORDER BY 2, 1
 """
 
-QUERY_ENTRADAS_ANO_AGRUPADO = """
+QUERY_ENTRADAS_ANO_AGRUPADO = f"""
 SELECT extract(year FROM c.dtcom) AS ano,
-       CAST(SUM(COALESCE(l.valor,0)) AS NUMERIC(14,2)) AS valor
+       CAST(SUM({EXPR_VALOR_ENTRADA}) AS NUMERIC(14,2)) AS valor
 FROM in01lan l
 INNER JOIN in01com c
         ON c.notfi = l.notfi
@@ -63,7 +64,7 @@ INNER JOIN in01com c
        AND c.modelonota = l.modelonota
 WHERE l.venda = 'C'
   AND CHARACTER_LENGTH(l.cfop) = 5
-  AND l.cfop NOT IN ({placeholders})
+  AND l.cfop NOT IN ({{placeholders}})
   AND c.dtcom BETWEEN ? AND ?
 GROUP BY 1
 ORDER BY 1

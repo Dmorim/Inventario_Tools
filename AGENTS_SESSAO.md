@@ -1,13 +1,22 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 21/10/2026 — **Caça à performance ENCERRADA por medição (decisão do usuário)**;
-em seguida, o usuário commitou `d81b381` ("Improve dashboard trend chart visuals"), que entregou
-a **base** do visual do gráfico do Dashboard — complementada nesta sessão (itens A–G do Item 8).
-Medição pós-otimização (script `%TEMP%\opencode\medir_*.py`, só SELECTs, banco = **cópia de cliente**)
-mostrou que **não sobrou correção de SQL de alto retorno**: o que resta em `KPI previa` (~20 s)
-é **I/O**, não defeito de query. Duas hipóteses foram **testadas e derrubadas**:
-(a) filtrar a CTE `saidas` por período → 23,05 s (pior) **e resultado diferente**
+**Última sessão:** 22/10/2026 — sessão de **diagnóstico do Dashboard** (sem alteração de
+código de produção): o KPI "Total de Entradas" (951.529,18 em 2025) e a série "Entradas" do
+gráfico (rótulo "278 mil") usam **fórmulas SQL diferentes** — o gráfico soma o valor
+**unitário** (`SUM(l.valor)`) e ignora a **quantidade**, o desconto, o `valsub` e o IPI.
+Correção proposta (fonte única de verdade para a expressão) **aguardando aprovação** do
+usuário — ver **Item 9**. Também: o usuário commitou `9100308` ("Improve dashboard chart
+readability"), que fechou o visual do gráfico do Dashboard (itens A–G + contraste WCAG), e
+executou `git rm --cached config.ini` (Item 6.10 — desrastreamento feito; **rotação da senha
+ainda pendente**).
+**Contexto histórico:** 21/10/2026 — **caça à performance ENCERRADA por medição** (decisão do
+usuário); em seguida, o usuário commitou `d81b381` ("Improve dashboard trend chart visuals"),
+que entregou a **base** do visual do gráfico do Dashboard — complementada na sessão de 21/10/2026
+(itens A–G do Item 8). Medição pós-otimização (script `%TEMP%\opencode\medir_*.py`, só SELECTs,
+banco = **cópia de cliente**) mostrou que **não sobrou correção de SQL de alto retorno**: o que
+resta em `KPI previa` (~20 s) é **I/O**, não defeito de query. Duas hipóteses foram **testadas e
+derrubadas**: (a) filtrar a CTE `saidas` por período → 23,05 s (pior) **e resultado diferente**
 (2024: 3.190.616,54 → 3.124.194,69), ou seja, **mudaria o KPI** — não fazer;
 (b) join `s.fatur = e.notfi` explodindo → **falso**: `fatur` repetido = 0, pares do join = 111.757,
 maior fan-out = 1 (join um-para-um, limpo).
@@ -19,17 +28,14 @@ e/ou compactar o `.fdb` (`gbak`/`gfix`). Decisão do usuário, não da sessão.
 **Não remedir:** o que foi apurado aqui está consolidado no Item 6.7.
 Sessão anterior (20/10/2026): otimização de desempenho (views `V_LAN_COM`/`V_DIFF_ENTRADA_SAIDA_MES`
 removidas → entradas 22 s→0,04 s, diferença 41 s→1,3 s). Sessão de 19/10/2026: refatoração de datas concluída.
-**Próximo passo (neste momento):** **visual do gráfico do Dashboard — CONCLUÍDO** (itens A–G
-aplicados nesta sessão, **sem commit**). Nenhuma etapa de código aberta.
+**Próximo passo (neste momento):** **correção da fórmula de "Entradas" no gráfico** — ✅
+**APLICADA e validada no banco** (Item 9.2; KPI e gráfico agora coincidem em 2024/2025/2026).
+**Restam apenas decisões de negócio** sobre as divergências latentes do Item 9.5 (classe `'03'`
+na distorção, filtro `l.cance` nas entradas, classe `'07'` no inventário) — o agente **não
+decide** isso sozinho. Nenhuma outra etapa de código aberta.
 **Pendências herdadas:** testes manuais (troca de período + reabertura das telas);
 `DROP VIEW V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` no banco (SQL a cargo do usuário — Item 6.8);
-`config.ini` versionado → **decidido pelo usuário: tratar em sessão dedicada** (Item 6.10).
-**Pendências herdadas:** testes manuais (troca de período + reabertura das telas);
-`DROP VIEW V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` no banco (SQL a cargo do usuário — Item 6.8).
-**Pendência de segurança (achado em 21/10/2026):** `config.ini` está no `.gitignore` **mas
-continua rastreado pelo git** (`.gitignore` só vale para arquivos não rastreados) — as credenciais
-(`user_db`/`pass_db`) estão no histórico do repositório. Decisão do usuário: desrastrear
-(`git rm --cached config.ini`, mantém o arquivo local) e/ou rotacionar a senha. Ver Item 6.10.
+**rotação da senha do banco** (`config.ini` já foi desrastreado — Item 6.10).
 **Branch:** `refatoracao_v3.5`
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
@@ -232,18 +238,18 @@ DROP VIEW V_LAN_COM;
 O app não cria nem recria essas views (`Queries/Create_Views.py` só gerencia
 `V_FAT_VALOR_SAIDA`). Não remover `V_FAT_VALOR_SAIDA` — está em uso.
 
-### 6.10 `config.ini` está versionado apesar do `.gitignore` (achado em 21/10/2026)
+### 6.10 `config.ini` versionado apesar do `.gitignore` — **desrastreado em 22/10/2026**
 - `.gitignore` lista `config.ini`/`*.ini`, **mas** o arquivo já estava **rastreado** — o
   `.gitignore` só se aplica a arquivos **não** rastreados. `git ls-files config.ini` confirma.
 - Consequência: `config.ini` (com `user_db`/`pass_db` e `dir_banco`) está no **histórico**
   do repositório (13+ commits, desde `1a91bfe`).
-- Estado atual no working tree: apenas 1 linha alterada (`dir_banco` apontando para a
-  **cópia do banco do cliente** usada nos testes).
-- Correção (a cargo do usuário): `git rm --cached config.ini` (mantém o arquivo local e
-  passa a respeitar o `.gitignore`) + **rotacionar a senha do banco**. Limpar o histórico
-  exigiria reescrita de histórico — **não fazer sem decisão explícita**.
+- **Ação do usuário em 22/10/2026:** `git rm --cached config.ini` — arquivo **mantido localmente**,
+  agora respeitando o `.gitignore` (staged, aguardando commit do usuário). O `.gitignore` também
+  foi limpo das linhas duplicadas (`config.ini`/`*.ini` apareciam 3×).
+- **AINDA PENDENTE:** **rotacionar a senha do banco** — o histórico do repositório continua
+  contendo as credenciais antigas. Limpar o histórico exigiria reescrita — **não fazer sem
+  decisão explícita**.
 - O agente **não** executa comandos de git que alterem índice/histórico sem aprovação.
-- **Decisão do usuário (21/10/2026):** tratar em **sessão dedicada** — não mexer agora.
 
 ---
 
@@ -341,6 +347,120 @@ séries — ou dar superfície própria (moldura/caixa), ou garantir contraste p
 - `Dashboard_Charts.py` chama `matplotlib.use('Agg')` **depois** de importar o `backend_tkagg` —
   inofensivo (o canvas Tk é instanciado explicitamente), mas desnecessário.
 - Testes: manter os helpers de formatação **puros** (sem UI) para permitir `pytest` sem display.
+
+---
+
+## 9. KPI "Total de Entradas" × série "Entradas" do gráfico — DIVERGÊNCIA DE FÓRMULA (22/10/2026)
+
+**Sintoma relatado pelo usuário:** KPI "Total de Entradas" = **951.529,18** (período 2025),
+mas o gráfico de tendência exibe **"278 mil"**.
+
+### 9.1 Diagnóstico (medido no banco — cópia do cliente, só SELECTs)
+
+**Não é divergência de período** — é divergência de **fórmula**:
+
+| Origem | Query | Valor da expressão |
+|---|---|---|
+| KPI do card "Total de Entradas" (`Dashboard_Func.py:219`) e tela "Valor de Entradas" (`Consultas_Val_Ent_Func.py:18`) | `QUERY_ENTRADAS` (`Queries/Consulta_Queries.py:43`) | `((valor − valor×despr/100) × quant) + valsub + (((valor − valor×despr/100) × quant) × alipi_ent/100)` |
+| Série "Entradas" do gráfico (`Dashboard_Func.py:177,182`) | `QUERY_ENTRADAS_MES_ANO_AGRUPADO` / `QUERY_ENTRADAS_ANO_AGRUPADO` (`Dashboard/Dashboard_Func.py:39,56`) | `SUM(COALESCE(l.valor,0))` → valor **unitário**, **sem `quant`** |
+
+**Decomposição medida em 2025** (`in01lan` ⋈ `in01com`, 6.207 linhas):
+| Componente | Valor |
+|---|---|
+| A — `SUM(l.valor)` (o que o gráfico mostra) | 278.164,69 |
+| B — `(valor − desconto) × quant` | 872.107,18 |
+| C — `valsub` | 72.019,00 |
+| D — IPI sobre B | 7.402,99 |
+| **B + C + D (o que o KPI mostra)** | **951.529,18** |
+
+`VENDAS` **não** tem o problema: KPI e gráfico usam a mesma `SUM(valor_saida)` sobre
+`V_FAT_VALOR_SAIDA` com os mesmos filtros.
+
+**Verificações colaterais:** `dtcom` vs `dtpro` como filtro de período → **resultados
+idênticos** (o join `in01com` já restringe às compras). Período do usuário = **2025**
+(`periodo_padrao()` = último ano cheio). O gráfico usa janela fixa de 5 anos
+(`periodo_tendencia_ultimos_5_anos`) → 7 pontos no modo "Ano" (rótulo "278 mil" = 278.164,69
+formatado por `_valor_compacto`).
+
+### 9.2 Correção — ✅ APLICADA em 22/10/2026 (sem commit)
+
+**Fonte única de verdade:** a expressão passou para `EXPR_VALOR_ENTRADA` em
+`Queries/Consulta_Queries.py`, usada por `QUERY_ENTRADAS` **e** pelas duas queries de tendência
+do Dashboard. As duas telas não podem mais divergir.
+
+- `Queries/Consulta_Queries.py` — novo `EXPR_VALOR_ENTRADA`; `QUERY_ENTRADAS` virou f-string
+  (`{{placeholders}}` preserva o `.format(placeholders=...)` já usado em runtime).
+- `Dashboard/Dashboard_Func.py` — `QUERY_ENTRADAS_MES_ANO_AGRUPADO` e
+  `QUERY_ENTRADAS_ANO_AGRUPADO` passaram a usar `EXPR_VALOR_ENTRADA`.
+- `tests/test_queries.py` — caso anti-regressão `test_queries_de_entradas_compartilham_a_mesma_expressao`.
+- **Contrato dos testes:** `tests/test_queries.py` só exige que os nomes `QUERY_*` existam e
+  sejam não vazios → `EXPR_VALOR_ENTRADA` (não começa com `QUERY_`) não quebra o contrato;
+  `_nome_query` (`Thread_Manager/Query_Operations.py:11`) compara o SQL **em runtime** com as
+  constantes do módulo → continua identificando `QUERY_ENTRADAS` / `QUERY_ENTRADAS_ANO_AGRUPADO`.
+
+**Validação no banco (cópia do cliente, só SELECT):**
+| Período | KPI | Barra do gráfico (Ano) | Soma dos meses | Iguais |
+|---|---|---|---|---|
+| 2024 | 703.596,11 | 703.596,11 | — | ✅ |
+| 2025 | **951.529,18** | **951.529,18** | **951.529,18** | ✅ |
+| 2026 (jan–set) | 597.393,68 | 597.393,68 | — | ✅ |
+
+Desempenho inalterado (0,08 s por ano; 0,28 s na janela de 5 anos). Suíte: **102 passed**;
+`compileall` limpo.
+
+### 9.3 Efeito colateral esperado (comunicado ao usuário)
+
+Com a fórmula unificada, a série "Diferença" (`entradas − vendas`) deixa de ser dominada por
+vendas: em 2025, entradas 951.529,18 × vendas 1.612.693,53 → diferença **−661.164,35**
+(antes: 278.164,69 − 1.612.693,53 = −1.334.528,84). O gráfico fica mais legível e
+comparativo com o KPI.
+
+### 9.4 Scripts de diagnóstico (temporários, fora do repo)
+
+`%TEMP%\opencode\diagnostico_kpi_entradas.py`, `diagnostico_entradas_decomposicao.py`,
+`prototipo_grafico_entradas.py`, `validacao_pos_correcao.py`,
+`diagnostico_casos_similares.py`, `diagnostico_casos_similares2.py` — conectam por `fdb` com as
+credenciais do `config.ini` (nunca imprimir a senha), **somente SELECT**.
+
+### 9.5 Varredura de casos semelhantes (22/10/2026) — resultado
+
+**Varredura feita:** SQL fora de `Queries/` (só o Dashboard tem); pares query-de-contagem ×
+query-de-listagem; universos de classificação; filtros de cancelamento; semântica de data;
+view `V_FAT_VALOR_SAIDA`; fórmulas "de entradas" em todo o app.
+
+**✅ Sem divergência (verificado no banco):**
+| Item | Resultado |
+|---|---|
+| KPI "Valor do Inventário" × tela Valor do Inventário | mesma `QUERY_INVENTARIO` |
+| KPI "Total de Vendas" × tela Valor de Vendas | mesma `QUERY_VENDAS` |
+| KPI "Total de Entradas" × tela Valor de Entradas | mesma `QUERY_ENTRADAS` |
+| KPI Vendas × série Vendas do gráfico | **1.612.693,53 = 1.612.693,53** |
+| `dtcom` (data da compra) × `dtpro` (data do movimento) nas entradas | **280.611,25 = 280.611,25** (2025) |
+| View `V_FAT_VALOR_SAIDA` no banco × fórmula do código | 9.912.968,64 vs 9.912.968,65 (arredondamento) |
+| 6 pares contagem × listagem (`Preço Custo Zerado`, `Preço Custo > PV`, `Classificação Nula`, `Quantidade Exorbitante`, `Controle Estoque`, `Saldo Não Zerado`) | filtros **semanticamente iguais** (as diferenças detectadas são só o prefixo de alias `L.`) |
+
+**⚠️ Divergências latentes (encontradas, com impacto ZERO nesta base):**
+1. **Universo de classificação** — `QUERY_INVENTARIO` (`'00','01','02','03','04','05','06'`) ×
+   `QUERY_DISTORCAO_SALDO` (`'00','01','02','04','05','06'` — **sem `'03'`**). Se um cliente
+   tiver produtos de classe `'03'` com saldo > 0, o **valor do inventário** os conta e a
+   **checagem de distorção** os ignora. Nesta base: **0 produtos** classe `'03'` → sem impacto.
+   *Decisão de negócio necessária* (o `'03'` é inventário?).
+2. **Filtro de cancelamento (`l.cance`)** — `QUERY_ENTRADAS` **não** filtra `cance`;
+   `QUERY_DISTORCAO_SALDO` filtra (`COALESCE(l.cance,'N')='N'`). Nesta base: **0 linhas** de
+   compra com `cance='S'` em 2025 → sem impacto. *(KPI e gráfico seguem coerentes entre si.)*
+3. **Classe `'07'`** — existe nesta base (51 produtos) e está fora das **duas** listas → coerente,
+   mas os produtos `'07'` **não** entram no valor do inventário (nenhum deles tem saldo > 0).
+   *Confirmação de negócio necessária.*
+
+**ℹ️ Não é bug, mas é uma terceira noção de "entradas"** — o KPI "Previsão de Inventário"
+(`QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL`, `Dashboard_Func.py:75`) calcula entradas como
+`MAX(c.valno)` (valor da **nota**), e não pela expressão `EXPR_VALOR_ENTRADA` (valor extendido).
+Conceito diferente (diferença entradas−saídas por nota) — **não misturar** com o KPI
+"Total de Entradas".
+
+**Nota de ambiente:** `RDB$VIEWS` e `RDB$INDEX_FIELDS` **não são consultáveis** neste banco
+("Table unknown") — mesmo bloqueio do Item 6.7. A view do banco foi conferida **funcionalmente**
+(agregando `valor_saida` × fórmula do código), não por definição textual.
 
 ---
 

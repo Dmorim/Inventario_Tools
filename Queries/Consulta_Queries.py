@@ -40,17 +40,21 @@ Parâmetros: (data_inicial, data_final)
 Retorna: sum(valor_vendas)
 """
 
-QUERY_ENTRADAS = """
+EXPR_VALOR_ENTRADA = """(
+        ((CAST(l.valor AS NUMERIC(14, 4)) -
+          (CAST(l.valor AS NUMERIC(14, 4)) * CAST((l.despr/100) AS NUMERIC(14,4)))) *
+         CAST(l.quant AS NUMERIC(14, 2))) +
+        (l.valsub) +
+        (((CAST(l.valor AS NUMERIC(14, 2)) -
+           (CAST(l.valor AS NUMERIC(14, 2)) * CAST((l.despr/100) AS NUMERIC(14,4)))) *
+          CAST(l.quant AS NUMERIC(14, 2))) *
+         (CAST(l.alipi_ent AS NUMERIC(14, 2)) / 100))
+       )"""
+
+QUERY_ENTRADAS = f"""
     SELECT CAST(
         SUM(
-            ((CAST(l.valor AS NUMERIC(14, 4)) - 
-              (CAST(l.valor AS NUMERIC(14, 4)) * CAST((l.despr/100) AS NUMERIC(14,4)))) * 
-              CAST(l.quant AS NUMERIC(14, 2))) +
-            (l.valsub) + 
-            (((CAST(l.valor AS NUMERIC(14, 2)) - 
-               (CAST(l.valor AS NUMERIC(14, 2)) * CAST((l.despr/100) AS NUMERIC(14,4)))) * 
-               CAST(l.quant AS NUMERIC(14, 2))) * 
-             (CAST(l.alipi_ent AS NUMERIC(14, 2)) / 100))
+            {EXPR_VALOR_ENTRADA}
         ) AS NUMERIC(14,2)
     ) AS valor
     FROM in01lan l
@@ -59,7 +63,7 @@ QUERY_ENTRADAS = """
            AND c.cdfrn = l.cdfrn
            AND c.modelonota = l.modelonota
     WHERE l.venda = 'C'
-    AND l.cfop NOT IN ({placeholders})
+    AND l.cfop NOT IN ({{placeholders}})
     AND c.dtcom BETWEEN ? AND ?
     AND CHARACTER_LENGTH(l.cfop) = 5
 """

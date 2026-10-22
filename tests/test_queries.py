@@ -59,3 +59,13 @@ def test_comando_queries_mantem_contrato_publico():
     nomes = _nomes_de_queries(Comando_Queries)
     assert nomes == COMANDOS_ESPERADOS
     assert all(getattr(Comando_Queries, nome).strip() for nome in nomes)
+
+
+def test_queries_de_entradas_compartilham_a_mesma_expressao():
+    from Dashboard.Dashboard_Func import (QUERY_ENTRADAS_MES_ANO_AGRUPADO,
+                                          QUERY_ENTRADAS_ANO_AGRUPADO)
+
+    expressao = Consulta_Queries.EXPR_VALOR_ENTRADA
+    assert expressao in Consulta_Queries.QUERY_ENTRADAS
+    assert expressao in QUERY_ENTRADAS_MES_ANO_AGRUPADO
+    assert expressao in QUERY_ENTRADAS_ANO_AGRUPADO

@@ -161,12 +161,9 @@ cython_debug/
 .vscode/launch.json
 Teste.py
 config.ini
-config.ini
 *.ini
 *.exe
 *.env
-config.ini
-*.ini
 /logs
 /ignore
 /scripts
