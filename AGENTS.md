@@ -64,10 +64,27 @@ tests/             Testes unitários (pytest)
 
 - Os testes atualmente cobrem funções **puras**, sem interface (formatação de valores,
   validação de entrada). Evite que testes importem telas que dependem de display.
+  **Exceção (22/10/2026):** o gráfico do Dashboard é testado por **render Agg**
+  (`matplotlib.use('Agg')` + `Figure` + `FigureCanvasAgg` em `tests/test_dashboard_charts.py`)
+  — mede caixas de texto, corte nas bordas e sobreposição **sem** abrir display.
+  Para isso, o desenho das séries foi extraído para `_desenhar_series()`
+  (`Dashboard/Dashboard_Charts.py`), que **não** depende de Tk.
+  Atenção: **decisão do usuário (22/10/2026): as vendas vão para CIMA, com valor
+  positivo** — o desenho usa os valores como chegam (sem negação). A fonte dos
+  rótulos de valor é adaptada à densidade (`_fonte_rotulos_valor`): com as três
+  séries no mesmo hemisfério, rótulos de meses vizinhos podem se encostar.
+- **Regras de negócio do "universo de classificação" (decididas pelo usuário em 22/10/2026 —
+  Item 9.7):** `in01pro.classificacao_produto` define quais produtos contam como estoque.
+  (a) `QUERY_INVENTARIO` e `QUERY_DISTORCAO_SALDO` devem usar o **mesmo** universo;
+  (b) `'07'` = **produto de uso e consumo** → **fora** de qualquer cálculo de inventário
+  (e também `'08'`/`'10'`/`'99'`); (c) as queries de **entradas** devem excluir compras
+  canceladas (`l.cance='S'`), como a distorção já faz. A aplicação ainda está **pendente**
+  (diff pronto em `AGENTS_SESSAO.md` Item 9.7).
 - `Config.ini` e `docs/Plano_Refatoracao_Inventario_Tools_v2.md` estão no `.gitignore`
   (config não deve ser versionado para não expor credenciais).
-  **Atualização (22/10/2026):** o `config.ini` foi **desrastreado** pelo usuário
-  (`git rm --cached config.ini` — arquivo mantido localmente, agora respeitando o `.gitignore`).
+  **Atualização (22/10/2026):** o `config.ini` foi **desrastreado e commitado** pelo usuário
+  (`git rm --cached config.ini` + commit `a503daa` — arquivo mantido localmente, agora
+  respeitando o `.gitignore`).
   **Continua pendente a rotação da senha do banco**, pois as credenciais antigas seguem no
   histórico do repositório. Ver `AGENTS_SESSAO.md` Item 6.10.
 - Não commitar credenciais reais em nenhum arquivo.

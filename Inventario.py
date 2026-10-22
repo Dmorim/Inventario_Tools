@@ -51,7 +51,9 @@ if __name__ == '__main__':
         raise
     finally:
         if BancoDeDados.retorna_gerenciador():
-            deletar_views()
-            gerenciador = BancoDeDados.gerenciador()
-            gerenciador.fechar()
+            try:
+                deletar_views()
+            except Exception:
+                logger.exception('Erro ao remover as views auxiliares.')
+            BancoDeDados.fechar()
         logger.info('Aplicação encerrada.')

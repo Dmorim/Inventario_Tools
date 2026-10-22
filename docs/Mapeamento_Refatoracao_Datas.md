@@ -1,5 +1,10 @@
 ﻿# Mapeamento e Status - Refatoração de Datas (Plano v2)
 
+> **⚠️ Documento-snapshot de 19/10/2026.** A refatoração de datas foi **CONCLUÍDA** em
+> 19/10/2026 (E1a–E8). As colunas "Pendente"/"Parcial" da Seção 3 descrevem o **estado no
+> momento da análise** — o status **vigente** está em `docs/Status_Refatoracao.md`
+> (Fases 0–8, todas ✅). Ver `AGENTS_SESSAO.md` Item 5.
+
 **Branch:** refatoracao_v3.5  
 **Data da análise:** 2026-10-19 01:13:28  
 **Roadmap base:** docs/Plano_Refatoracao_Inventario_Tools_v2.md  

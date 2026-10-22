@@ -10,9 +10,11 @@ logger = get_logger(__name__)
 
 COR_BG = ('#f0f2f5', "#171E25")
 COR_CARD = ('#ffffff', "#2A2C3D")
-COR_TEXTO = ("#212d38", "#5fabe9")
+COR_TEXTO = ("#001425", "#9abbd6")
 COR_SUBTEXTO = ('#7f8c8d', "#b7e2e6")
-COR_DESTAQUE = '#3498db'
+COR_ENTRADAS = ("#1a90f8", "#11efef")
+COR_VENDAS = ("#5CA67B", "#2ecc71")
+COR_PREVISAO = '#e67e22'
 COR_KPI = ("#DADEE2", "#3E3F3F")
 COR_KPI_LABEL = ("#17191A", "#e1e6ec")
 OPCOES_TIPO_GRAFICO = ['Barras', 'Linhas']
@@ -43,15 +45,15 @@ def _atualizar_dashboard(screen, kpis, cards_frame):
         widget.destroy()
 
     _criar_kpi_card(cards_frame, 'Valor do Inventario',
-                    kpis['valor_inventario'], COR_DESTAQUE, 'R$ ')
+                    kpis['valor_inventario'], COR_TEXTO, 'R$ ')
     _criar_kpi_card(cards_frame, 'Total de Vendas',
-                    kpis['valor_vendas'], COR_TEXTO, 'R$ ')
+                    kpis['valor_vendas'], COR_VENDAS, 'R$ ')
     _criar_kpi_card(cards_frame, 'Total de Entradas',
-                    kpis['valor_entradas'], COR_TEXTO, 'R$ ')
+                    kpis['valor_entradas'], COR_ENTRADAS, 'R$ ')
     _criar_kpi_card(cards_frame, 'Vendas 1.3',
                     kpis['vendas_130'], COR_TEXTO, 'R$ ')
     _criar_kpi_card(cards_frame, 'Previsão de Inventario',
-                    kpis['previa_inventario'], COR_TEXTO, 'R$ ')
+                    kpis['previa_inventario'], COR_PREVISAO, 'R$ ')
 
     screen.update_idletasks()
     screen.geometry(f'{screen.winfo_width()}x{screen.winfo_height()}')

@@ -358,11 +358,13 @@ Retorna: (NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE)
 """
 
 QUERY_EMISSOES_MAXIMA = """
-    SELECT MAX(DTEMI) 
+    SELECT DTEMI 
     FROM V_FAT_VALOR_SAIDA
     WHERE VENDA IN ('V', 'A', 'W', 'D')
     AND EMITE = 'S'
     AND CANCE <> 'S'
+    ORDER BY DTEMI DESC
+    ROWS 1
 """
 """
 Busca a data máxima de emissão (último movimento).

@@ -13,6 +13,7 @@ COR_SERIES_DIFERENCA = '#e74c3c'
 
 MAX_ROTULOS_EIXO_X = 16
 MAX_PONTOS_COM_VALORES = 12
+MARGEM_Y_ROTULOS = 0.12
 
 CORES_POR_TEMA = {
     'Light': {
@@ -89,13 +90,65 @@ def _rotulos_eixo_x(labels, maximo=MAX_ROTULOS_EIXO_X):
     return visiveis
 
 
-def _anotar_barras(ax, container, valores, cor, fundo):
+def _anotar_barras(ax, container, valores, cor, fundo, fontsize=8):
     ax.bar_label(container,
                  labels=[_valor_compacto(valor, com_simbolo=False)
                          for valor in valores],
-                 fontsize=6, padding=2, color=cor,
+                 fontsize=fontsize, padding=2, color=cor,
                  bbox=dict(facecolor=fundo, edgecolor='none',
                            alpha=0.85, pad=1.2))
+
+
+def _fonte_rotulos_valor(ax, total_pontos):
+    """Fonte dos rotulos de valor, adaptada a densidade do grafico.
+
+    Com as vendas para cima (decisao do usuario) as tres series ficam no
+    mesmo hemisferio e os rotulos de meses vizinhos podem se encostar. A
+    fonte encolhe conforme o grafico fica denso, para que o rotulo caiba na
+    vaga disponivel entre dois pontos.
+    """
+    if total_pontos <= 8:
+        return 8
+    figura = ax.get_figure()
+    largura_px = figura.get_size_inches()[0] * figura.dpi
+    vao_px = (largura_px * 0.85) / total_pontos
+    # ~5,25 px de largura por unidade de fonte ("R$ 952 mil" mede ~42 px em 8)
+    fonte = int((vao_px * 0.75 - 2) / 5.25)
+    return max(6, min(8, fonte))
+
+
+def _desenhar_series(ax, labels, entradas, vendas, diffs, tipo, cores):
+    xs = list(range(len(labels)))
+    # Vendas, entradas e diferenca vao todas para cima (decisao do usuario
+    # em 22/10/2026): os valores sao desenhados como chegam.
+
+    if tipo == 'Linhas':
+        ax.plot(xs, entradas, marker='s', label='Entradas',
+                color=COR_SERIES_ENTRADAS, linewidth=2)
+        ax.plot(xs, vendas, marker='o', label='Vendas',
+                color=COR_SERIES_VENDAS, linewidth=2)
+        ax.plot(xs, diffs, marker='^', label='Diferenca',
+                color=COR_SERIES_DIFERENCA, linewidth=2)
+        return
+
+    largura = 0.25
+    barra_entradas = ax.bar([x - largura for x in xs], entradas, largura,
+                            label='Entradas', color=COR_SERIES_ENTRADAS)
+    barra_vendas = ax.bar(xs, vendas, largura,
+                          label='Vendas', color=COR_SERIES_VENDAS)
+    barra_diferenca = ax.bar([x + largura for x in xs], diffs, largura,
+                             label='Diferenca', color=COR_SERIES_DIFERENCA)
+    if len(labels) <= MAX_PONTOS_COM_VALORES:
+        # Margem extra no eixo Y: os rotulos de valor ficam acima/abaixo das
+        # barras e, sem folga, sao cortados nas bordas do grafico.
+        ax.margins(y=MARGEM_Y_ROTULOS)
+        fonte = _fonte_rotulos_valor(ax, len(labels))
+        _anotar_barras(ax, barra_entradas, entradas, cores['texto'],
+                       cores['figura'], fonte)
+        _anotar_barras(ax, barra_vendas, vendas, cores['texto'],
+                       cores['figura'], fonte)
+        _anotar_barras(ax, barra_diferenca, diffs, cores['texto'],
+                       cores['figura'], fonte)
 
 
 def criar_grafico_tendencia(master, dados, tipo='Barras'):
@@ -119,34 +172,11 @@ def criar_grafico_tendencia(master, dados, tipo='Barras'):
     ax = fig.add_subplot(111)
     ax.set_facecolor(cores['figura'])
 
-    vendas_negativo = [-v for v in vendas]
-
-    if tipo == 'Linhas':
-        ax.plot(xs, entradas, marker='s', label='Entradas',
-                color=COR_SERIES_ENTRADAS, linewidth=2)
-        ax.plot(xs, vendas_negativo, marker='o', label='Vendas',
-                color=COR_SERIES_VENDAS, linewidth=2)
-        ax.plot(xs, diffs, marker='^', label='Diferenca',
-                color=COR_SERIES_DIFERENCA, linewidth=2)
-    else:
-        largura = 0.25
-        barra_entradas = ax.bar([x - largura for x in xs], entradas, largura,
-                                 label='Entradas', color=COR_SERIES_ENTRADAS)
-        barra_vendas = ax.bar(xs, vendas_negativo, largura,
-                               label='Vendas', color=COR_SERIES_VENDAS)
-        barra_diferenca = ax.bar([x + largura for x in xs], diffs, largura,
-                                 label='Diferenca', color=COR_SERIES_DIFERENCA)
-        if len(labels) <= MAX_PONTOS_COM_VALORES:
-            _anotar_barras(ax, barra_entradas, entradas, cores['texto'],
-                           cores['figura'])
-            _anotar_barras(ax, barra_vendas, vendas_negativo, cores['texto'],
-                           cores['figura'])
-            _anotar_barras(ax, barra_diferenca, diffs, cores['texto'],
-                           cores['figura'])
+    _desenhar_series(ax, labels, entradas, vendas, diffs, tipo, cores)
 
     ax.set_xticks(xs)
-    ax.set_xticklabels(_rotulos_eixo_x(labels), fontsize=7, rotation=45,
-                       ha='right')
+    ax.set_xticklabels(_rotulos_eixo_x(labels), fontsize=9, rotation=0,
+                       ha='center')
     ax.axhline(0, color=cores['grade'], linewidth=0.8)
     ax.grid(axis='y', linestyle='--', alpha=0.4, color=cores['grade'])
     ax.set_axisbelow(True)

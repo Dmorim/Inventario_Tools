@@ -33,20 +33,28 @@ def criar_views():
 
 
 def _deletar_views_na_conexao(conexao):
-    """Remove todas as views usando a mesma conexão e transação controlada."""
+    """Remove todas as views usando a mesma conexão e transação controlada.
+
+    A falha em uma view não impede a remoção das demais; a primeira
+    exceção é relançada ao final para o chamador decidir o que fazer.
+    """
     conexao.rollback()
-    try:
-        for nome, _ in DROP_VIEW_DDL_ORDER:
-            cursor = conexao.cursor()
-            try:
-                cursor.execute(f"DROP VIEW {nome}")
-            finally:
-                cursor.close()
+    primeira_falha = None
+    for nome, _ in DROP_VIEW_DDL_ORDER:
+        cursor = conexao.cursor()
+        try:
+            cursor.execute(f"DROP VIEW {nome}")
             conexao.commit()
             logger.info('View %s removida com sucesso.', nome)
-    except Exception:
-        conexao.rollback()
-        raise
+        except Exception as erro:
+            conexao.rollback()
+            logger.exception('Não foi possível remover a view %s.', nome)
+            if primeira_falha is None:
+                primeira_falha = erro
+        finally:
+            cursor.close()
+    if primeira_falha is not None:
+        raise primeira_falha
 
 
 def deletar_views():
