@@ -1,9 +1,12 @@
 from customtkinter import CTkLabel
 from customtkinter import get_appearance_mode
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 import matplotlib
+import matplotlib.patheffects as path_effects
+import numpy as np
+from scipy.interpolate import make_interp_spline
 matplotlib.use('Agg')
 
 
@@ -14,6 +17,16 @@ COR_SERIES_DIFERENCA = '#e74c3c'
 MAX_ROTULOS_EIXO_X = 16
 MAX_PONTOS_COM_VALORES = 12
 MARGEM_Y_ROTULOS = 0.12
+ROTACAO_ROTULOS_BARRAS = 90
+MAX_AJUSTES_FOLGA_VERTICAL = 8
+FOLGA_MINIMA_PX = 0.5
+FONTE_ROTULOS_LINHA = 8
+TOLERANCIA_COLISAO_PX = 1.0
+CANDIDATOS_ROTULO_LINHA = (
+    (0, 7, 'bottom'), (0, -7, 'top'),
+    (0, 18, 'bottom'), (0, -18, 'top'),
+    (0, 28, 'bottom'), (0, -28, 'top'),
+)
 
 CORES_POR_TEMA = {
     'Light': {
@@ -95,8 +108,19 @@ def _anotar_barras(ax, container, valores, cor, fundo, fontsize=8):
                  labels=[_valor_compacto(valor, com_simbolo=False)
                          for valor in valores],
                  fontsize=fontsize, padding=2, color=cor,
-                 bbox=dict(facecolor=fundo, edgecolor='none',
-                           alpha=0.85, pad=1.2))
+                 rotation=ROTACAO_ROTULOS_BARRAS,
+                 path_effects=[path_effects.withStroke(linewidth=2.5,
+                                                       foreground=fundo)])
+
+
+def _curva_suave(xs, valores, pontos=200):
+    if len(xs) <= 2:
+        return xs, list(valores)
+    xs_arr = np.asarray(xs, dtype=float)
+    ys_arr = np.asarray(valores, dtype=float)
+    x_novo = np.linspace(xs_arr.min(), xs_arr.max(), pontos)
+    spline = make_interp_spline(xs_arr, ys_arr, k=min(3, len(xs_arr) - 1))
+    return x_novo, spline(x_novo)
 
 
 def _fonte_rotulos_valor(ax, total_pontos):
@@ -117,18 +141,111 @@ def _fonte_rotulos_valor(ax, total_pontos):
     return max(6, min(8, fonte))
 
 
+def _colide_caixas(caixa_a, caixa_b, tolerancia=TOLERANCIA_COLISAO_PX):
+    sobreposicao_x = min(caixa_a.x1, caixa_b.x1) - max(caixa_a.x0,
+                                                       caixa_b.x0)
+    sobreposicao_y = min(caixa_a.y1, caixa_b.y1) - max(caixa_a.y0,
+                                                       caixa_b.y0)
+    return (sobreposicao_x > tolerancia
+            and sobreposicao_y > tolerancia)
+
+
+def _anotar_ponto(ax, texto, x, valor, deslocamento, cor, fundo, fontsize):
+    deslocamento_x, deslocamento_y, alinhamento = deslocamento
+    return ax.annotate(
+        texto, (x, valor), xytext=(deslocamento_x, deslocamento_y),
+        textcoords='offset points', ha='center', va=alinhamento,
+        fontsize=fontsize, color=cor,
+        path_effects=[path_effects.withStroke(linewidth=2.5,
+                                              foreground=fundo)])
+
+
+def _anotar_linhas(ax, xs, series, cor, fundo, fontsize=8, renderer=None):
+    """Rotulos de valor das linhas, sem colisao e dentro da area do grafico."""
+    figura = ax.get_figure()
+    if renderer is None:
+        figura.canvas.draw()
+        renderer = figura.canvas.get_renderer()
+    area = ax.get_window_extent(renderer)
+    caixas = []
+    for valores in series:
+        for x, valor in zip(xs, valores):
+            texto = _valor_compacto(valor, com_simbolo=False)
+            for deslocamento in CANDIDATOS_ROTULO_LINHA:
+                anotacao = _anotar_ponto(
+                    ax, texto, x, valor, deslocamento, cor, fundo, fontsize)
+                caixa = anotacao.get_window_extent(renderer)
+                dentro = (caixa.x0 >= area.x0 and caixa.x1 <= area.x1
+                          and caixa.y0 >= area.y0 and caixa.y1 <= area.y1)
+                if dentro and not any(_colide_caixas(caixa, outra)
+                                      for outra in caixas):
+                    caixas.append(caixa)
+                    break
+                anotacao.remove()
+            else:
+                anotacao = _anotar_ponto(
+                    ax, texto, x, valor, CANDIDATOS_ROTULO_LINHA[0],
+                    cor, fundo, fontsize)
+                caixas.append(anotacao.get_window_extent(renderer))
+
+
+def _expandir_folga_vertical(ax, renderer):
+    """Abre o eixo Y o suficiente para nenhum rotulo ser cortado.
+
+    Devolve True se o limite foi alterado (o chamador precisa redesenhar e
+    medir de novo).
+    """
+    caixas = [texto.get_window_extent(renderer) for texto in ax.texts]
+    if not caixas:
+        return False
+    area = ax.get_window_extent(renderer)
+    acima = max(caixa.y1 for caixa in caixas) - area.y1
+    abaixo = area.y0 - min(caixa.y0 for caixa in caixas)
+    if acima <= FOLGA_MINIMA_PX and abaixo <= FOLGA_MINIMA_PX:
+        return False
+    inferior, superior = ax.get_ylim()
+    faixa = superior - inferior
+    ax.set_ylim(
+        inferior - max(0.0, abaixo) / area.height * faixa,
+        superior + max(0.0, acima) / area.height * faixa)
+    return True
+
+
+def _configurar_legenda(ax, cores):
+    legenda = ax.legend(fontsize=9, loc='lower center',
+                        bbox_to_anchor=(0.5, 1.01), ncol=3, framealpha=1,
+                        borderpad=0.4, handletextpad=0.6, columnspacing=1.2)
+    moldura = legenda.get_frame()
+    moldura.set_facecolor(cores['figura'])
+    moldura.set_edgecolor(cores['grade'])
+    moldura.set_linewidth(0.8)
+    for texto in legenda.get_texts():
+        texto.set_color(cores['texto'])
+    return legenda
+
+
 def _desenhar_series(ax, labels, entradas, vendas, diffs, tipo, cores):
     xs = list(range(len(labels)))
     # Vendas, entradas e diferenca vao todas para cima (decisao do usuario
     # em 22/10/2026): os valores sao desenhados como chegam.
 
     if tipo == 'Linhas':
-        ax.plot(xs, entradas, marker='s', label='Entradas',
-                color=COR_SERIES_ENTRADAS, linewidth=2)
-        ax.plot(xs, vendas, marker='o', label='Vendas',
-                color=COR_SERIES_VENDAS, linewidth=2)
-        ax.plot(xs, diffs, marker='^', label='Diferenca',
-                color=COR_SERIES_DIFERENCA, linewidth=2)
+        for serie, cor in ((entradas, COR_SERIES_ENTRADAS),
+                           (vendas, COR_SERIES_VENDAS),
+                           (diffs, COR_SERIES_DIFERENCA)):
+            xs_s, ys_s = _curva_suave(xs, serie)
+            ax.plot(xs_s, ys_s, color=cor, linewidth=2, solid_capstyle='round',
+                    solid_joinstyle='round')
+        for serie, marcador, cor, rotulo in ((entradas, 's', COR_SERIES_ENTRADAS,
+                                               'Entradas'),
+                                              (vendas, 'o', COR_SERIES_VENDAS,
+                                               'Vendas'),
+                                              (diffs, '^', COR_SERIES_DIFERENCA,
+                                               'Diferenca')):
+            ax.plot(xs, serie, marker=marcador, linestyle='none', color=cor,
+                    markersize=5, label=rotulo)
+        if len(labels) <= MAX_PONTOS_COM_VALORES:
+            ax.margins(y=MARGEM_Y_ROTULOS)
         return
 
     largura = 0.25
@@ -149,6 +266,111 @@ def _desenhar_series(ax, labels, entradas, vendas, diffs, tipo, cores):
                        cores['figura'], fonte)
         _anotar_barras(ax, barra_diferenca, diffs, cores['texto'],
                        cores['figura'], fonte)
+
+
+def adicionar_tooltip(grafico_frame):
+    """Tooltip ao passar o mouse sobre barras/pontos do gráfico."""
+    try:
+        canvas = None
+        figura = None
+        for widget in grafico_frame.winfo_children():
+            if hasattr(widget, 'figure'):
+                canvas = widget
+                figura = widget.figure
+                break
+        if canvas is None or figura is None:
+            return
+        ax = figura.axes[0] if figura.axes else None
+        if ax is None:
+            return
+
+        tooltip = None
+        def _criar_tooltip():
+            nonlocal tooltip
+            if tooltip is not None:
+                try:
+                    tooltip.destroy()
+                except Exception:
+                    pass
+            tooltip = CTkLabel(grafico_frame, text='', font=('', 9),
+                               text_color='#ffffff', fg_color='#1f1f1f',
+                               corner_radius=4)
+            tooltip.place(x=0, y=0)
+            tooltip.lower()
+
+        _criar_tooltip()
+
+        def _formatar(valor):
+            return _valor_compacto(valor, com_simbolo=True)
+
+        def _on_move(event):
+            if event.inaxes != ax or event.xdata is None or event.ydata is None:
+                if tooltip is not None:
+                    try:
+                        tooltip.place_forget()
+                    except Exception:
+                        pass
+                return
+            melhor = None
+            melhor_dist = None
+            for cont in ax.containers:
+                try:
+                    for barra in cont.patches:
+                        bbox = barra.get_bbox()
+                        if bbox.xmin <= event.xdata <= bbox.xmax and event.ydata >= 0:
+                            dist = abs(event.xdata - bbox.xmid)
+                            if melhor_dist is None or dist < melhor_dist:
+                                melhor_dist = dist
+                                melhor = ('bar', barra.get_height())
+                except Exception:
+                    continue
+            for linha in ax.lines:
+                try:
+                    dados_x = linha.get_xdata()
+                    dados_y = linha.get_ydata()
+                    if len(dados_x) == 0:
+                        continue
+                    idx = np.argmin(np.abs(np.array(dados_x) - event.xdata))
+                    if idx < len(dados_y):
+                        px = ax.transData.transform((dados_x[idx], dados_y[idx]))
+                        py = ax.transData.transform((event.xdata, event.ydata))
+                        dist = np.hypot(px[0] - event.xdata * ax.figure.dpi /
+                                        ax.figure.dpi, 0)
+                    dist = abs(float(dados_x[idx]) - float(event.xdata))
+                    if melhor_dist is None or dist < melhor_dist:
+                        melhor_dist = dist
+                        melhor = ('line', float(dados_y[idx]), int(idx))
+                except Exception:
+                    continue
+            if melhor is None or melhor_dist is None or melhor_dist > 0.4:
+                if tooltip is not None:
+                    try:
+                        tooltip.place_forget()
+                    except Exception:
+                        pass
+                return
+            if melhor[0] == 'bar':
+                texto = _formatar(melhor[1])
+            else:
+                texto = _formatar(melhor[1])
+            try:
+                tooltip.configure(text=texto)
+                tooltip.place(x=event.guiEvent.x + 12, y=event.guiEvent.y - 12)
+                tooltip.lift()
+            except Exception:
+                pass
+
+        def _on_leave(event):
+            if tooltip is not None:
+                try:
+                    tooltip.place_forget()
+                except Exception:
+                    pass
+
+        canvas.mpl_connect('motion_notify_event', _on_move)
+        canvas.mpl_connect('axes_leave_event', _on_leave)
+    except Exception:
+        pass
 
 
 def criar_grafico_tendencia(master, dados, tipo='Barras'):
@@ -180,16 +402,9 @@ def criar_grafico_tendencia(master, dados, tipo='Barras'):
     ax.axhline(0, color=cores['grade'], linewidth=0.8)
     ax.grid(axis='y', linestyle='--', alpha=0.4, color=cores['grade'])
     ax.set_axisbelow(True)
-    legenda = ax.legend(fontsize=9, loc='best', framealpha=1,
-                        borderpad=0.5, handletextpad=0.8, labelspacing=0.4)
-    moldura = legenda.get_frame()
-    moldura.set_facecolor(cores['figura'])
-    moldura.set_edgecolor(cores['grade'])
-    moldura.set_linewidth(0.8)
-    for texto in legenda.get_texts():
-        texto.set_color(cores['texto'])
+    _configurar_legenda(ax, cores)
     ax.set_title('Entradas x Vendas x Diferenca', fontsize=10,
-                 fontweight='bold', color=cores['texto'])
+                 fontweight='bold', color=cores['texto'], pad=32)
     ax.tick_params(colors=cores['texto'], labelsize=7)
     ax.yaxis.set_major_formatter(
         FuncFormatter(lambda valor, _posicao: _valor_compacto(valor)))
@@ -200,5 +415,27 @@ def criar_grafico_tendencia(master, dados, tipo='Barras'):
 
     canvas = FigureCanvasTkAgg(fig, master=master)
     canvas.draw()
+    if tipo == 'Linhas' and len(labels) <= MAX_PONTOS_COM_VALORES:
+        _anotar_linhas(ax, xs, (entradas, vendas, diffs), cores['texto'],
+                       cores['figura'], FONTE_ROTULOS_LINHA,
+                       canvas.get_renderer())
+        canvas.draw()
+    elif tipo != 'Linhas' and len(labels) <= MAX_PONTOS_COM_VALORES:
+        # Rotulos verticais sao mais altos que largos: abre o eixo Y medindo
+        # as caixas ja renderizadas para nao cortar nenhum valor.
+        for _ in range(MAX_AJUSTES_FOLGA_VERTICAL):
+            if not _expandir_folga_vertical(ax, canvas.get_renderer()):
+                break
+            canvas.draw()
     canvas.get_tk_widget().pack(fill='both', expand=True)
+    try:
+        toolbar = NavigationToolbar2Tk(canvas, master)
+        toolbar.update()
+        toolbar.pack(side='bottom', fill='x')
+    except Exception:
+        pass
+    try:
+        adicionar_tooltip(master)
+    except Exception:
+        pass
     return canvas

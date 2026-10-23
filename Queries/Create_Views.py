@@ -24,10 +24,10 @@ DROP_VIEW_DDL_ORDER = list(VIEW_DDL_ORDER[::-1])
 
 def criar_views():
     """Cria ou atualiza as views auxiliares no banco, na ordem de dependência."""
+    logger.info('Criando/atualizando views auxiliares.')
     for nome, ddl in VIEW_DDL_ORDER:
         try:
             query_executor(query_updater, ddl)
-            logger.info('View %s criada/atualizada com sucesso.', nome)
         except Exception:
             logger.exception('Erro ao criar a view %s.', nome)
 
@@ -39,13 +39,13 @@ def _deletar_views_na_conexao(conexao):
     exceção é relançada ao final para o chamador decidir o que fazer.
     """
     conexao.rollback()
+    logger.info('Removendo views auxiliares na conexão.')
     primeira_falha = None
     for nome, _ in DROP_VIEW_DDL_ORDER:
         cursor = conexao.cursor()
         try:
             cursor.execute(f"DROP VIEW {nome}")
             conexao.commit()
-            logger.info('View %s removida com sucesso.', nome)
         except Exception as erro:
             conexao.rollback()
             logger.exception('Não foi possível remover a view %s.', nome)

@@ -19,6 +19,8 @@ def ent_get(periodo):
     nome_query = _nome_query(query)
 
     params = (*cfop_list, periodo.inicio_formatado, periodo.fim_formatado)
+    logger.info('Consultando valor de entradas. query=%s | params=%s',
+                nome_query, params)
     # Tenta executar a query no banco de dados
     try:
         rows = query_executor(query_selector, query, params)
@@ -31,7 +33,6 @@ def ent_get(periodo):
     # Se o valor obtido for diferente de None, formata o valor e retorna ele, caso contrário retorna uma string informando que não foi registrado entradas
     if valent is not None:
         valent = banco_codigo_valueform(valent)
-        logger.info('Valor de entradas obtido e formatado. query=%s | valor=%s', nome_query, valent)
     else:
         valent = 'Não foi registrado entradas'
         logger.warning(

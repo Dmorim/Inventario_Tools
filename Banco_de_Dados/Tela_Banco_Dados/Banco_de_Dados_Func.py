@@ -114,7 +114,8 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
             return criar_views()
 
         def _apos_criar_views(_):
-            logger.info('Views auxiliares criadas/atualizadas com sucesso.')
+            logger.info(
+                'Disparando consultas após criar as views auxiliares.')
             _disparar_queries()
 
         def _falha_criar_views(erro):

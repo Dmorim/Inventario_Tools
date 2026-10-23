@@ -35,11 +35,12 @@ class BancoDeDados:
     @classmethod
     def conectar(cls):
         """Cria o pool uma única vez. Chamadas seguintes reaproveitam."""
+        logger.info(
+            'Conectando ao banco de dados e preparando o pool de conexões.')
         if cls._gerenciador is not None:
             return cls._gerenciador
 
         cls._gerenciador = GerenciadorThreadBD(cls._criar_conexao)
-        logger.info('Pool de conexões do banco criado com sucesso.')
         return cls._gerenciador
 
     @staticmethod

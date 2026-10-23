@@ -73,6 +73,13 @@ tests/             Testes unitários (pytest)
   positivo** — o desenho usa os valores como chegam (sem negação). A fonte dos
   rótulos de valor é adaptada à densidade (`_fonte_rotulos_valor`): com as três
   séries no mesmo hemisfério, rótulos de meses vizinhos podem se encostar.
+- **Robustez de ciclo de vida (commit `02afd20`, 23/10/2026):** `thread_execução`
+  (`Thread_Manager/Thread_Executor.py`) tem flag de cancelamento e revalida o widget dentro do
+  callback agendado; `GerenciadorThreadBD` recusa operações com `_fechando` ativo; o Dashboard
+  protege abertura/fechamento (`_aplicar_grab_seguro`, `_fechar_dashboard_seguro`) e nunca deixa
+  o botão travado. Coberto desde 23/10/2026 por `tests/test_thread_executor.py` (10 casos, com
+  fake de Tk — sem display) e +7 casos em `tests/test_gerenciador_thread_bd.py`. Ao mexer nesses
+  caminhos, rode `pytest tests/test_thread_executor.py tests/test_gerenciador_thread_bd.py`.
 - **Regras de negócio do "universo de classificação" (decididas pelo usuário em 22/10/2026 —
   Item 9.7):** `in01pro.classificacao_produto` define quais produtos contam como estoque.
   (a) `QUERY_INVENTARIO` e `QUERY_DISTORCAO_SALDO` devem usar o **mesmo** universo;

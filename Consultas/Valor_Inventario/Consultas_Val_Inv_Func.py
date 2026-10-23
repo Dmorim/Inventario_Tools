@@ -12,6 +12,7 @@ def inv_get():
     # Função que executa a query de valor de inventário e retorna o valor obtido
     query = QUERY_INVENTARIO
     nome_query = _nome_query(query)
+    logger.info('Consultando valor de inventário. query=%s', nome_query)
     try:
         rows = query_executor(query_selector, query)
         val = rows[0][0] if rows else None
@@ -23,8 +24,6 @@ def inv_get():
 
     if val is not None:
         val = banco_codigo_valueform(val)  # Formata o valor obtido
-        logger.info(
-            'Valor de inventário obtido e formatado. query=%s | valor=%s', nome_query, val)
     else:
         # Se o valor for None, retorna uma string informando que não foi registrado valor de inventário
         val = 'Não foi registrado valor de inventário'

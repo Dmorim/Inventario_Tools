@@ -61,7 +61,7 @@ def dist_saldo_screen(Consulta_Screen, consulta_button, container_manager: Conta
     progress_bar.atualizar_status("Consultando distorções de saldo...")
 
     def on_query_complete(_):
-        logger.info("Consulta de distorção de saldo concluída com sucesso.")
+        logger.info("Finalizando consulta de distorção de saldo.")
         progress_bar.finalizar()
         val_ven_text.configure(
             text=str(distorcao_manager.obter_distorcao().tamanho)

@@ -52,6 +52,8 @@ def thread_execução(master, func, callback, on_erro=None, *args, **kwargs):
 
     def thread_target(*args, **kwargs):
         try:
+            logger.debug('Executando thread %s.',
+                         getattr(func, '__name__', repr(func)))
             if cancelado['flag']:
                 return
             if master is not None:
@@ -64,8 +66,6 @@ def thread_execução(master, func, callback, on_erro=None, *args, **kwargs):
             if cancelado['flag']:
                 return
             fila.put((True, result))
-            logger.debug('Thread %s concluída com sucesso.',
-                         getattr(func, '__name__', repr(func)))
         except Exception as exc:
             if cancelado['flag']:
                 return

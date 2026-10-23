@@ -87,13 +87,13 @@ class Funcoes_Comandos:
 
     def on_click_confirm(self, comando, checkbox_List, values_List, confirm_button, status_label):
         def update_finalizado(_):
+            logger.info('Finalizando execução dos comandos.')
             atualizar_ui_main(comando, progress_bar.finalizar)
             status_label.configure(
                 text=f'{total} comando(s) executado(s) com sucesso.')
             messagebox.showinfo(
                 'Aviso', 'Comandos executados com sucesso', parent=comando)
             comando.destroy()
-            logger.info('Comandos finalizados.')
 
         def update_erro(erro):
             logger.error(f'Erro ao executar os comandos: {erro}')

@@ -27,12 +27,11 @@ def _nome_query(query):
 
 def query_selector(conexao, query, params=None):
     nome_query = _nome_query(query)
+    logger.debug('Executando SELECT: %s | params=%s', nome_query, params)
     try:
         cursor = conexao.cursor()
         cursor.execute(query, params)
         resultado = cursor.fetchall()
-        logger.debug(
-            'SELECT concluído com sucesso. query=%s | linhas=%s', nome_query, len(resultado))
         return resultado
     except DatabaseError as e:
         logger.exception('Erro no SELECT: %s | params=%s', nome_query, params)
@@ -45,11 +44,11 @@ def query_selector(conexao, query, params=None):
 
 def query_updater(conexao, query, params=None):
     nome_query = _nome_query(query)
+    logger.debug('Executando operação SQL: %s | params=%s', nome_query, params)
     try:
         cursor = conexao.cursor()
         cursor.execute(query, params)
         conexao.commit()
-        logger.debug('Operação de banco confirmada com sucesso: %s', nome_query)
         return
     except DatabaseError as e:
         conexao.rollback()

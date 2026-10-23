@@ -1,11 +1,14 @@
 import customtkinter as ctk
 from tkinter import TclError, messagebox
+import datetime
+import json
+import os
 
 from Outros.Logger.Get_Logger import get_logger
 from Outros.Periodo_Inventario import periodo_tendencia_ultimos_5_anos
 from Thread_Manager.Thread_Executor import thread_execução
 from Dashboard.Dashboard_Func import carregar_kpis, carregar_dados_tendencia
-from Dashboard.Dashboard_Charts import criar_grafico_tendencia
+from Dashboard.Dashboard_Charts import criar_grafico_tendencia, adicionar_tooltip
 
 logger = get_logger(__name__)
 
@@ -20,14 +23,52 @@ COR_KPI = ("#DADEE2", "#3E3F3F")
 COR_KPI_LABEL = ("#17191A", "#e1e6ec")
 OPCOES_TIPO_GRAFICO = ['Barras', 'Linhas']
 OPCOES_AGRUPAMENTO = ['Mês', 'Ano']
+CAMINHO_FILTROS_DASHBOARD = os.path.join(
+    os.path.expanduser('~'), '.inventario_tools_dashboard.json')
 
 
-def _fechar_dashboard(screen, button):
-    button.configure(state='normal')
-    screen.destroy()
+def _periodo_anterior(inicio, fim):
+    """Intervalo imediatamente anterior, com a mesma duração."""
+    try:
+        duracao = (fim - inicio).days
+        fim_anterior = inicio - datetime.timedelta(days=1)
+        inicio_anterior = fim_anterior - datetime.timedelta(days=duracao)
+        return (inicio_anterior.strftime('%d.%m.%Y'),
+                fim_anterior.strftime('%d.%m.%Y'))
+    except Exception:
+        logger.debug('Falha ao calcular período anterior.', exc_info=True)
+        return None, None
 
 
-def _criar_kpi_card(master, titulo, valor, cor_valor=COR_TEXTO, prefix=''):
+def _carregar_filtros_dashboard():
+    tipo = OPCOES_TIPO_GRAFICO[0]
+    agrupamento = OPCOES_AGRUPAMENTO[1]
+    try:
+        if os.path.exists(CAMINHO_FILTROS_DASHBOARD):
+            with open(CAMINHO_FILTROS_DASHBOARD, 'r', encoding='utf-8') as arquivo:
+                dados = json.load(arquivo)
+            tipo_lido = dados.get('tipo_grafico', tipo)
+            agrupamento_lido = dados.get('agrupamento', agrupamento)
+            if tipo_lido in OPCOES_TIPO_GRAFICO:
+                tipo = tipo_lido
+            if agrupamento_lido in OPCOES_AGRUPAMENTO:
+                agrupamento = agrupamento_lido
+    except Exception:
+        logger.debug('Falha ao ler filtros salvos do dashboard.', exc_info=True)
+    return tipo, agrupamento
+
+
+def _salvar_filtros_dashboard(tipo, agrupamento):
+    try:
+        with open(CAMINHO_FILTROS_DASHBOARD, 'w', encoding='utf-8') as arquivo:
+            json.dump({'tipo_grafico': tipo, 'agrupamento': agrupamento},
+                      arquivo, ensure_ascii=False, indent=2)
+    except Exception:
+        logger.debug('Falha ao salvar filtros do dashboard.', exc_info=True)
+
+
+def _criar_kpi_card(master, titulo, valor, cor_valor=COR_TEXTO, prefix='',
+                    variacao=None, cor_variacao=None):
     card = ctk.CTkFrame(master, fg_color=COR_KPI,
                         corner_radius=8, border_width=1,
                         border_color="#e9e8fa")
@@ -37,11 +78,33 @@ def _criar_kpi_card(master, titulo, valor, cor_valor=COR_TEXTO, prefix=''):
                  text_color=COR_KPI_LABEL, wraplength=140).pack(
         padx=10, pady=(8, 2), anchor='center')
     ctk.CTkLabel(card, text=prefix + str(valor), font=('', 20, 'bold'),
-                 text_color=cor_valor).pack(padx=10, pady=(2, 8), anchor='center')
+                 text_color=cor_valor).pack(padx=10, pady=(2, 0), anchor='center')
+    if variacao:
+        cor_variacao = cor_variacao or COR_SUBTEXTO
+        ctk.CTkLabel(card, text=variacao, font=('', 11, 'bold'),
+                     text_color=cor_variacao).pack(padx=10, pady=(0, 8),
+                                                   anchor='center')
+    else:
+        ctk.CTkFrame(card, height=16, fg_color='transparent').pack()
     return card
 
 
-def _atualizar_dashboard(screen, kpis, cards_frame):
+def _formatar_variacao(atual, anterior):
+    try:
+        val_atual = float(atual or 0)
+        val_anterior = float(anterior or 0)
+        if val_anterior == 0:
+            return None, None
+        perc = ((val_atual - val_anterior) / abs(val_anterior)) * 100
+        sinal = '+' if perc >= 0 else ''
+        texto = f'{sinal}{perc:.1f}% vs período anterior'
+        cor = '#2ecc71' if perc >= 0 else '#e74c3c'
+        return texto, cor
+    except Exception:
+        return None, None
+
+
+def _atualizar_dashboard(screen, kpis, cards_frame, kpis_anterior=None):
     try:
         if screen is None or not screen.winfo_exists():
             return
@@ -54,14 +117,26 @@ def _atualizar_dashboard(screen, kpis, cards_frame):
     try:
         _criar_kpi_card(cards_frame, 'Valor do Inventario',
                         kpis.get('valor_inventario', '0,00'), COR_TEXTO, 'R$ ')
+        v_ven, c_ven = _formatar_variacao(
+            kpis.get('valor_vendas_num'), kpis.get('valor_vendas_num_ant'))
         _criar_kpi_card(cards_frame, 'Total de Vendas',
-                        kpis.get('valor_vendas', '0,00'), COR_VENDAS, 'R$ ')
+                        kpis.get('valor_vendas', '0,00'), COR_VENDAS, 'R$ ',
+                        v_ven, c_ven)
+        v_ent, c_ent = _formatar_variacao(
+            kpis.get('valor_entradas_num'), kpis.get('valor_entradas_num_ant'))
         _criar_kpi_card(cards_frame, 'Total de Entradas',
-                        kpis.get('valor_entradas', '0,00'), COR_ENTRADAS, 'R$ ')
+                        kpis.get('valor_entradas', '0,00'), COR_ENTRADAS, 'R$ ',
+                        v_ent, c_ent)
+        v_v13, c_v13 = _formatar_variacao(
+            kpis.get('vendas_130_num'), kpis.get('vendas_130_num_ant'))
         _criar_kpi_card(cards_frame, 'Vendas 1.3',
-                        kpis.get('vendas_130', '0,00'), COR_TEXTO, 'R$ ')
+                        kpis.get('vendas_130', '0,00'), COR_TEXTO, 'R$ ',
+                        v_v13, c_v13)
+        v_prev, c_prev = _formatar_variacao(
+            kpis.get('previa_inventario_num'), kpis.get('previa_inventario_num_ant'))
         _criar_kpi_card(cards_frame, 'Previsão de Inventario',
-                        kpis.get('previa_inventario', '0,00'), COR_PREVISAO, 'R$ ')
+                        kpis.get('previa_inventario', '0,00'), COR_PREVISAO, 'R$ ',
+                        v_prev, c_prev)
     except Exception:
         logger.exception('Erro ao criar cards do dashboard.')
 
@@ -79,10 +154,23 @@ def _atualizar_dashboard(screen, kpis, cards_frame):
         logger.debug('Falha ao reajustar geometria do dashboard.', exc_info=True)
 
 
-def _carregar_dados(screen, cards_frame, on_erro, ini, fim):
+def _carregar_dados(screen, cards_frame, on_erro, ini, fim, ini_ant=None, fim_ant=None):
     def callback(kpis):
         _atualizar_dashboard(screen, kpis, cards_frame)
 
+    if ini_ant and fim_ant:
+        def callback_comparativo(kpis):
+            kpis_atual = kpis[0] if isinstance(kpis, tuple) else kpis
+            kpis_ant = kpis[1] if isinstance(kpis, tuple) else {}
+            if isinstance(kpis_atual, dict) and isinstance(kpis_ant, dict):
+                kpis_atual['valor_inventario_num_ant'] = kpis_ant.get('valor_inventario_num')
+                kpis_atual['valor_vendas_num_ant'] = kpis_ant.get('valor_vendas_num')
+                kpis_atual['valor_entradas_num_ant'] = kpis_ant.get('valor_entradas_num')
+                kpis_atual['vendas_130_num_ant'] = kpis_ant.get('vendas_130_num')
+                kpis_atual['previa_inventario_num_ant'] = kpis_ant.get('previa_inventario_num')
+            _atualizar_dashboard(screen, kpis_atual, cards_frame)
+        thread_execução(screen, carregar_kpis, callback_comparativo, on_erro, ini, fim, ini_ant, fim_ant)
+        return
     thread_execução(screen, carregar_kpis, callback, on_erro, ini, fim)
 
 
@@ -241,11 +329,12 @@ def Dashboard_Screen(periodo, parent, button):
         controls_frame = ctk.CTkFrame(content_frame, fg_color=COR_BG)
         controls_frame.pack(fill='x', pady=(6, 0))
 
+        tipo_salvo, agrupamento_salvo = _carregar_filtros_dashboard()
         tipo_label = ctk.CTkLabel(
             controls_frame, text='Tipo de gráfico:',
             font=('', 12), text_color=COR_SUBTEXTO)
         tipo_label.pack(side='left', padx=(9, 4))
-        tipo_var = ctk.StringVar(value=OPCOES_TIPO_GRAFICO[0])
+        tipo_var = ctk.StringVar(value=tipo_salvo)
         tipo_combo = ctk.CTkComboBox(
             controls_frame, variable=tipo_var, values=OPCOES_TIPO_GRAFICO,
             width=110, font=('', 12), state='readonly')
@@ -255,22 +344,45 @@ def Dashboard_Screen(periodo, parent, button):
             controls_frame, text='Agrupar por:',
             font=('', 12), text_color=COR_SUBTEXTO)
         agrupamento_label.pack(side='left', padx=(0, 4))
-        agrupamento_var = ctk.StringVar(value=OPCOES_AGRUPAMENTO[1])
+        agrupamento_var = ctk.StringVar(value=agrupamento_salvo)
         agrupamento_combo = ctk.CTkComboBox(
             controls_frame, variable=agrupamento_var, values=OPCOES_AGRUPAMENTO,
             width=100, font=('', 12), state='readonly')
         agrupamento_combo.pack(side='left')
+
+        btn_maximizar = ctk.CTkButton(
+            controls_frame, text='Maximizar', width=95,
+            command=lambda: _alternar_maximizar(screen, btn_maximizar))
+        btn_maximizar.pack(side='right', padx=(0, 9))
 
         trend_frame = ctk.CTkFrame(
             content_frame, fg_color=COR_CARD, corner_radius=8,
             border_width=1, border_color='#e0e0e0')
         trend_frame.pack(fill='both', expand=True, pady=(6, 0))
 
+        def _alternar_maximizar(janela, botao):
+            try:
+                estado_janela = janela.state()
+                if estado_janela == 'zoomed':
+                    janela.state('normal')
+                    botao.configure(text='Maximizar')
+                else:
+                    try:
+                        janela.state('zoomed')
+                    except Exception:
+                        largura = janela.winfo_screenwidth() - 10
+                        altura = janela.winfo_screenheight() - 40
+                        janela.geometry(f'{largura}x{altura}+0+0')
+                    botao.configure(text='Restaurar')
+            except Exception:
+                logger.debug('Falha ao alternar maximizar do dashboard.', exc_info=True)
+
         estado = {'seq': 0, 'cache': {}}
 
         try:
             ini_kpi = periodo.inicio_formatado
             fim_kpi = periodo.fim_formatado
+            ini_kpi_ant, fim_kpi_ant = _periodo_anterior(periodo.inicio, periodo.fim)
             ini_tendencia, fim_tendencia = periodo_tendencia_ultimos_5_anos(
                 periodo.fim)
         except Exception:
@@ -295,6 +407,10 @@ def Dashboard_Screen(periodo, parent, button):
             try:
                 if agrupamento_var is None:
                     return
+                try:
+                    _salvar_filtros_dashboard(tipo_var.get(), agrupamento_var.get())
+                except Exception:
+                    pass
                 gran = _granularidade_de(agrupamento_var)
                 dados = estado.get('cache', {}).get(gran)
                 if dados is not None:
@@ -332,7 +448,7 @@ def Dashboard_Screen(periodo, parent, button):
         try:
             _carregar_dados(
                 screen, cards_frame, on_erro,
-                ini_kpi, fim_kpi)
+                ini_kpi, fim_kpi, ini_kpi_ant, fim_kpi_ant)
         except Exception:
             logger.exception('Erro ao iniciar carregamento dos KPIs do dashboard.')
             try:

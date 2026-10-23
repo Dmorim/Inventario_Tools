@@ -1,7 +1,43 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 22/10/2026 — sessão de **diagnóstico do Dashboard** (sem alteração de
+**Última sessão:** 23/10/2026 — **varredura de abertura** (somente leitura + sincronia de
+docs) seguida de **limpeza de código morto + testes de threads/pool** (plano aprovado pelo
+usuário). No início da sessão o working tree estava **limpo** e o trabalho das sessões
+anteriores já havia sido **commitado pelo usuário** em `0c43604` ("Harden view cleanup and
+chart rendering") e `02afd20` ("Harden dashboard and thread lifecycle"). Baseline confirmada:
+**113 passed** no início; **130 passed** após os testes novos, `compileall` sem erros;
+**136 passed** após a correção do gráfico (23/10/2026); **139 passed** após o refinamento
+dos rótulos (barras verticais + halo nas linhas, mesma data).
+O commit `02afd20` (não documentado até então) endureceu o ciclo de vida:
+(1) `Dashboard_Screen.py` — abertura/fechamento protegidos, `grab` reaplicado por
+`_aplicar_grab_seguro`, `_fechar_dashboard_seguro` (libera `grab` + reabilita o botão +
+destrói), callbacks com `winfo_exists()` e KPIs via `kpis.get(...)`; (2) `Thread_Executor.py`
+— flag `cancelado`, checagem de `master` antes/depois de `func`, revalidação do widget dentro
+do callback agendado, polling 100 ms → **75 ms**; (3) `Gerenciador_Thread_BD.py` —
+`_pegar_conexao` recusa trabalho com `_fechando`, falha ao devolver conexão não derruba o
+`finally`, `sleep(0.02)` entre tentativas. **Cobertura automatizada acrescentada em 23/10/2026:**
+`tests/test_thread_executor.py` (**novo**, 10 casos — agenda segura, cancelamento por
+`winfo_exists()`, resultado/erro via callback, janela destruída) e +**7 casos** em
+`tests/test_gerenciador_thread_bd.py` (recusa com `_fechando`, descarte durante fechamento,
+propagação de erro com contador zerado, devolução ao pool, falha na devolução não derruba o
+`finally`, `fechar()` fecha o pool). Suíte: **130 passed**. O código morto `_fechar_dashboard`
+(`Dashboard_Screen.py`) foi **removido** (não tinha uso). **Transição de logging (23/10/2026,
+diretiva nova do usuário):** os logs de **resultado** (`info`/`debug` de sucesso) deixaram de
+ficar no fim da função e passaram a ser **um único log no início**, no presente, anunciando a
+operação (mesmo nível e mesmo contexto); o log de conclusão da mesma função foi **removido**
+(sem par entrada/saída). Exceções permanecem no `except`; `warning`/`error` de condição
+detectada permanecem no ponto de detecção; loops que logavam por item (views) passaram a logar
+**1×**; nenhuma linha de log foi adicionada (conversão 1:1 — contagem inalterada). Detalhes em
+**Item 6.2** (reescrito). **Gráfico do Dashboard (23/10/2026):** a legenda saiu da área de
+plotagem (faixa horizontal acima do gráfico, `ncol=3`) e deixou de cobrir os rótulos de valor;
+o **modo Linhas** passou a exibir rótulos de valor com posicionamento anticolisão; os rótulos
+das **barras** passaram a ser **verticais (90°)** com folga automática no eixo Y (não cobrem
+mais as barras vizinhas) e os das **linhas** usam **fonte 8 com halo**. Suíte:
+**139 passed**. Detalhes no **Item 8.8**. **Nada de código pendente.** O **Item 9.7 foi
+descartado pelo usuário** em 23/10/2026 (considerado solucionado).
+
+**Sessão anterior:** 22/10/2026 — sessão de **diagnóstico do Dashboard** (sem alteração de
 código de produção): o KPI "Total de Entradas" (951.529,18 em 2025) e a série "Entradas" do
 gráfico (rótulo "278 mil") usavam **fórmulas SQL diferentes** — o gráfico somava o valor
 **unitário** (`SUM(l.valor)`) e ignorava a **quantidade**, o desconto, o `valsub` e o IPI.
@@ -49,11 +85,12 @@ encerramento (Item 6.11):**
   casos**) — os 3 casos de resiliência **falham** com o código antigo (validado).
 - Alteração **do usuário** (não tocada) em `Dashboard/Dashboard_Screen.py`: cores dos KPI cards
   (`COR_ENTRADAS`/`COR_VENDAS`/`COR_PREVISAO`, sem `COR_DESTAQUE`).
-- **Item 9.5 — DECISÃO DO USUÁRIO registrada (Item 9.7), aplicação AINDA NÃO FEITA:**
-  normalizar os dois universos de classificação (incluir `'03'` na distorção), manter `'07'`
-  (uso e consumo) **fora** de qualquer cálculo de inventário, e incluir o filtro `l.cance` nas
-  queries de entradas. Impacto medido em 5 bancos cliente: **0,00** (nenhuma mudança numérica
-  hoje) — o diff está pronto, aguardando confirmação para aplicar.
+- **Item 9.5 — decisão do usuário registrada no Item 9.7, mas o Item 9.7 foi DESCARTADO em
+  23/10/2026** (o usuário informou que já foi solucionado): normalizar os dois universos de
+  classificação (incluir `'03'` na distorção), manter `'07'` (uso e consumo) **fora** de
+  qualquer cálculo de inventário, e incluir o filtro `l.cance` nas queries de entradas.
+  Impacto medido em 5 bancos cliente: **0,00** (nenhuma mudança numérica hoje). O diff
+  registrado no Item 9.7 **não foi aplicado pelo agente**.
 **Contexto histórico:** 21/10/2026 — **caça à performance ENCERRADA por medição** (decisão do
 usuário); em seguida, o usuário commitou `d81b381` ("Improve dashboard trend chart visuals"),
 que entregou a **base** do visual do gráfico do Dashboard — complementada na sessão de 21/10/2026
@@ -72,27 +109,23 @@ e/ou compactar o `.fdb` (`gbak`/`gfix`). Decisão do usuário, não da sessão.
 **Não remedir:** o que foi apurado aqui está consolidado no Item 6.7.
 Sessão anterior (20/10/2026): otimização de desempenho (views `V_LAN_COM`/`V_DIFF_ENTRADA_SAIDA_MES`
 removidas → entradas 22 s→0,04 s, diferença 41 s→1,3 s). Sessão de 19/10/2026: refatoração de datas concluída.
-**Próximo passo (neste momento):** **decisões de negócio** sobre as divergências latentes do
-Item 9.5 (classe `'03'` na distorção, filtro `l.cance` nas entradas, classe `'07'` — e as
-novas `'08'`/`'10'`/`'99'` — fora dos universos) — o agente **não decide** isso sozinho.
-Nenhuma outra etapa de código aberta.
+**Próximo passo (neste momento):** nenhuma etapa de código aberta. O **Item 9.7 foi descartado
+pelo usuário** em 23/10/2026 (considerado solucionado); a correção da legenda/rótulos do modo
+Linhas foi aplicada no Item 8.8.
 **Pendências herdadas:** testes manuais (troca de período + reabertura das telas);
 `DROP VIEW V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` no banco (SQL a cargo do usuário — Item 6.8);
 **rotação da senha do banco** (`config.ini` já desrastreado **e commitado** — Item 6.10).
-**Branch:** `refatoracao_v3.5` · **HEAD:** `a503daa`
-**Working tree (nada commitado — regra de ouro da sessão):**
-`Dashboard/Dashboard_Charts.py` (`fontsize` 6 → 8 nos rótulos de valor + rótulos do eixo X
-`fontsize` 9 / `rotation` 0 / `ha` 'center' **do usuário** + `MARGEM_Y_ROTULOS`/`_desenhar_series`
-**do agente** — Plano A + restauração da inversão das vendas — Item 8.7),
-`tests/test_dashboard_charts.py` (+6 casos),
-`Dashboard/Dashboard_Screen.py` (**do usuário** — cores dos KPI cards: `COR_ENTRADAS`/`COR_VENDAS`/
-`COR_PREVISAO`),
-`Queries/Consulta_Queries.py` (`QUERY_EMISSOES_MAXIMA` com `ORDER BY … ROWS 1`),
-`Queries/Create_Views.py` (remoção de views **resiliente por view** — Item 6.11),
-`Inventario.py` (`finally` do `__main__` robusto — Item 6.11),
-`tests/test_create_views.py` (**novo, untracked** — 5 casos),
-`AGENTS.md`, `AGENTS_SESSAO.md`, `docs/Status_Refatoracao.md`,
-`docs/Mapeamento_Refatoracao_Datas.md`.
+**Branch:** `refatoracao_v3.5` · **HEAD:** `02afd20`
+**Working tree (nada commitado — regra de ouro):** `Dashboard/Dashboard_Screen.py` (remoção do
+código morto `_fechar_dashboard`), `tests/test_thread_executor.py` (**novo**, 10 casos),
+`tests/test_gerenciador_thread_bd.py` (+7 casos + `import pytest`), **transição de logging**
+em 11 arquivos de código (`Inventario_Conn.py`, `Banco_de_Dados_Func.py`, `Comandos_Func.py`,
+`Consultas_Dist_Saldo_Screen.py`, `Gen_Funcs_Consulta.py`, `Consultas_Val_Ent_Func.py`,
+`Consultas_Val_Inv_Func.py`, `Consultas_Val_Ven_Func.py`, `Create_Views.py`,
+`Query_Operations.py`, `Thread_Executor.py`), `Dashboard/Dashboard_Charts.py` (legenda fora da
+área + rótulos nos dois modos: barras verticais com folga automática, linhas com fonte 8 + halo),
+`tests/test_dashboard_charts.py` (casos parametrizados e testes de rotulação/legenda), `AGENTS.md`,
+`AGENTS_SESSAO.md`, `docs/Status_Refatoracao.md` — trabalho de 23/10/2026 (suíte **139 passed**).
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
 ---
@@ -159,7 +192,7 @@ permissão, mas qualquer **escrita** exige plano + prévia + confirmação.
 .\.venv\Scripts\python.exe -m pytest tests -v
 ```
 
-Estado de referência saudável: **69 passed**, `compileall` sem erros.
+Estado de referência saudável: **136 passed**, `compileall` sem erros.
 Se testes falharem após mudança, o plano foi executado incorretamente — informar o usuário.
 
 ---
@@ -199,22 +232,38 @@ Se testes falharem após mudança, o plano foi executado incorretamente — info
 - Zero `print()` no código de produção (padrão já adotado); usar `get_logger` quando aplicável.
 - Acesso ao banco sempre via `Thread_Manager.Query_Operations` + `thread_execução()`.
 
-### 6.2 Loggers — somente logs de saída
-- **Registrar apenas logs de saída/resultados**: valores finais, respostas de consulta,
-  totals, conclusões, erros e exceções.
-- **NUNCA criar log de início de função** (não registrar "iniciando...", "entrando em...",
-  "chamado por..." nem qualquer linha de entrada/execução).
-- Quando um logger for adicionado a uma função, ele deve aparecer **uma única vez**, no
-  ponto de retorno/conclusão ou no tratamento de erro — não na abertura do corpo.
-- **Uma única camada registra cada evento:** a infraestrutura (`Query_Operations`,
-  `Thread_Executor`) registra conclusões de query/thread em `debug`; o módulo de negócio
-  (ex.: `ven_get`, `prod_get`, `carregar_kpis`) registra o resultado final em `info`.
-  Nunca ambos em `info` para o mesmo evento (duplicação de linha no arquivo de log).
+### 6.2 Loggers — log único no início da função
+> **Diretiva alterada pelo usuário em 23/10/2026** (substitui a regra antiga de "somente logs de
+> saída"). O usuário consultou os pares e decidiu que os logs devem ser registrados **no começo
+> da função**.
+
+- **Log de resultado vira log de entrada:** função que tinha `info`/`debug` de sucesso no fim
+  passa a ter **um único log no início** do corpo, no presente, anunciando a operação e
+  preservando o contexto útil (`query`, `params`, `prefix`, nome da tela/botão).
+- **Sem par entrada/saída:** o log de conclusão da **mesma** função é **removido** — não se
+  registra "iniciou" e "concluiu" para o mesmo fluxo. A contagem de logs não aumenta
+  (conversão 1:1; a maioria dos pontos manteve o nível original).
+- **Exceções continuam no `except`:** `logger.exception` permanece no tratamento do erro (não
+  há como registrar um erro antes de ele acontecer). O mesmo vale para `warning`/`error` de
+  **condição detectada** no meio da execução (ex.: "nenhum valor encontrado", "credenciais
+  ausentes", guarda de lista inválida) — ficam no ponto de detecção, não no início.
+- **Sem sequências duplicadas:** um evento não é anunciado duas vezes. Regras aplicadas:
+  - callback que só delega não repete o log do fluxo que ele chama;
+  - `Thread_Executor` anuncia **uma vez** (no `thread_target`, não também em `thread_execução`);
+  - loops que logavam por item (ex.: criação/remoção de views) passam a logar **1×** no início;
+  - infraestrutura (`Query_Operations`) registra a execução SQL em **`debug`**; módulos de
+    negócio (`ven_get`, `prod_get`, `conectar`, comandos, dashboard) em **`info`**. Em `INFO`
+    não há linha duplicada; em `DEBUG` a sequência negócio → SQL é intencional (granularidades
+    e níveis diferentes).
+- **Funções que só têm `exception`/`error`/`warning` NÃO ganham log de entrada** (não havia log
+  de resultado para converter). Nesta etapa o Dashboard permanece assim; instrumentar esses
+  fluxos com log de início seria uma decisão separada (aumenta volume).
 - **Nível de log configurável por env var:** `INVENTARIO_LOG_LEVEL` (`DEBUG`, `INFO`...)
   com fallback `INFO` — lido em `Outros/Logger/Get_Logger.py`. Para diagnóstico, rodar a
   aplicação com `$env:INVENTARIO_LOG_LEVEL='DEBUG'` (PowerShell) sem alterar código.
-- Estado atual (22/10/2026): **54 chamadas de logger** no código de produção
-  (25 exception, 15 info, 6 warning, 5 debug, 3 error) — todas de saída/conclusão/erro.
+- Estado atual (23/10/2026, após a transição): **72 chamadas de logger** no código de produção
+  (35 `exception`, 15 `info`, 5 `warning`, 12 `debug`, 3 `error`, + `setLevel`/`addHandler`) —
+  todas as de resultado já no início da função; nenhuma duplicação entrada+saída.
 
 ### 6.3 Segurança e dados
 - **Nunca** gravar credenciais em arquivo versionado; `Config.ini` está no `.gitignore`.
@@ -529,6 +578,53 @@ no tamanho mínimo é ≈48 px. `_rotulos_eixo_x` só rareia acima de `MAX_ROTUL
 - (c) rarear antes (baixar `MAX_ROTULOS_EIXO_X`) — perde meses no eixo X.
 Nenhuma das opções foi aplicada (mudança em `.py` exige plano + aprovação).
 
+### 8.8 Legenda fora da área + rótulos nos dois modos (23/10/2026) — APLICADO
+
+**Pedido do usuário:** resolver o *overlapping* da legenda com os valores no gráfico de barras
+e fazer o gráfico de linhas **também exibir os valores**.
+
+**Medição do problema (render Agg, sem display):** com `loc='best'`, a legenda cobria rótulos
+de valor em **4 de 6** cenários reais (5/7/12 pontos × tamanhos padrão 10,6×3,4 pol e mínimo
+6,6×3,0 pol) — **1 a 2 rótulos cobertos**. O modo Linhas não desenhava rótulo algum (o ramo
+saía antes de qualquer anotação).
+
+**Correções aplicadas em `Dashboard/Dashboard_Charts.py`:**
+- `_configurar_legenda(ax, cores)`: legenda em **faixa horizontal acima do gráfico**
+  (`loc='lower center'`, `bbox_to_anchor=(0.5, 1.01)`, `ncol=3`), mantendo moldura opaca e
+  cores por tema; título com `pad=32` para ficar acima da legenda.
+- `_anotar_linhas(...)`: rótulos de valor no modo Linhas com **posicionamento anticolisão** —
+  candidatos acima/abaixo (+7, −7, +18, −18, +28, −28 pt), validando cada caixa contra a área
+  do eixo e contra os rótulos já postos (`TOLERANCIA_COLISAO_PX = 1,0`). Mesmo limite de
+  `MAX_PONTOS_COM_VALORES = 12`.
+- `_desenhar_series`: o ramo Linhas também aplica `ax.margins(y=MARGEM_Y_ROTULOS)` quando há
+  rótulos.
+
+**Refinamento após retorno do usuário (mesma data):** o usuário reportou que as **barras
+continuavam com overlap** e que a fonte dos valores nas linhas poderia ser mais bonita.
+Medição: o rótulo horizontal mede **~42–47 px**, mas a vaga de cada barra tem **~19 px**
+(12 meses) → **12 rótulos ficavam por cima das barras vizinhas**; quando Entradas ≈ Vendas
+havia **até 12 colisões rótulo × rótulo**. Aumentar margem Y não resolve (o problema é a
+largura do texto). Correções aplicadas:
+- **Barras:** rótulos **verticais (`ROTACAO_ROTULOS_BARRAS = 90`)** — ~10 px de largura, cabem
+  na vaga da própria barra; `_expandir_folga_vertical(...)` mede as caixas já renderizadas e
+  abre o eixo Y iterativamente (`MAX_AJUSTES_FOLGA_VERTICAL = 8`) para nenhum valor ser cortado.
+  Custo medido: eixo Y **+28%** no caso de 12 pontos.
+- **Linhas:** fonte fixa **8** (`FONTE_ROTULOS_LINHA`, sem encolher para 6) e **halo/contorno**
+  na cor do fundo (`path_effects.withStroke`, 2,5 px) em vez da caixa quadrada — visual mais
+  limpo.
+
+**Medição final:** 0 sobreposições legenda × rótulos/ticks/título, legenda dentro da figura,
+0 rótulos cortados, 0 colisões entre rótulos e **0 rótulos sobre outras barras** em 2 conjuntos
+de dados (normal e séries quase iguais) × 2 tamanhos × 5/7/12 pontos, nos **dois** tipos.
+
+**Testes (`tests/test_dashboard_charts.py`):** `TestRotulosDeValor` parametrizada para
+**Barras e Linhas** (contagem, não-corte, não-sobreposição, ausência acima de 12 pontos),
+`test_modo_linhas_nao_altera_a_margem` virou `test_margem_de_rotulos_aplicada_no_modo_linhas`,
+`test_legenda_nao_cobre_rotulos_de_valor` (legenda × rótulos × ticks × título, 5/7/12 pontos ×
+2 tamanhos × 2 tipos) e, no refinamento, `test_rotulos_de_barras_sao_verticais`,
+`test_rotulos_de_barras_nao_cobrem_outras_barras` e
+`test_rotulos_de_linhas_usam_halo_e_fonte_8`. Suíte: **139 passed**; `compileall` limpo.
+
 ---
 
 ## 9. KPI "Total de Entradas" × série "Entradas" do gráfico — DIVERGÊNCIA DE FÓRMULA (22/10/2026)
@@ -672,7 +768,11 @@ Script: `%TEMP%\opencode\medir_item95.py`. Bancos: **ABC AUTO PECAS**, **CASA DO
 — no universo do inventário **e** da distorção (as duas listas devem compartilhar o mesmo
 universo); `'03'` sem ação imediata; `l.cance` sem ação.
 
-### 9.7 DECISÃO DO USUÁRIO sobre o Item 9.5 (22/10/2026) — **aplicação AINDA NÃO FEITA**
+### 9.7 DECISÃO DO USUÁRIO sobre o Item 9.5 (22/10/2026) — **DESCARTADO em 23/10/2026**
+
+> **Descarte (23/10/2026):** o usuário informou que o item **já foi solucionado** e pediu para
+> descartá-lo. O diff abaixo **não foi aplicado pelo agente** e permanece apenas como registro
+> histórico da decisão.
 
 **Decisão (palavras do usuário):** *"Normalize a distorção e o inventário, inclua `'03'` na
 distorção. `'07'` indica produtos de uso e consumo, eles não são inclusos em **NENHUM** cálculo
@@ -716,7 +816,7 @@ para consistência."*
 > recebem o filtro `l.cance` **sem qualquer alteração numérica** em 5 bancos de cliente.
 > A mudança é de **consistência/semântica**, não de valor.
 
-**Diff pronto (NÃO APLICADO — aguardando confirmação do usuário):**
+**Diff registrado (NÃO APLICADO — item descartado pelo usuário em 23/10/2026):**
 - `Queries/Consulta_Queries.py:222` — `'00','01','02','04','05','06'` → `'00','01','02','03','04','05','06'`
   (normaliza com `QUERY_INVENTARIO:17`).
 - `Queries/Consulta_Queries.py` (`QUERY_ENTRADAS`) — `+ AND COALESCE(l.cance, 'N') = 'N'`.

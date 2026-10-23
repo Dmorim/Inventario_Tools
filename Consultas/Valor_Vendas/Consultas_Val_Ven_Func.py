@@ -13,6 +13,8 @@ def ven_get(periodo) -> str:
     nome_query = _nome_query(query)
     # Define os parâmetros da query
     params = (periodo.inicio_formatado, periodo.fim_formatado)
+    logger.info('Consultando valor de vendas. query=%s | params=%s',
+                nome_query, params)
     # Tenta executar a query no banco de dados
     try:
         rows = query_executor(query_selector, query, params)
@@ -25,8 +27,6 @@ def ven_get(periodo) -> str:
     # Se o valor obtido for diferente de None, formata o valor e retorna ele, caso contrário retorna uma string informando que não foi registrado vendas
     if valrec is not None:
         valrec = banco_codigo_valueform(valrec)
-        logger.info(
-            'Valor de vendas obtido e formatado. query=%s | valor=%s', nome_query, valrec)
     else:
         valrec = 'Não foi registrado vendas'
         logger.warning(

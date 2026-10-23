@@ -213,34 +213,45 @@ def carregar_dados_tendencia(ini, fim, granularidade):
         return {'labels': [], 'vendas': [], 'entradas': [], 'diferenca': []}
 
 
-def carregar_kpis(ini=None, fim=None):
+def _calcular_kpis(ini, fim):
+    valor_inventario = _executar_consulta(QUERY_INVENTARIO)
+    valor_vendas = _executar_consulta(QUERY_VENDAS, (ini, fim))
+    valor_entradas = _executar_consulta(
+        QUERY_ENTRADAS.format(placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim))
+    valor_vendas_130 = float(valor_vendas) * 1.3
+    valor_previa_inventario = _previa_inventario(valor_inventario, fim)
+
+    valor_fmt_inventario = banco_codigo_valueform(
+        valor_inventario) if valor_inventario else '0,00'
+    valor_fmt_vendas = banco_codigo_valueform(
+        valor_vendas) if valor_vendas else '0,00'
+    valor_fmt_entradas = banco_codigo_valueform(
+        valor_entradas) if valor_entradas else '0,00'
+    valor_fmt_vendas_130 = banco_codigo_valueform(
+        valor_vendas_130) if valor_vendas_130 else '0,00'
+    valor_fmt_previa_inventario = banco_codigo_valueform(
+        valor_previa_inventario) if valor_previa_inventario else '0,00'
+
+    kpis = {
+        'valor_inventario': valor_fmt_inventario,
+        'valor_vendas': valor_fmt_vendas,
+        'valor_entradas': valor_fmt_entradas,
+        'vendas_130': valor_fmt_vendas_130,
+        'previa_inventario': valor_fmt_previa_inventario,
+        'valor_inventario_num': float(valor_inventario or 0),
+        'valor_vendas_num': float(valor_vendas or 0),
+        'valor_entradas_num': float(valor_entradas or 0),
+        'vendas_130_num': float(valor_vendas_130 or 0),
+        'previa_inventario_num': float(valor_previa_inventario or 0),
+    }
+    return kpis
+
+
+def carregar_kpis(ini=None, fim=None, ini_ant=None, fim_ant=None):
     try:
-        valor_inventario = _executar_consulta(QUERY_INVENTARIO)
-        valor_vendas = _executar_consulta(QUERY_VENDAS, (ini, fim))
-        valor_entradas = _executar_consulta(
-            QUERY_ENTRADAS.format(placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim))
-        valor_vendas_130 = float(valor_vendas) * 1.3
-        valor_previa_inventario = _previa_inventario(valor_inventario, fim)
-
-        valor_fmt_inventario = banco_codigo_valueform(
-            valor_inventario) if valor_inventario else '0,00'
-        valor_fmt_vendas = banco_codigo_valueform(
-            valor_vendas) if valor_vendas else '0,00'
-        valor_fmt_entradas = banco_codigo_valueform(
-            valor_entradas) if valor_entradas else '0,00'
-        valor_fmt_vendas_130 = banco_codigo_valueform(
-            valor_vendas_130) if valor_vendas_130 else '0,00'
-        valor_fmt_previa_inventario = banco_codigo_valueform(
-            valor_previa_inventario) if valor_previa_inventario else '0,00'
-
-        kpis = {
-            'valor_inventario': valor_fmt_inventario,
-            'valor_vendas': valor_fmt_vendas,
-            'valor_entradas': valor_fmt_entradas,
-            'vendas_130': valor_fmt_vendas_130,
-            'previa_inventario': valor_fmt_previa_inventario,
-        }
-        return kpis
+        if ini_ant and fim_ant:
+            return (_calcular_kpis(ini, fim), _calcular_kpis(ini_ant, fim_ant))
+        return _calcular_kpis(ini, fim)
 
     except Exception:
         logger.exception('Erro ao carregar KPIs do dashboard.')

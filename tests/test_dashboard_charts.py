@@ -1,4 +1,5 @@
 import matplotlib
+import pytest
 
 matplotlib.use('Agg')
 
@@ -7,13 +8,22 @@ from matplotlib.figure import Figure
 
 from Dashboard.Dashboard_Charts import (
     CORES_POR_TEMA,
+    FONTE_ROTULOS_LINHA,
     MARGEM_Y_ROTULOS,
+    MAX_AJUSTES_FOLGA_VERTICAL,
     MAX_PONTOS_COM_VALORES,
+    ROTACAO_ROTULOS_BARRAS,
+    TOLERANCIA_COLISAO_PX,
+    _anotar_linhas,
+    _configurar_legenda,
     _contraste,
     _desenhar_series,
+    _expandir_folga_vertical,
     _rotulos_eixo_x,
     _valor_compacto,
 )
+
+TIPOS_GRAFICO = ('Barras', 'Linhas')
 
 # Tamanhos reais do widget do grafico (Dashboard 1080x560 e minimo 680x520).
 TAMANHOS_GRAFICO = (
@@ -22,10 +32,6 @@ TAMANHOS_GRAFICO = (
 )
 
 TOLERANCIA_PX = 0.5
-# No tamanho minimo da janela os rotulos de "diferenca" de grupos vizinhos
-# encostam (medido: 0,6 px horizontal x 0,7 px vertical). Acima disso e
-# colisao real de rotulo.
-TOLERANCIA_SOBREPOSICAO_PX = 1.0
 
 
 class TestValorCompacto:
@@ -108,55 +114,77 @@ def _dados_tendencia(total):
 def _renderizar(figsize, total, tipo='Barras'):
     fig = Figure(figsize=figsize, dpi=100, facecolor='#ffffff')
     ax = fig.add_subplot(111)
-    labels, entradas, vendas, diferencas = _dados_tendencia(total)
-    _desenhar_series(ax, labels, entradas, vendas, diferencas, tipo,
-                      CORES_POR_TEMA['Light'])
-    ax.set_xticks(range(total))
-    ax.set_xticklabels(labels, fontsize=7, rotation=45, ha='right')
-    fig.set_layout_engine('tight')
     canvas = FigureCanvasAgg(fig)
+    labels, entradas, vendas, diferencas = _dados_tendencia(total)
+    cores = CORES_POR_TEMA['Light']
+    _desenhar_series(ax, labels, entradas, vendas, diferencas, tipo, cores)
+    ax.set_xticks(range(total))
+    ax.set_xticklabels(_rotulos_eixo_x(labels), fontsize=9, rotation=0,
+                       ha='center')
+    ax.set_title('Entradas x Vendas x Diferenca', fontsize=10,
+                 fontweight='bold', pad=32)
+    _configurar_legenda(ax, cores)
+    fig.set_layout_engine('tight')
     canvas.draw()
+    if total <= MAX_PONTOS_COM_VALORES:
+        if tipo == 'Linhas':
+            _anotar_linhas(ax, list(range(total)),
+                           (entradas, vendas, diferencas), cores['texto'],
+                           cores['figura'], FONTE_ROTULOS_LINHA,
+                           canvas.get_renderer())
+            canvas.draw()
+        else:
+            for _ in range(MAX_AJUSTES_FOLGA_VERTICAL):
+                if not _expandir_folga_vertical(ax, canvas.get_renderer()):
+                    break
+                canvas.draw()
     return fig, ax, canvas.get_renderer()
 
 
+def _colidem(caixa_a, caixa_b):
+    sobreposicao_x = min(caixa_a.x1, caixa_b.x1) - max(caixa_a.x0,
+                                                       caixa_b.x0)
+    sobreposicao_y = min(caixa_a.y1, caixa_b.y1) - max(caixa_a.y0,
+                                                       caixa_b.y0)
+    return (sobreposicao_x > TOLERANCIA_COLISAO_PX
+            and sobreposicao_y > TOLERANCIA_COLISAO_PX)
+
+
 class TestRotulosDeValor:
-    def test_rotulos_de_valor_sao_desenhados(self):
-        fig, ax, renderer = _renderizar((10.6, 3.4), 12)
+    @pytest.mark.parametrize('tipo', TIPOS_GRAFICO)
+    def test_rotulos_de_valor_sao_desenhados(self, tipo):
+        fig, ax, renderer = _renderizar((10.6, 3.4), 12, tipo)
         assert len(ax.texts) == 12 * 3
         fig.clear()
 
-    def test_rotulos_de_valor_nao_sao_cortados(self):
+    @pytest.mark.parametrize('tipo', TIPOS_GRAFICO)
+    def test_rotulos_de_valor_nao_sao_cortados(self, tipo):
         for nome, figsize in TAMANHOS_GRAFICO:
             for total in (5, 7, 12):
-                fig, ax, renderer = _renderizar(figsize, total)
+                fig, ax, renderer = _renderizar(figsize, total, tipo)
                 area = ax.get_window_extent(renderer)
                 for texto in ax.texts:
                     caixa = texto.get_window_extent(renderer)
-                    assert caixa.y1 <= area.y1 + TOLERANCIA_PX, (nome, total)
-                    assert caixa.y0 >= area.y0 - TOLERANCIA_PX, (nome, total)
-                    assert caixa.x0 >= area.x0 - TOLERANCIA_PX, (nome, total)
-                    assert caixa.x1 <= area.x1 + TOLERANCIA_PX, (nome, total)
+                    assert caixa.y1 <= area.y1 + TOLERANCIA_PX, (tipo, nome, total)
+                    assert caixa.y0 >= area.y0 - TOLERANCIA_PX, (tipo, nome, total)
+                    assert caixa.x0 >= area.x0 - TOLERANCIA_PX, (tipo, nome, total)
+                    assert caixa.x1 <= area.x1 + TOLERANCIA_PX, (tipo, nome, total)
                 fig.clear()
 
-    def test_rotulos_de_valor_nao_se_sobrepoem(self):
+    @pytest.mark.parametrize('tipo', TIPOS_GRAFICO)
+    def test_rotulos_de_valor_nao_se_sobrepoem(self, tipo):
         for nome, figsize in TAMANHOS_GRAFICO:
-            fig, ax, renderer = _renderizar(figsize, 12)
+            fig, ax, renderer = _renderizar(figsize, 12, tipo)
             caixas = [texto.get_window_extent(renderer) for texto in ax.texts]
             for indice, caixa in enumerate(caixas):
                 for outra in caixas[indice + 1:]:
-                    sobreposicao_x = min(caixa.x1, outra.x1) - max(caixa.x0,
-                                                                   outra.x0)
-                    sobreposicao_y = min(caixa.y1, outra.y1) - max(caixa.y0,
-                                                                   outra.y0)
-                    colide = (sobreposicao_x > TOLERANCIA_SOBREPOSICAO_PX
-                              and sobreposicao_y
-                              > TOLERANCIA_SOBREPOSICAO_PX)
-                    assert not colide, nome
+                    assert not _colidem(caixa, outra), (tipo, nome)
             fig.clear()
 
-    def test_rotulos_desaparecem_acima_do_limite_de_pontos(self):
+    @pytest.mark.parametrize('tipo', TIPOS_GRAFICO)
+    def test_rotulos_desaparecem_acima_do_limite_de_pontos(self, tipo):
         total = MAX_PONTOS_COM_VALORES + 1
-        fig, ax, renderer = _renderizar((10.6, 3.4), total)
+        fig, ax, renderer = _renderizar((10.6, 3.4), total, tipo)
         assert len(ax.texts) == 0
         fig.clear()
 
@@ -166,8 +194,66 @@ class TestRotulosDeValor:
         assert ax.margins()[1] == MARGEM_Y_ROTULOS
         fig.clear()
 
-    def test_modo_linhas_nao_altera_a_margem(self):
-        fig, ax, renderer = _renderizar((10.6, 3.4), 12, tipo='Linhas')
-        assert ax.margins()[1] == matplotlib.rcParams['axes.ymargin']
-        assert len(ax.texts) == 0
+    def test_margem_de_rotulos_aplicada_no_modo_linhas(self):
+        fig, ax, renderer = _renderizar((10.6, 3.4), 12, 'Linhas')
+        assert ax.margins()[1] == MARGEM_Y_ROTULOS
+        assert len(ax.texts) == 12 * 3
         fig.clear()
+
+    def test_rotulos_de_barras_sao_verticais(self):
+        fig, ax, renderer = _renderizar((10.6, 3.4), 12)
+        assert ax.texts
+        assert all(texto.get_rotation() == ROTACAO_ROTULOS_BARRAS
+                   for texto in ax.texts)
+        fig.clear()
+
+    def test_rotulos_de_barras_nao_cobrem_outras_barras(self):
+        for nome, figsize in TAMANHOS_GRAFICO:
+            for total in (5, 7, 12):
+                fig, ax, renderer = _renderizar(figsize, total)
+                caixas = [texto.get_window_extent(renderer)
+                          for texto in ax.texts]
+                barras = [barra.get_window_extent(renderer)
+                          for barra in ax.patches]
+                assert len(caixas) == len(barras)
+                for indice, caixa in enumerate(caixas):
+                    for outro, barra in enumerate(barras):
+                        if outro != indice:
+                            assert not _colidem(caixa, barra), (nome, total)
+                fig.clear()
+
+    def test_rotulos_de_linhas_usam_halo_e_fonte_8(self):
+        fig, ax, renderer = _renderizar((10.6, 3.4), 12, 'Linhas')
+        assert ax.texts
+        for texto in ax.texts:
+            assert texto.get_fontsize() == FONTE_ROTULOS_LINHA
+            assert texto.get_path_effects()
+            assert texto.get_bbox_patch() is None
+        fig.clear()
+
+    @pytest.mark.parametrize('tipo', TIPOS_GRAFICO)
+    def test_legenda_nao_cobre_rotulos_de_valor(self, tipo):
+        for nome, figsize in TAMANHOS_GRAFICO:
+            for total in (5, 7, 12):
+                fig, ax, renderer = _renderizar(figsize, total, tipo)
+                legenda = ax.get_legend()
+                assert legenda is not None
+                caixa_legenda = legenda.get_window_extent(renderer)
+                figura = fig.bbox
+                assert caixa_legenda.x0 >= figura.x0
+                assert caixa_legenda.y0 >= figura.y0
+                assert caixa_legenda.x1 <= figura.x1
+                assert caixa_legenda.y1 <= figura.y1
+                for texto in ax.texts:
+                    assert not _colidem(caixa_legenda,
+                                        texto.get_window_extent(renderer)), (
+                        tipo, nome, total)
+                for tick in ax.get_xticklabels():
+                    if tick.get_text():
+                        assert not _colidem(
+                            caixa_legenda,
+                            tick.get_window_extent(renderer)), (
+                            tipo, nome, total)
+                titulo = ax.title.get_window_extent(renderer)
+                assert not _colidem(caixa_legenda, titulo), (tipo, nome, total)
+                fig.clear()
