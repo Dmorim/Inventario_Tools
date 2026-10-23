@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from tkinter import TclError, messagebox
 
 from Outros.Logger.Get_Logger import get_logger
 from Outros.Periodo_Inventario import periodo_tendencia_ultimos_5_anos
@@ -41,22 +42,41 @@ def _criar_kpi_card(master, titulo, valor, cor_valor=COR_TEXTO, prefix=''):
 
 
 def _atualizar_dashboard(screen, kpis, cards_frame):
+    try:
+        if screen is None or not screen.winfo_exists():
+            return
+    except (AttributeError, TclError):
+        return
+
     for widget in cards_frame.winfo_children():
         widget.destroy()
 
-    _criar_kpi_card(cards_frame, 'Valor do Inventario',
-                    kpis['valor_inventario'], COR_TEXTO, 'R$ ')
-    _criar_kpi_card(cards_frame, 'Total de Vendas',
-                    kpis['valor_vendas'], COR_VENDAS, 'R$ ')
-    _criar_kpi_card(cards_frame, 'Total de Entradas',
-                    kpis['valor_entradas'], COR_ENTRADAS, 'R$ ')
-    _criar_kpi_card(cards_frame, 'Vendas 1.3',
-                    kpis['vendas_130'], COR_TEXTO, 'R$ ')
-    _criar_kpi_card(cards_frame, 'Previsão de Inventario',
-                    kpis['previa_inventario'], COR_PREVISAO, 'R$ ')
+    try:
+        _criar_kpi_card(cards_frame, 'Valor do Inventario',
+                        kpis.get('valor_inventario', '0,00'), COR_TEXTO, 'R$ ')
+        _criar_kpi_card(cards_frame, 'Total de Vendas',
+                        kpis.get('valor_vendas', '0,00'), COR_VENDAS, 'R$ ')
+        _criar_kpi_card(cards_frame, 'Total de Entradas',
+                        kpis.get('valor_entradas', '0,00'), COR_ENTRADAS, 'R$ ')
+        _criar_kpi_card(cards_frame, 'Vendas 1.3',
+                        kpis.get('vendas_130', '0,00'), COR_TEXTO, 'R$ ')
+        _criar_kpi_card(cards_frame, 'Previsão de Inventario',
+                        kpis.get('previa_inventario', '0,00'), COR_PREVISAO, 'R$ ')
+    except Exception:
+        logger.exception('Erro ao criar cards do dashboard.')
 
-    screen.update_idletasks()
-    screen.geometry(f'{screen.winfo_width()}x{screen.winfo_height()}')
+    try:
+        screen.update_idletasks()
+        if not screen.winfo_viewable():
+            return
+        largura = screen.winfo_width()
+        altura = screen.winfo_height()
+        if largura > 1 and altura > 1:
+            screen.geometry(f'{largura}x{altura}')
+    except (TclError, AttributeError):
+        pass
+    except Exception:
+        logger.debug('Falha ao reajustar geometria do dashboard.', exc_info=True)
 
 
 def _carregar_dados(screen, cards_frame, on_erro, ini, fim):
@@ -67,15 +87,30 @@ def _carregar_dados(screen, cards_frame, on_erro, ini, fim):
 
 
 def _renderizar_tendencia(screen, trend_frame, dados, tipo):
+    try:
+        if screen is None or not screen.winfo_exists():
+            return
+        if trend_frame is None or not trend_frame.winfo_exists():
+            return
+    except (AttributeError, TclError):
+        return
+
     for widget in trend_frame.winfo_children():
         widget.destroy()
     try:
         criar_grafico_tendencia(trend_frame, dados, tipo)
     except Exception:
         logger.exception('Erro ao desenhar gráfico de tendência.')
-        ctk.CTkLabel(trend_frame, text='Erro ao desenhar o gráfico.',
-                     font=('', 12), text_color='#e74c3c').pack(expand=True)
-    screen.update_idletasks()
+        try:
+            if trend_frame.winfo_exists():
+                ctk.CTkLabel(trend_frame, text='Erro ao desenhar o gráfico.',
+                             font=('', 12), text_color='#e74c3c').pack(expand=True)
+        except (TclError, AttributeError):
+            pass
+    try:
+        screen.update_idletasks()
+    except (TclError, AttributeError):
+        pass
 
 
 def _granularidade_de(agrupamento_var):
@@ -105,91 +140,223 @@ def _recarregar_tendencia(screen, trend_frame, tipo_var, estado, gran, ini, fim)
                     ini, fim, gran)
 
 
-def Dashboard_Screen(periodo, parent, button):
-    button.configure(state='disabled')
-
-    screen = ctk.CTkToplevel(parent)
-    screen.title('Dashboard - Visao Geral do Inventario')
-    screen.geometry('1080x560+80+60')
-    screen.minsize(680, 520)
-    screen.resizable(True, True)
-    screen.transient(parent)
-    screen.focus_set()
-    screen.grab_set()
-
-    screen.protocol('WM_DELETE_WINDOW',
-                    lambda: _fechar_dashboard(screen, button))
-    screen.bind('<Escape>',
-                lambda e: _fechar_dashboard(screen, button))
-
-    title_label = ctk.CTkLabel(
-        screen, text='Dashboard - Visao Geral do Inventario',
-        font=('', 20, 'bold'), text_color=COR_TEXTO)
-    title_label.pack(pady=(12, 4))
-
-    loading_label = ctk.CTkLabel(
-        screen, text='Carregando dados...',
-        font=('', 13), text_color=COR_SUBTEXTO)
-    loading_label.pack(pady=(0, 6))
-
-    content_frame = ctk.CTkFrame(screen, fg_color=COR_BG)
-    content_frame.pack(fill='both', expand=True, padx=10, pady=(0, 10))
-
-    cards_frame = ctk.CTkFrame(content_frame, fg_color=COR_BG)
-    cards_frame.pack(fill='x', pady=(0, 4))
-
-    controls_frame = ctk.CTkFrame(content_frame, fg_color=COR_BG)
-    controls_frame.pack(fill='x', pady=(6, 0))
-
-    tipo_label = ctk.CTkLabel(
-        controls_frame, text='Tipo de gráfico:',
-        font=('', 12), text_color=COR_SUBTEXTO)
-    tipo_label.pack(side='left', padx=(9, 4))
-    tipo_var = ctk.StringVar(value=OPCOES_TIPO_GRAFICO[0])
-    tipo_combo = ctk.CTkComboBox(
-        controls_frame, variable=tipo_var, values=OPCOES_TIPO_GRAFICO,
-        width=110, font=('', 12), state='readonly')
-    tipo_combo.pack(side='left', padx=(0, 18))
-
-    agrupamento_label = ctk.CTkLabel(
-        controls_frame, text='Agrupar por:',
-        font=('', 12), text_color=COR_SUBTEXTO)
-    agrupamento_label.pack(side='left', padx=(0, 4))
-    agrupamento_var = ctk.StringVar(value=OPCOES_AGRUPAMENTO[1])
-    agrupamento_combo = ctk.CTkComboBox(
-        controls_frame, variable=agrupamento_var, values=OPCOES_AGRUPAMENTO,
-        width=100, font=('', 12), state='readonly')
-    agrupamento_combo.pack(side='left')
-
-    trend_frame = ctk.CTkFrame(
-        content_frame, fg_color=COR_CARD, corner_radius=8,
-        border_width=1, border_color='#e0e0e0')
-    trend_frame.pack(fill='both', expand=True, pady=(6, 0))
-
-    estado = {'seq': 0, 'cache': {}}
-
-    ini_kpi = periodo.inicio_formatado
-    fim_kpi = periodo.fim_formatado
-    ini_tendencia, fim_tendencia = periodo_tendencia_ultimos_5_anos(
-        periodo.fim)
-
-    def carregar_tendencia(_=None):
-        gran = _granularidade_de(agrupamento_var)
-        dados = estado['cache'].get(gran)
-        if dados is not None:
-            _renderizar_tendencia(screen, trend_frame, dados, tipo_var.get())
+def _aplicar_grab_seguro(screen, tentativas=0):
+    try:
+        if screen is None or not screen.winfo_exists():
             return
-        _recarregar_tendencia(screen, trend_frame, tipo_var, estado,
-                              gran, ini_tendencia, fim_tendencia)
+        if screen.winfo_viewable():
+            try:
+                screen.grab_release()
+            except Exception:
+                pass
+            try:
+                screen.grab_set()
+                return
+            except Exception:
+                logger.debug('Falha ao aplicar grab_set no dashboard.', exc_info=True)
+                return
+        if tentativas < 10:
+            try:
+                screen.after(100, lambda t=tentativas + 1: _aplicar_grab_seguro(screen, t))
+            except Exception:
+                pass
+        else:
+            try:
+                screen.grab_set()
+            except Exception:
+                logger.debug('Falha ao aplicar grab_set no dashboard (ultima tentativa).', exc_info=True)
+    except (TclError, AttributeError):
+        pass
+    except Exception:
+        logger.debug('Erro ao agendar grab seguro do dashboard.', exc_info=True)
 
-    tipo_combo.configure(command=carregar_tendencia)
-    agrupamento_combo.configure(command=carregar_tendencia)
 
-    def on_erro(exc):
-        loading_label.configure(text=f'Erro ao carregar dados: {exc}')
-        logger.exception('Erro ao carregar dados do dashboard.')
+def Dashboard_Screen(periodo, parent, button):
+    try:
+        if button is not None:
+            try:
+                button.configure(state='disabled')
+            except (TclError, AttributeError):
+                pass
 
-    _carregar_dados(
-        screen, cards_frame, on_erro,
-        ini_kpi, fim_kpi)
-    carregar_tendencia()
+        screen = ctk.CTkToplevel(parent)
+        screen.title('Dashboard - Visao Geral do Inventario')
+        screen.geometry('1080x560+80+60')
+        screen.minsize(680, 520)
+        screen.resizable(True, True)
+        try:
+            screen.transient(parent)
+        except (TclError, AttributeError):
+            pass
+        try:
+            screen.focus_set()
+        except (TclError, AttributeError):
+            pass
+
+        try:
+            screen.update_idletasks()
+        except (TclError, AttributeError):
+            pass
+
+        def _fechar_dashboard_seguro():
+            try:
+                if button is not None:
+                    try:
+                        button.configure(state='normal')
+                    except (TclError, AttributeError):
+                        pass
+            finally:
+                try:
+                    screen.grab_release()
+                except Exception:
+                    pass
+                try:
+                    if screen.winfo_exists():
+                        screen.destroy()
+                except Exception:
+                    try:
+                        screen.destroy()
+                    except Exception:
+                        pass
+
+        screen.protocol('WM_DELETE_WINDOW', _fechar_dashboard_seguro)
+        screen.bind('<Escape>', lambda e: _fechar_dashboard_seguro())
+
+        title_label = ctk.CTkLabel(
+            screen, text='Dashboard - Visao Geral do Inventario',
+            font=('', 20, 'bold'), text_color=COR_TEXTO)
+        title_label.pack(pady=(12, 4))
+
+        loading_label = ctk.CTkLabel(
+            screen, text='Carregando dados...',
+            font=('', 13), text_color=COR_SUBTEXTO)
+        loading_label.pack(pady=(0, 6))
+
+        content_frame = ctk.CTkFrame(screen, fg_color=COR_BG)
+        content_frame.pack(fill='both', expand=True, padx=10, pady=(0, 10))
+
+        cards_frame = ctk.CTkFrame(content_frame, fg_color=COR_BG)
+        cards_frame.pack(fill='x', pady=(0, 4))
+
+        controls_frame = ctk.CTkFrame(content_frame, fg_color=COR_BG)
+        controls_frame.pack(fill='x', pady=(6, 0))
+
+        tipo_label = ctk.CTkLabel(
+            controls_frame, text='Tipo de gráfico:',
+            font=('', 12), text_color=COR_SUBTEXTO)
+        tipo_label.pack(side='left', padx=(9, 4))
+        tipo_var = ctk.StringVar(value=OPCOES_TIPO_GRAFICO[0])
+        tipo_combo = ctk.CTkComboBox(
+            controls_frame, variable=tipo_var, values=OPCOES_TIPO_GRAFICO,
+            width=110, font=('', 12), state='readonly')
+        tipo_combo.pack(side='left', padx=(0, 18))
+
+        agrupamento_label = ctk.CTkLabel(
+            controls_frame, text='Agrupar por:',
+            font=('', 12), text_color=COR_SUBTEXTO)
+        agrupamento_label.pack(side='left', padx=(0, 4))
+        agrupamento_var = ctk.StringVar(value=OPCOES_AGRUPAMENTO[1])
+        agrupamento_combo = ctk.CTkComboBox(
+            controls_frame, variable=agrupamento_var, values=OPCOES_AGRUPAMENTO,
+            width=100, font=('', 12), state='readonly')
+        agrupamento_combo.pack(side='left')
+
+        trend_frame = ctk.CTkFrame(
+            content_frame, fg_color=COR_CARD, corner_radius=8,
+            border_width=1, border_color='#e0e0e0')
+        trend_frame.pack(fill='both', expand=True, pady=(6, 0))
+
+        estado = {'seq': 0, 'cache': {}}
+
+        try:
+            ini_kpi = periodo.inicio_formatado
+            fim_kpi = periodo.fim_formatado
+            ini_tendencia, fim_tendencia = periodo_tendencia_ultimos_5_anos(
+                periodo.fim)
+        except Exception:
+            logger.exception('Erro ao calcular períodos do dashboard.')
+            try:
+                if button is not None:
+                    button.configure(state='normal')
+            except Exception:
+                pass
+            try:
+                if screen.winfo_exists():
+                    screen.destroy()
+            except Exception:
+                pass
+            try:
+                messagebox.showerror('Dashboard', 'Não foi possível calcular os períodos para o dashboard.')
+            except Exception:
+                pass
+            return
+
+        def carregar_tendencia(_=None):
+            try:
+                if agrupamento_var is None:
+                    return
+                gran = _granularidade_de(agrupamento_var)
+                dados = estado.get('cache', {}).get(gran)
+                if dados is not None:
+                    _renderizar_tendencia(screen, trend_frame, dados, tipo_var.get())
+                    return
+                _recarregar_tendencia(screen, trend_frame, tipo_var, estado,
+                                      gran, ini_tendencia, fim_tendencia)
+            except Exception:
+                logger.exception('Erro ao agendar carregamento da tendência do dashboard.')
+
+        try:
+            tipo_combo.configure(command=carregar_tendencia)
+            agrupamento_combo.configure(command=carregar_tendencia)
+        except (TclError, AttributeError):
+            pass
+
+        def on_erro(exc):
+            try:
+                if 'loading_label' in locals() and loading_label.winfo_exists():
+                    loading_label.configure(text=f'Erro ao carregar dados: {exc}')
+            except (TclError, AttributeError):
+                pass
+            logger.exception('Erro ao carregar dados do dashboard.')
+
+        try:
+            screen.update_idletasks()
+        except (TclError, AttributeError):
+            pass
+
+        try:
+            _aplicar_grab_seguro(screen)
+        except Exception:
+            logger.debug('Falha ao agendar grab do dashboard.', exc_info=True)
+
+        try:
+            _carregar_dados(
+                screen, cards_frame, on_erro,
+                ini_kpi, fim_kpi)
+        except Exception:
+            logger.exception('Erro ao iniciar carregamento dos KPIs do dashboard.')
+            try:
+                if 'loading_label' in locals() and loading_label.winfo_exists():
+                    loading_label.configure(text='Erro ao iniciar carregamento dos dados.')
+            except Exception:
+                pass
+
+        try:
+            carregar_tendencia()
+        except Exception:
+            logger.exception('Erro ao iniciar carregamento da tendência do dashboard.')
+    except Exception:
+        logger.exception('Falha crítica ao abrir o Dashboard.')
+        try:
+            if button is not None:
+                try:
+                    button.configure(state='normal')
+                except (TclError, AttributeError):
+                    pass
+        except Exception:
+            pass
+        try:
+            messagebox.showerror('Dashboard', 'Não foi possível abrir o Dashboard.')
+        except Exception:
+            pass
+        return

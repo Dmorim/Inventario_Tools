@@ -62,6 +62,8 @@ class GerenciadorThreadBD:
         raise ConnectionError('A nova conexão falhou no health-check.')
 
     def _pegar_conexao(self, timeout=5, tentativas=3):
+        if getattr(self, '_fechando', False):
+            raise RuntimeError('O gerenciador de conexões está sendo fechado.')
         for tentativa_conexao in range(tentativas + 1):
             try:
                 conexao = self.__pool.get(timeout=timeout)
@@ -74,12 +76,15 @@ class GerenciadorThreadBD:
 
             if not self._conexao_valida(conexao):
                 self._fechar_conexao(conexao)
+                if getattr(self, '_fechando', False):
+                    raise RuntimeError('O gerenciador de conexões está sendo fechado.')
                 try:
                     return self._criar_conexao_valida()
                 except Exception:
                     if tentativa_conexao == tentativas:
                         raise TimeoutError(
                             'Conexão inválida ou fechada foi descartada do pool.')
+                    time.sleep(0.02)
                     continue
 
             return conexao
@@ -108,7 +113,7 @@ class GerenciadorThreadBD:
 
     def executar(self, funcao, *args, **kwargs):
         with self._operacoes_condicao:
-            if self._fechando:
+            if getattr(self, '_fechando', False):
                 raise RuntimeError(
                     'O gerenciador de conexões está sendo fechado.')
             self._operacoes_ativas += 1
@@ -117,13 +122,21 @@ class GerenciadorThreadBD:
         try:
             conexao = self._pegar_conexao()
             return funcao(conexao, *args, **kwargs)
+        except Exception:
+            raise
         finally:
             if conexao is not None:
-                self._devolver_conexao(conexao)
+                try:
+                    self._devolver_conexao(conexao)
+                except Exception:
+                    self.logger.debug('Falha ao devolver conexão ao pool.', exc_info=True)
             with self._operacoes_condicao:
-                self._operacoes_ativas -= 1
-                if self._operacoes_ativas == 0:
-                    self._operacoes_condicao.notify_all()
+                try:
+                    self._operacoes_ativas -= 1
+                    if self._operacoes_ativas == 0:
+                        self._operacoes_condicao.notify_all()
+                except Exception:
+                    pass
 
     def aguardar_operacoes(self):
         """Aguarda as operações em andamento antes de uma manutenção."""
