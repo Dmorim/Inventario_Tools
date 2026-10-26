@@ -7,6 +7,7 @@ from Outros.Periodo_Inventario import (
     calcular_periodo,
     formatar_banco,
     periodo_padrao,
+    periodo_tendencia_ultimos_5_anos,
 )
 
 
@@ -68,3 +69,22 @@ class TestPeriodoPadrao:
     def test_anual_ano_anterior(self):
         ano = date.today().year - 1
         assert periodo_padrao() == (date(ano, 1, 1), date(ano, 12, 31))
+
+
+class TestPeriodoTendenciaUltimos5Anos:
+    def test_comeca_em_01_01_cinco_anos_antes(self):
+        assert periodo_tendencia_ultimos_5_anos(date(2030, 5, 20)) == (
+            '01.01.2025', '20.05.2030')
+
+    def test_fim_igual_a_data_recebida(self):
+        assert periodo_tendencia_ultimos_5_anos(date(2026, 1, 1)) == (
+            '01.01.2021', '01.01.2026')
+
+    def test_inicio_e_sempre_primeiro_dia_do_ano(self):
+        for fim in (date(2024, 2, 29), date(2025, 7, 15), date(2026, 12, 31)):
+            inicio, _ = periodo_tendencia_ultimos_5_anos(fim)
+            assert inicio.startswith('01.01.')
+
+    def test_retorna_strings_formatadas_para_o_banco(self):
+        inicio, fim = periodo_tendencia_ultimos_5_anos(date(2026, 8, 3))
+        assert (inicio, fim) == ('01.01.2021', '03.08.2026')

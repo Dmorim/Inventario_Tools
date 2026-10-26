@@ -70,65 +70,47 @@ GROUP BY 1
 ORDER BY 1
 """
 
-QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL = """
-WITH entradas AS (
-    SELECT l.notfi, l.cdfrn, l.modelonota,
-           extract(month from l.dtpro) AS mes,
-           extract(year  from l.dtpro) AS ano
+QUERY_MOVIMENTO_ESTOQUE_CUSTO = """
+    SELECT CAST(SUM(IIF(l.tpmov = 'S', l.quant, -l.quant)
+                    * COALESCE(p.precu, 0)) AS NUMERIC(15, 2)) AS movimento
     FROM in01lan l
+    INNER JOIN in01pro p ON p.cdpro = l.cdpro
     WHERE COALESCE(l.controlaestoque, 'S') = 'S'
+      AND COALESCE(l.cance, 'N') = 'N'
+      AND p.classificacao_produto IN ('00','01','02','03','04','05','06')
       AND l.dtpro BETWEEN ? AND ?
-    GROUP BY 1, 2, 3, 4, 5
-), entradas_com_valor AS (
-    SELECT e.mes, e.ano, e.notfi, e.cdfrn, e.modelonota,
-           COALESCE(MAX(c.valno), 0) AS valor_entrada
-    FROM entradas e
-    LEFT JOIN in01com c
-           ON c.notfi = e.notfi
-          AND c.cdfrn = e.cdfrn
-          AND c.modelonota = e.modelonota
-    GROUP BY 1, 2, 3, 4, 5
-), saidas AS (
-    SELECT vs.fatur, SUM(vs.valor_saida) AS valor_saida
-    FROM V_FAT_VALOR_SAIDA vs
-    WHERE COALESCE(vs.cance, 'N') = 'N'
-    GROUP BY 1
-)
-SELECT SUM(ABS(valor_diff)) AS valor_diff
-FROM (
-    SELECT e.mes, e.ano,
-           SUM(e.valor_entrada) - SUM(COALESCE(s.valor_saida, 0)) AS valor_diff
-    FROM entradas_com_valor e
-    LEFT JOIN saidas s ON s.fatur = e.notfi
-    GROUP BY 1, 2
-)
-WHERE ano IN (?, ?)
-GROUP BY ano
-ORDER BY ano ASC
+"""
+"""
+Movimento líquido do estoque no período, valorizado ao custo atual (precu).
+
+`l.tpmov = 'S'` identifica as linhas que entram no estoque (compras,
+devoluções de venda e transferências de entrada); as demais saem (vendas,
+devoluções ao fornecedor e ajustes). Usa o mesmo custo e o mesmo universo de
+classificação de QUERY_INVENTARIO — no banco de teste o total histórico
+(4.156.492,44) converge com o saldo calculado (4.207.242,01).
+Tela: Dashboard/Dashboard_Func.py (_previa_inventario)
+Parâmetros: (data_inicial, data_final)
+Retorna: movimento líquido a custo atual
 """
 
 
 _PLACEHOLDERS_CFOP = ', '.join(['?'] * len(CFOP_LIST))
 
 
-def _previa_inventario(valor_inventario, fim):
+def _previa_inventario(valor_inventario, ini, fim):
+    """Estima o inventário no fim do período.
+
+    Premissa: `valor_inventario` é o inventário na data inicial do período
+    (base normalizada para o ano do inventário). Soma ao valor base o movimento
+    líquido de estoque do período valorizado ao custo atual (`precu`):
+    compras, devoluções de venda e ajustes de entrada somam; vendas, devoluções
+    ao fornecedor e ajustes de saída subtraem.
+
+    É uma estimativa: não substitui inventário contado/fechamento.
     """
-    Calcula a previsão do inventário gerado subtraindo do valor do inventario atual a diferença de entradas/saídas do ano do inventário e anterior
-    """
-
-    ano = int(fim[-4:])
-    ini_exato = f'01.01.{ano - 1}'
-    fim_exato = f'31.12.{ano}'
-    valores = _executar_select(
-        QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL,
-        (ini_exato, fim_exato, ano - 1, ano))
-
-    valor_diferenca_anterior = valores[0][0] if valores else 0
-    valor_diferenca_atual = valores[1][0] if len(valores) > 1 else 0
-
-    diferenca_em_diferenca = valor_diferenca_atual - valor_diferenca_anterior
-    valor_previa = valor_inventario - diferenca_em_diferenca
-    return valor_previa
+    movimento = _executar_consulta(
+        QUERY_MOVIMENTO_ESTOQUE_CUSTO, (ini, fim))
+    return float(valor_inventario or 0) + float(movimento or 0)
 
 
 def _executar_consulta(query, params=None):
@@ -213,13 +195,12 @@ def carregar_dados_tendencia(ini, fim, granularidade):
         return {'labels': [], 'vendas': [], 'entradas': [], 'diferenca': []}
 
 
-def _calcular_kpis(ini, fim):
+def _calcular_kpis(ini, fim, incluir_previa=True):
     valor_inventario = _executar_consulta(QUERY_INVENTARIO)
     valor_vendas = _executar_consulta(QUERY_VENDAS, (ini, fim))
     valor_entradas = _executar_consulta(
         QUERY_ENTRADAS.format(placeholders=_PLACEHOLDERS_CFOP), (*CFOP_LIST, ini, fim))
     valor_vendas_130 = float(valor_vendas) * 1.3
-    valor_previa_inventario = _previa_inventario(valor_inventario, fim)
 
     valor_fmt_inventario = banco_codigo_valueform(
         valor_inventario) if valor_inventario else '0,00'
@@ -229,28 +210,35 @@ def _calcular_kpis(ini, fim):
         valor_entradas) if valor_entradas else '0,00'
     valor_fmt_vendas_130 = banco_codigo_valueform(
         valor_vendas_130) if valor_vendas_130 else '0,00'
-    valor_fmt_previa_inventario = banco_codigo_valueform(
-        valor_previa_inventario) if valor_previa_inventario else '0,00'
 
     kpis = {
         'valor_inventario': valor_fmt_inventario,
         'valor_vendas': valor_fmt_vendas,
         'valor_entradas': valor_fmt_entradas,
         'vendas_130': valor_fmt_vendas_130,
-        'previa_inventario': valor_fmt_previa_inventario,
         'valor_inventario_num': float(valor_inventario or 0),
         'valor_vendas_num': float(valor_vendas or 0),
         'valor_entradas_num': float(valor_entradas or 0),
         'vendas_130_num': float(valor_vendas_130 or 0),
-        'previa_inventario_num': float(valor_previa_inventario or 0),
     }
+
+    # A previsão depende do período e só faz sentido no período selecionado;
+    # no período anterior ela não é exibida nem comparada.
+    if incluir_previa:
+        valor_previa_inventario = _previa_inventario(
+            valor_inventario, ini, fim)
+        kpis['previa_inventario'] = (
+            banco_codigo_valueform(valor_previa_inventario)
+            if valor_previa_inventario else '0,00')
+        kpis['previa_inventario_num'] = float(valor_previa_inventario or 0)
     return kpis
 
 
 def carregar_kpis(ini=None, fim=None, ini_ant=None, fim_ant=None):
     try:
         if ini_ant and fim_ant:
-            return (_calcular_kpis(ini, fim), _calcular_kpis(ini_ant, fim_ant))
+            return (_calcular_kpis(ini, fim),
+                    _calcular_kpis(ini_ant, fim_ant, incluir_previa=False))
         return _calcular_kpis(ini, fim)
 
     except Exception:

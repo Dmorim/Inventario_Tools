@@ -3,14 +3,16 @@
 **Versão do sistema:** 2.0.0 (em evolução)
 **Autor:** Daniel Amorim (com colaboração de Cícero Romão nas consultas SQL)
 **Licença:** CC0 1.0 Universal (domínio público)
-**Documento atualizado em:** 13/10/2026
-**Versão do documento:** 5.1 (atualizado — reflete o estado atual do código após o commit `e2c46ce`,
-da branch `refatoracao_v3.5`: Dashboard implementado, pool endurecido, 59 testes passando)
+**Documento atualizado em:** 26/10/2026
+**Versão do documento:** 5.3 (atualizado — reflete o estado atual do código na branch
+`refatoracao_v3.5`, HEAD `3d7d9ef`: Dashboard completo com KPI comparativo, curvas suavizadas,
+toolbar e tooltip; KPI "Previsão de Inventário" redefinido como estimativa do fim do período;
+pool endurecido; **203 testes** passando em 16 arquivos)
 
 > Este documento atualiza o plano original (`Plano_Refatoracao_Inventario_Tools.pdf`) e as revisões
 > 1.x/2.0/3.0. Ele incorpora as **modificações já feitas no projeto** (branch `QoL` integrada ao
 > `main`, e branch de trabalho `refatoracao_v3.5`) e lista **apenas o trabalho que ainda falta**,
-> focado no estado real do código em 01/09/2026.
+> focado no estado real do código em 26/10/2026.
 
 ---
 
@@ -68,6 +70,12 @@ Inventario_Tools/
 |   +-- Distorcao_Saldo/           # Correção de distorção de saldo
 +-- Configuracoes/                 # Configurações do sistema (tema)
 |   +-- Config_Manager.py          # NOVO — classe AppConfig (leitura/escrita)
++-- Dashboard/                     # NOVO — KPIs e gráfico de tendência
+|   +-- Dashboard_Screen.py        # Janela, filtros e cards de KPI
+|   +-- Dashboard_Func.py          # KPIs e séries de tendência (queries)
+|   +-- Dashboard_Charts.py        # Gráfico (matplotlib) + toolbar + tooltip
++-- Data_Manager/                  # Período (PeriodoManager, PeriodoInventario)
++-- Distorcao_Manager/             # Correção de distorção (DistorcaoManager)
 +-- Consultas/                     # Consultas (11 tipos + hub)
 |   +-- Generics_Functions/        # Gen_Funcs_Consulta, Distorcao_de_Saldo
 |   +-- Consultas_Screen.py        # Hub com os botões de consulta
@@ -86,6 +94,7 @@ Inventario_Tools/
 +-- Outros/                        # Recursos auxiliares
 |   +-- Banco_Images.py            # Imagens embutidas (base64)
 |   +-- Periodo_Inventario.py      # Cálculo/formatação de período (datas)
+|   +-- Logger/Get_Logger.py       # NOVO — logger central (get_logger)
 +-- Thread_Manager/                # Concorrência e pool de BD
 |   +-- Gerenciador_Thread_BD.py   # Pool de conexões Firebird
 |   +-- Query_Operations.py        # query_selector / query_updater / query_executor
@@ -106,7 +115,10 @@ Desde o commit `fc40fdd`, o `Thread_Executor` roteia toda atualização de UI pa
 tratado na camada de tela via callbacks agendados. A animação de status é consolidada em
 `TextAnimator` (commit `584cf56`). As telas de consulta e de listagem usam factories compartilhadas
 (`Consulta_Screen.py`, `Treeview_Table/Listagem_Treeview.py`), eliminando grande parte do
-boilerplate que antes era duplicado.
+boilerplate que antes era duplicado. O logging é central desde `Outros/Logger/Get_Logger.py`
+(`get_logger`, nível por `INVENTARIO_LOG_LEVEL`, padrão `INFO`; arquivos em
+`logs/AAAAMM/DDMMAAAA_log.txt`); desde 26/10/2026 os `except` de UI do Dashboard registram em
+`logger.debug(..., exc_info=True)` (visível só com `INVENTARIO_LOG_LEVEL=DEBUG`).
 
 ---
 
@@ -149,12 +161,14 @@ Todas as mudanças abaixo já estão no código (a maioria na branch `refatoraca
 | `help_base64_image` sem vírgula inválida (`Banco_Images.py`) | N7/§5.6 | ✅ Feito |
 | `Listagem_Treeview` — `grab_set()` + `WM_DELETE_WINDOW` (via `toplevel.protocol`) | N7/§5.6 | ✅ Feito |
 | `executa_comandos` — feedback de status via `atualizar_ui_main` (sem `after()` na thread) | N3/§5.3 | ✅ Feito |
-| **59 testes** passando (`pytest` → 59 passed) | Fase 5 | ✅ Feito |
+| Suíte ampliada para **203 testes** em 16 arquivos (`pytest` → 203 passed) | Fase 5 | ✅ Feito |
+| **Feature 1 — Dashboard** (`Dashboard/`): KPIs + KPI comparativo, gráfico de tendência (Barras/Linhas × Mês/Ano), toolbar, tooltip e persistência de filtros | Feature 1 | ✅ Feito |
+| **Logging** nos `except` de UI do Dashboard (24 em `Dashboard_Screen.py`, 10 em `Dashboard_Charts.py`) e remoção do cálculo morto do tooltip | Fase 3.3 / §5.8 | ✅ Feito (26/10/2026) |
 
 > **Nota sobre branches:** As modificações de UI foram consolidadas no `main` via PR #14
-> (merge `48e7fe3`). A refatoração estrutural é conduzida na branch `refatoracao_v3.5`, que já
-> contém os commits `2ea1544`, `1a91bfe`, `a997197`, `d9626b8`, `085a37b`, `7178ff7`, `bd3f77d`,
-> `72b7e4f`, `34cc7ef`, `584cf56` e `fc40fdd`. O commit `fc40fdd` ainda aguarda push.
+> (merge `48e7fe3`). A refatoração estrutural é conduzida na branch `refatoracao_v3.5`, hoje
+> sincronizada com `origin/refatoracao_v3.5` no HEAD `3d7d9ef` (o commit `fc40fdd`, citado nas
+> revisões anteriores, já foi enviado).
 
 ---
 
@@ -188,18 +202,26 @@ Resolvido em `fc40fdd` + correções desta revisão: o SQL livre continua sendo 
 
 ### Fase 3 — Arquitetura e Organização (restante)
 
-#### 3.1 Mover imports para o topo dos módulos — 🔄 PARCIAL
+#### 3.1 Mover imports para o topo dos módulos — ✅ CONCLUÍDO
 
-Imports lazy ainda espalhados em telas (ex.: `Banco_de_Dados_Screen.py`,
-`Comandos_Screen.py`, `Config_Screen.py`, `Consultas_Screen.py`, `Tutorial_Screen.py` importam
-`customtkinter` dentro de função) e em `Comandos_Func.py` (`messagebox` dentro de
-`montar_operacoes`) e `Consultas_Dist_Saldo_Screen.py`. Remover quando não houver risco de circular;
-resolver circulares com injeção de dependência.
+Verificado em 26/10/2026: **não há imports lazy** nos módulos da aplicação (nenhum `import`/`from`
+dentro de função fora de `tests/`). As telas que antes importavam `customtkinter`/`messagebox`
+dentro de funções (`Banco_de_Dados_Screen.py`, `Comandos_Screen.py`, `Config_Screen.py`,
+`Consultas_Screen.py`, `Tutorial_Screen.py`, `Comandos_Func.py`,
+`Consultas_Dist_Saldo_Screen.py`) já têm os imports no topo; não foi necessário injetar
+dependências para quebrar circulares.
 
 #### 3.3 (remanescente) — robustez de erros
 
 - ✅ `Inventario_Conn.py` — porta agora `int | None`, validada por `isdigit()` antes de usar.
-- ⬜ Adicionar `logging` onde houver tratamento de erro em comandos (ver 3.4).
+- 🔄 `logging` no tratamento de erros: o **Dashboard** foi concluído em 26/10/2026
+  (`Dashboard_Screen.py`: 24 pontos; `Dashboard_Charts.py`: 10 pontos) — todos os `except` de UI
+  registram `logger.debug(..., exc_info=True)`, visível apenas com `INVENTARIO_LOG_LEVEL=DEBUG`.
+  **Ainda restam 17 `except ...: pass` silenciosos** em `Comandos_Func.py` (3),
+  `Banco_de_Dados_Func.py` (1), `Consultas_Val_Screen.py` (1),
+  `Consultas_Val_Inv_Screen.py` (2), `Tk_Progress_Bar.py` (3), `Tk_Status_Animator.py` (2),
+  `Gerenciador_Thread_BD.py` (3) e `Thread_Executor.py` (2); parte deles é limpeza intencional
+  (`destroy`/`close` de melhor esforço) e deve ser avaliada caso a caso.
 
 ---
 
@@ -207,9 +229,12 @@ resolver circulares com injeção de dependência.
 
 #### 4.1 Adicionar type hints
 
-Hoje há ~21 anotações `-> ` em 7 arquivos (principalmente `Config_Manager.py`, `Tk_Progress_Bar.py`,
-factories de tela/listagem e `Comandos_Func.py`). Ainda faltam retornos e parâmetros tipados na
-maioria dos módulos (telas, listagens, funcs de consulta).
+Estado medido em 26/10/2026 (AST, sem contar `tests/`): **22 funções com anotação de retorno**
+em 11 arquivos (`Config_Manager.py` 4; `DistorcaoManager.py` 3; `Comandos_Func.py` 3;
+`Get_Logger.py` 3; `PeriodoInventario.py` 2; `DistorcaoInventario.py` 2; `PeriodoManager.py`,
+`Tk_Progress_Bar.py`, `Container_Manager.py`, `Listagem_Treeview.py` e `Consultas_Val_Ven_Func.py`
+1 cada) e **51 parâmetros anotados em 255 funções**. A maioria dos módulos (telas, listagens, funcs
+de consulta) segue sem anotação de retorno e de parâmetros.
 
 #### 4.2 Criar `py.typed`
 
@@ -219,29 +244,49 @@ O marker `py.typed` não existe. Criar na raiz para indicar suporte a type check
 
 ### Fase 5 — Testes Unitários (restante)
 
-#### 5.2 Testar funções puras — ✅ COMPLETO (54 testes)
+#### 5.2 Testar funções puras — ✅ COMPLETO (203 testes na suíte, 16 arquivos)
+
+Principais grupos (a suíte completa está detalhada em `docs/Status_Refatoracao.md`, Fase 5):
 
 | Função | Arquivo | Status |
 |---|---|---|
 | `banco_codigo_valueform()` | Gen_Funcs_Consulta.py | ✅ coberto |
 | `precu_porcent_entry_validate()` | Comandos_Func.py | ✅ coberto |
-| `copy_val()` (mock pyperclip) | Gen_Funcs_Consulta.py | ✅ coberto (`test_copy_val.py`) |
-| `calcular_periodo()` / `formatar_banco()` | Outros/Periodo_Inventario.py | ✅ coberto (`test_periodo.py`) |
-| `_montar_operacoes()` / `comandos_true()` | Comandos_Func.py | ✅ coberto (`test_comandos_func.py`) |
-| `query_updater` / `_safe_schedule_ui` / validações UI | Thread_Manager / Configuracoes | ✅ coberto (`test_query_operations.py`, `test_validacao.py`) |
+| `copy_val()` (mock pyperclip) | Gen_Funcs_Consulta.py | ✅ coberto (`test_copy_val.py`, 4) |
+| `calcular_periodo()` / `formatar_banco()` / `periodo_padrao()` / `periodo_tendencia_ultimos_5_anos()` | Outros/Periodo_Inventario.py | ✅ coberto (`test_periodo.py`, 16) |
+| `_montar_operacoes()` / `comandos_true()` | Comandos_Func.py | ✅ coberto (`test_comandos_func.py`, 12) |
+| `query_updater` / `_safe_schedule_ui` / validações UI | Thread_Manager / Configuracoes | ✅ coberto (`test_query_operations.py` 12, `test_validacao.py` 10) |
+| `PeriodoManager` | Data_Manager/PeriodoManager.py | ✅ coberto (`test_periodo_manager.py`, 16) |
+| `_extrair_series()` / `_previa_inventario()` / `_calcular_kpis()` / `carregar_kpis()` / `carregar_dados_tendencia()` | Dashboard/Dashboard_Func.py | ✅ coberto (`test_dashboard_func.py`, 27 — banco mockado) |
+| `_periodo_anterior()` / `_formatar_variacao()` | Dashboard/Dashboard_Screen.py | ✅ coberto (`test_dashboard_screen_helpers.py`, 17) |
+| `_desenhar_series()` (render Agg, sem display) | Dashboard/Dashboard_Charts.py | ✅ coberto (`test_dashboard_charts.py`, 31) |
 
-#### 5.3 Testar queries isoladamente — 🔄 PARCIAL
+#### 5.3 Testar queries isoladamente — ✅ COMPLETO
 
 As fixtures `FakeCursor`/`FakeConexao` já existem em `tests/conftest.py`; `test_query_operations.py`
-cobre `query_selector`/`query_updater` isolados. Faltam: testes que validem os **nomes das queries**
-centralizadas em `Queries/` (todas as 20 consultas e 14 comandos usados pelas telas).
+cobre `query_selector`/`query_updater` isolados. `tests/test_queries.py` (3 casos) valida o
+**contrato nominal** das **20 consultas** e **14 comandos** centralizados em `Queries/` (nomes
+públicos exatos + conteúdo não vazio) e garante que `EXPR_VALOR_ENTRADA` é a mesma expressão em
+`QUERY_ENTRADAS` e nas duas queries de tendência do Dashboard.
 
 ---
 
-### Fase 6 — Compatibilidade com PyInstaller — ⬜ PENDENTE
+### Fase 6 — Compatibilidade com PyInstaller — ⬜ PENDENTE (config obsoleto)
 
-- Rodar `pyinstaller` e validar módulos embutidos, `config.ini` via `--add-data`, e `fbclient.dll`.
-- Revisar `Auto_py_to_exe config.json` após a reorganização de módulos (`Queries/`, factories).
+Não existe `*.spec`, `build/` nem `dist/` no repositório (o `.gitignore` ignora `*.spec`,
+`build/`, `dist/` e `*.exe`), então **o empacotamento nunca foi validado**. Existe
+`Outros/Auto_py_to_exe config.json`, mas ele está **desatualizado**:
+
+- caminhos absolutos da máquina antiga (`C:/Users/Sup-12/...`);
+- não inclui os pacotes novos (`Dashboard/`, `Queries/`, `Thread_Manager/`, `Data_Manager/`,
+  `Distorcao_Manager/`, `Inv_Screen/`, `Interface_Tools/`) nem `Recursos/Firebird/fbclient.dll`;
+- não embute `config.ini` (falta `--add-data`) e não coleta `matplotlib`/`numpy`/`scipy`;
+- usa `collect_all` em módulos da stdlib (`base64`, `io`, `datetime`, `ctypes`), o que não faz
+  sentido e pode falhar no build;
+- nome do executável `Inv Tools 2.0.1` (o sistema está em 2.0.0).
+
+Para retomar: gerar um `*.spec` versionado (ou parar de ignorar `*.spec`), com `--add-data` de
+`config.ini`, `Recursos/Firebird/fbclient.dll` e o backend `Agg` do matplotlib.
 
 ---
 
@@ -298,12 +343,10 @@ Resolvido nos commits `34cc7ef`/`fc40fdd` e nas correções desta revisão:
 
 ### 5.4 N4 — Pool de conexões
 
-- `Gerenciador_Thread_BD.fechar()` usa `Queue.empty()` como condição de loop (pode engolir erros e
-  não é thread-safe para o pattern).
-- `trocar_bd` definido mas **nunca utilizado** — reutilizaria conexões do banco antigo. Decidir usar
-  ou remover.
-- Sem health-check/reconexão para conexões obsoletas.
-- `_devolver_conexao` pode mascarar o erro original e/ou vazar conexão.
+✅ Resolvido (ver N4 na seção 4): health-check por conexão (`_conexao_valida` com
+`SELECT 1 FROM RDB$DATABASE`), descarte/reposição de conexões stale, reposição na devolução,
+`fechar()` seguro e `_devolver_conexao` sem mascarar o erro original. O código morto `trocar_bd`
+foi **removido** (não existe mais em `Thread_Manager/`).
 
 ### 5.5 N5 — Erros de entrada
 
@@ -331,27 +374,45 @@ eliminando a duplicação e o ciclo de `after` não cancelado.
 
 ### 5.8 Código morto
 
-- `Gerenciador_Thread_BD.trocar_bd()` — definido, nunca chamado (ver §5.4). ⬜ Pendente de decisão.
+- ✅ `Gerenciador_Thread_BD.trocar_bd()` — **removido** (não existe mais no código; ver §5.4).
+- ✅ `Dashboard/Dashboard_Charts.py` — cálculo morto do tooltip (`px`, `py`, `dist` via
+  `np.hypot`) removido em 26/10/2026, sem mudança de comportamento.
+- 🔄 Views físicas `V_LAN_COM` e `V_DIFF_ENTRADA_SAIDA_MES` — já removidas de
+  `Queries/View_Queries.py` e `Queries/Create_Views.py` (0 referências no código), mas **seguem
+  existindo no banco** de cada cliente até um `DROP VIEW` explícito. Pendente (fora do código).
 
 ---
 
 ## 6. Novas Features
 
-> Pendentes — dependem de queries centralizadas e funções unificadas (já prontas) e de
-> `Config_Manager` (já pronto). Podem ser iniciadas após a Fase 4/5.
+> **Feature 1 concluída**; a **Feature 2** segue pendente e depende apenas do que já está pronto
+> (queries centralizadas, funções unificadas, `Config_Manager`).
 
-### Feature 1 — Dashboard Visual
+### Feature 1 — Dashboard Visual — ✅ IMPLEMENTADO
 
-Tela principal pós-conexão com KPIs e gráficos resumidos do inventário, no módulo `Dashboard/`
-(`Dashboard_Screen.py`, `Dashboard_Func.py`, `Dashboard_Charts.py`) com `matplotlib` +
-`FigureCanvasTkAgg`. Saúde do banco: `saude = 100 - (total_problemas / total_produtos * 100)`;
-verde > 90%, amarelo 70–90%, vermelho < 70%.
+Módulo `Dashboard/` (`Dashboard_Screen.py`, `Dashboard_Func.py`, `Dashboard_Charts.py`) entregue e
+em produção: cards de KPI (**Valor do Inventário**, **Total de Vendas**, **Total de Entradas**,
+**Vendas 1.3** e **Previsão de Inventário**), gráfico
+de tendência dos últimos 5 anos (Barras/Linhas × Mês/Ano, curvas suavizadas com
+`scipy.make_interp_spline`, valores nas barras, toolbar e tooltip), filtros persistidos em
+`~/.inventario_tools_dashboard.json` e carregamento em thread (KPIs e tendência separados).
+Os quatro primeiros cards mostram variação percentual vs período anterior; a **Previsão de
+Inventário** (redefinida em 26/10/2026) é uma **estimativa do fim do período** — inventário base +
+movimento líquido do período a custo atual (`tpmov`/`precu`) — e exibe o subtexto fixo
+"estimativa do período", sem comparativo.
+
+**Não implementado da proposta original:** o indicador de *saúde do banco*
+(`saude = 100 - (total_problemas / total_produtos * 100)` com faixas verde/amarelo/vermelho)
+**não** existe no Dashboard atual — o gráfico mostra vendas/entradas/diferença, não problemas de
+cadastro. Se for retomado, deve virar item próprio.
 
 ### Feature 2 — Validação Pré-Inventário
 
 Checklist que roda todas as verificações simultaneamente e apresenta o status de cada uma, com
 contagem e ação corretiva, no módulo `Validacao/` (`Validacao_Screen.py`, `Validacao_Func.py`,
 `Validacao_Itens.py`). Checklist interativo com drill-down, correção em lote, exportação TXT/CSV.
+**Status:** ⬜ o diretório `Validacao/` **não existe** no repositório (só
+`tests/test_validacao.py`, que cobre validações de entrada — não é esta feature).
 
 ---
 
@@ -361,33 +422,36 @@ contagem e ação corretiva, no módulo `Validacao/` (`Validacao_Screen.py`, `Va
 
 | Passo | Item | Objetivo | Tempo Est. |
 |---|---|---|---|
-| 1 | **Fase 1.2** — credenciais em `[Credenciais]` | Eliminar hardcode | 1 h |
-| 2 | **N4** — robustecer pool (fechamento ordenado, health-check); decidir `trocar_bd` | Confiabilidade | 2 h |
-| 3 | **Fase 1.1 remanescente** — política para `com_ger` (SQL livre) | Segurança | 1 h |
-| 4 | **Fase 3.1** — imports no topo dos módulos (restam telas) | Organização | 1 h |
-| 5 | **Fase 3.3 remanescente** — `logging` no tratamento de erros | Rastreabilidade | 30 min |
-| 6 | **Fase 5.3** — testes dos nomes das queries centralizadas (20/14) | Qualidade | 1 h |
-| 7 | **Fase 4** — type hints + `py.typed` | Legibilidade | 2 h |
-| 8 | **Fase 6** — PyInstaller | Validar executável | 1 h |
-| 9 | Feature: Validação Pré-Inventário | Checklist automático | 4 h |
-| 10 | Feature: Dashboard Visual | Visão geral com gráficos | 5 h |
+| 1 | **Fase 1.1 remanescente** — política para `com_ger` (SQL livre) | Segurança | 1 h |
+| 2 | **Fase 3.3 remanescente** — `logging` nos 17 `except: pass` ainda silenciosos | Rastreabilidade | 30 min |
+| 3 | **`DROP VIEW`** de `V_LAN_COM` e `V_DIFF_ENTRADA_SAIDA_MES` nas bases cliente | Limpeza no banco | 30 min |
+| 4 | **Fase 4** — type hints + `py.typed` | Legibilidade | 2 h |
+| 5 | **Fase 6** — PyInstaller (regerar `*.spec` a partir do `Auto_py_to_exe config.json` obsoleto) | Validar executável | 1 h |
+| 6 | Feature: Validação Pré-Inventário | Checklist automático | 4 h |
+| 7 | **Item 10.1** — avaliar paralelizar as consultas *dentro* de `_calcular_kpis` (medir antes) | Desempenho | a medir |
+| 8 | **Item 6.10** — rotação da senha do banco (credenciais antigas no histórico do git) | Segurança | 30 min |
+
+Já concluídos desde a revisão anterior: **Fase 1.2** (credenciais em `[Credenciais]`), **N4**
+(pool), **Fase 3.1** (imports no topo), **Fase 5.2/5.3** (testes puros e de queries) e
+**Feature 1 — Dashboard**.
 
 ### 7.2 Tempo Estimado Total (restante)
 
 | Categoria | Horas Estimadas |
 |---|---|
-| Refatoração (Fases 1, 3, 4, 5.3, 6, N4) | 9,5 h |
+| Refatoração (Fases 1.1, 3.3, 4, 6 + `DROP VIEW`) | 5,0 h |
 | Feature: Validação Pré-Inventário | 4–5 h |
-| Feature: Dashboard Visual | 5–6 h |
-| **TOTAL** | **18,5–20,5 h** |
+| Itens operacionais (senha do banco) | 0,5 h |
+| **TOTAL** | **9,5–10,5 h** |
 
 ### 7.3 Ganho Esperado
 
-- Eliminação de riscos de SQL injection (já parcial) e do SQL livre não validado
-- Correção de bugs reais: pool frágil (N4) — N1, N2, N3, N5, N6, N7, N8, N9 já resolvidos
-- Código tipado, testável e com queries centralizadas (base já pronta)
-- Suíte de testes ampliada cobrindo funções puras e queries
-- Dashboard e Validação automática antes de fechar inventário
+- Eliminação do risco residual do SQL livre não validado (`com_ger`)
+- Bugs estruturais já corrigidos: N1–N9 e o pool de conexões (N4)
+- Código tipado, testável e com queries centralizadas (base pronta; faltam type hints)
+- Suíte de testes ampliada: **203 testes** cobrindo funções puras, Dashboard, threads e contrato
+  das queries
+- Dashboard entregue; falta apenas a Validação automática antes de fechar inventário
 
 ---
 
@@ -395,6 +459,12 @@ contagem e ação corretiva, no módulo `Validacao/` (`Validacao_Screen.py`, `Va
 
 | Dependência | Versão | Uso | Status |
 |---|---|---|---|
-| matplotlib | >= 3.7.0 | Gráficos do Dashboard | ⬜ a adicionar |
-| pytest | >= 7.0 | Testes unitários (dev) | ✅ já instalado |
-| fpdf2 | >= 2.8 | Geração de PDFs (opcional) | ⬜ opcional |
+| matplotlib | (sem pin em `requirements.txt`) | Gráficos do Dashboard | ✅ declarado |
+| numpy | (sem pin em `requirements.txt`) | Cálculos do gráfico (`Dashboard_Charts.py`) | ✅ declarado |
+| scipy | 1.18.1 na `.venv` (sem pin) | Curvas suavizadas (`make_interp_spline`) | ✅ declarado |
+| customtkinter / tkcalendar / Pillow / fdb / pyperclip | (sem pin) | UI, calendário, imagens, Firebird, clipboard | ✅ declarado |
+| pytest | >= 7.0 | Testes unitários (dev) | ✅ já instalado (`requirements-dev.txt`) |
+| fpdf2 | >= 2.8 | Geração de PDFs (opcional) | ⬜ não usado (0 referências no código) |
+
+> O `matplotlib` é usado com backend `Agg` em `Dashboard_Charts.py`, o que também importa para o
+> empacotamento (Fase 6).

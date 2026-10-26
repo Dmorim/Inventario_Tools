@@ -1,7 +1,55 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 23/10/2026 — **varredura de abertura** (somente leitura + sincronia de
+**Última sessão:** 26/10/2026 — **varredura de abertura + restauração da baseline** (plano
+aprovado pelo usuário). O working tree estava **limpo** e o trabalho de 23/10/2026 já havia sido
+**commitado pelo usuário** em `3d7d9ef` ("Harden dashboard and thread workflows"). A varredura
+achou a baseline **quebrada**: `Dashboard/Dashboard_Charts.py:9` importa `scipy.interpolate`
+(`_curva_suave`, suavização do modo Linhas) e o `scipy` **não estava instalado** na `.venv` nem
+declarado no `requirements.txt` → `import Dashboard.Dashboard_Charts` falhava (a tela do
+Dashboard não abriria) e o `pytest` **abortava na coleta** (`tests/test_dashboard_charts.py`).
+**Corrigido:** `pip install scipy` (**1.18.1**) + `numpy` e `scipy` declarados no
+`requirements.txt`. Baseline após a correção: **139 passed** e `compileall` limpo
+(`tests/test_dashboard_charts.py` tem **31 casos**, não 28). O commit `3d7d9ef` trouxe recursos
+que **não** estavam documentados (ver **Item 8.9**): KPI cards com variação **"% vs período
+anterior"** (`carregar_kpis(..., ini_ant, fim_ant)` + `_calcular_kpis`), **curvas suavizadas** no
+modo Linhas, **barra de ferramentas** do matplotlib e **tooltip** ao passar o mouse. Varredura de
+período: **0 resíduos** (`dt_ini`/`dt_fim`/`data_banco_*`).
+
+**Continuação da mesma sessão (26/10/2026) — itens 1 e 4 das pendências (plano aprovado):** depois
+da varredura, o usuário aprovou dois itens do relatório da sessão e o **B3**. (1) **Testes dos
+helpers puros do Dashboard** — `tests/test_dashboard_func.py` (**novo**, 23 casos: `_extrair_series`,
+`_previa_inventario`, `_calcular_kpis`, `carregar_kpis`, `carregar_dados_tendencia`, com banco
+**mockado**), `tests/test_dashboard_screen_helpers.py` (**novo**, 17 casos: `_periodo_anterior`,
+`_formatar_variacao`) e **+4 casos** de `periodo_tendencia_ultimos_5_anos` em `tests/test_periodo.py`
+(arquivo com 16). (2) **Logging nos `except` de UI** — 24 pontos em `Dashboard/Dashboard_Screen.py`
+e 10 em `Dashboard/Dashboard_Charts.py` passaram de `pass` para `logger.debug(..., exc_info=True)`
+com mensagem específica (**0** `pass` soltos nos dois arquivos); como o nível padrão é `INFO`, o
+comportamento visível não muda. (3) **B3** — removido o cálculo morto do tooltip (`px`/`py`/`dist`
+via `np.hypot`) em `Dashboard_Charts.py`. Baseline: **183 passed** em 15 arquivos; `compileall` OK.
+O usuário aplicou em paralelo `'03'` em `QUERY_DISTORCAO_SALDO` (universos agora idênticos) e o
+rótulo `loading_label` no Dashboard. Ver **Item 11**.
+
+**Continuação da mesma sessão (26/10/2026) — KPI "Previsão de Inventário" redefinido (plano
+aprovado):** o usuário definiu que o KPI deve ser uma **estimativa do inventário no fim do
+período** (opção 2 do diagnóstico) e que o selo "vs período anterior" **sai** do card. Diagnóstico
+medido no banco cópia: a fórmula antiga (`inventário − Δ|compras − vendas|` entre
+anos-calendário) misturava custo de nota com preço de venda, comparava ano cheio com ano parcial
+e oscilava **1,8 M** (3.696.805,72 → 5.521.718,82) só mudando o ano de `fim`. **Nova fórmula:**
+`inventário_base + Σ(quant × precu × sinal de l.tpmov)` no período selecionado
+(`QUERY_MOVIMENTO_ESTOQUE_CUSTO`) — mesmo custo e mesmo universo de classificação de
+`QUERY_INVENTARIO`, com sinal `'S'` = entra (compras, devoluções de venda, transferências de
+entrada) e as demais saem. **Premissa do usuário:** base do cliente com inventário **normalizado
+para o ano base** (o snapshot é o valor na **data inicial** do período). Validação: movimento
+histórico **4.156.492,44** × saldo **4.207.242,01** (diferença = estoque inicial de fev/2021);
+previsões no banco cópia: 2024 = 4.647.236,00; 2025 = 4.559.194,73; 2026 jan–set = 4.409.961,27.
+**Custo:** 23–28 s → **3,4–13,1 s** e **1 chamada** por carga (o período anterior usa
+`_calcular_kpis(..., incluir_previa=False)`, pois o KPI não é mais comparado). Removida a
+`QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL`. Testes: `TestPreviaInventario` reescrito (7 casos),
+`incluir_previa` coberto em `_calcular_kpis`/`carregar_kpis`. Baseline: **203 passed** em 16
+arquivos; `compileall` OK. **Não commitado.**
+
+**Sessão anterior:** 23/10/2026 — **varredura de abertura** (somente leitura + sincronia de
 docs) seguida de **limpeza de código morto + testes de threads/pool** (plano aprovado pelo
 usuário). No início da sessão o working tree estava **limpo** e o trabalho das sessões
 anteriores já havia sido **commitado pelo usuário** em `0c43604` ("Harden view cleanup and
@@ -110,22 +158,29 @@ e/ou compactar o `.fdb` (`gbak`/`gfix`). Decisão do usuário, não da sessão.
 Sessão anterior (20/10/2026): otimização de desempenho (views `V_LAN_COM`/`V_DIFF_ENTRADA_SAIDA_MES`
 removidas → entradas 22 s→0,04 s, diferença 41 s→1,3 s). Sessão de 19/10/2026: refatoração de datas concluída.
 **Próximo passo (neste momento):** nenhuma etapa de código aberta. O **Item 9.7 foi descartado
-pelo usuário** em 23/10/2026 (considerado solucionado); a correção da legenda/rótulos do modo
-Linhas foi aplicada no Item 8.8.
+pelo usuário** em 23/10/2026 (considerado solucionado; em 26/10/2026 o usuário aplicou `'03'` na
+distorção, deixando os dois universos idênticos); a correção da legenda/rótulos do modo
+Linhas foi aplicada no Item 8.8; os **itens 1 e 4** das pendências (testes dos helpers do Dashboard
++ logging nos `except` de UI) e o **B3** foram aplicados em 26/10/2026 (ver **Item 11**). **Fila de
+ideias para sessões futuras: Item 10** — em 26/10/2026 foi registrado o **Item 10.1** (paralelizar
+as consultas do Dashboard em threads separadas — hoje KPIs e tendência já rodam em threads
+distintas, mas as consultas **dentro** de cada bloco são sequenciais).
 **Pendências herdadas:** testes manuais (troca de período + reabertura das telas);
 `DROP VIEW V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` no banco (SQL a cargo do usuário — Item 6.8);
-**rotação da senha do banco** (`config.ini` já desrastreado **e commitado** — Item 6.10).
-**Branch:** `refatoracao_v3.5` · **HEAD:** `02afd20`
-**Working tree (nada commitado — regra de ouro):** `Dashboard/Dashboard_Screen.py` (remoção do
-código morto `_fechar_dashboard`), `tests/test_thread_executor.py` (**novo**, 10 casos),
-`tests/test_gerenciador_thread_bd.py` (+7 casos + `import pytest`), **transição de logging**
-em 11 arquivos de código (`Inventario_Conn.py`, `Banco_de_Dados_Func.py`, `Comandos_Func.py`,
-`Consultas_Dist_Saldo_Screen.py`, `Gen_Funcs_Consulta.py`, `Consultas_Val_Ent_Func.py`,
-`Consultas_Val_Inv_Func.py`, `Consultas_Val_Ven_Func.py`, `Create_Views.py`,
-`Query_Operations.py`, `Thread_Executor.py`), `Dashboard/Dashboard_Charts.py` (legenda fora da
-área + rótulos nos dois modos: barras verticais com folga automática, linhas com fonte 8 + halo),
-`tests/test_dashboard_charts.py` (casos parametrizados e testes de rotulação/legenda), `AGENTS.md`,
-`AGENTS_SESSAO.md`, `docs/Status_Refatoracao.md` — trabalho de 23/10/2026 (suíte **139 passed**).
+**rotação da senha do banco** (`config.ini` já desrastreado **e commitado** — Item 6.10);
+**17 `except ...: pass`** ainda silenciosos fora do Dashboard (`Comandos_Func` 3,
+`Banco_de_Dados_Func` 1, `Consultas_Val_Screen` 1, `Consultas_Val_Inv_Screen` 2,
+`Tk_Progress_Bar` 3, `Tk_Status_Animator` 2, `Gerenciador_Thread_BD` 3, `Thread_Executor` 2);
+**PyInstaller** sem receita válida (`Outros/Auto_py_to_exe config.json` obsoleto).
+**Branch:** `refatoracao_v3.5` · **HEAD:** `3d7d9ef` · **baseline:** **183 passed** em 15 arquivos
+**Working tree (nada commitado — regra de ouro):** o trabalho **desta sessão** (26/10/2026):
+`requirements.txt` (`numpy`/`scipy` explícitos), `AGENTS.md`, `AGENTS_SESSAO.md`,
+`docs/Status_Refatoracao.md`, `docs/Mapeamento_Refatoracao_Datas.md` e o `docs/Plano_*.md`
+(ignorado pelo git) — sincronia de status; `Dashboard/Dashboard_Charts.py` e
+`Dashboard/Dashboard_Screen.py` (logging + B3, convivendo com a edição **do usuário** do
+`loading_label`); `tests/test_periodo.py`; **novos** (untracked) `tests/test_dashboard_func.py` e
+`tests/test_dashboard_screen_helpers.py`; e as edições **do usuário** em `Queries/Consulta_Queries.py`
+(`'03'` na distorção). O trabalho de 23/10/2026 está **commitado pelo usuário** em `3d7d9ef`.
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
 ---
@@ -192,7 +247,9 @@ permissão, mas qualquer **escrita** exige plano + prévia + confirmação.
 .\.venv\Scripts\python.exe -m pytest tests -v
 ```
 
-Estado de referência saudável: **136 passed**, `compileall` sem erros.
+Estado de referência saudável: **183 passed** em 15 arquivos, `compileall` sem erros (exige
+`requirements.txt` instalado — `matplotlib`/`numpy`/`scipy` são importados por
+`Dashboard/Dashboard_Charts.py`).
 Se testes falharem após mudança, o plano foi executado incorretamente — informar o usuário.
 
 ---
@@ -261,9 +318,16 @@ Se testes falharem após mudança, o plano foi executado incorretamente — info
 - **Nível de log configurável por env var:** `INVENTARIO_LOG_LEVEL` (`DEBUG`, `INFO`...)
   com fallback `INFO` — lido em `Outros/Logger/Get_Logger.py`. Para diagnóstico, rodar a
   aplicação com `$env:INVENTARIO_LOG_LEVEL='DEBUG'` (PowerShell) sem alterar código.
-- Estado atual (23/10/2026, após a transição): **72 chamadas de logger** no código de produção
-  (35 `exception`, 15 `info`, 5 `warning`, 12 `debug`, 3 `error`, + `setLevel`/`addHandler`) —
-  todas as de resultado já no início da função; nenhuma duplicação entrada+saída.
+- **`except` de melhor esforço não fica silencioso (desde 26/10/2026):** onde o código só tenta
+  limpar/posicionar algo e pode falhar sem prejuízo (UI, `destroy`, `place_forget`, `grab`), usar
+  `logger.debug('<o que falhou>', exc_info=True)` em vez de `pass`. Nível `debug` mantém o volume
+  zero no padrão (`INFO`); as mensagens só aparecem com `INVENTARIO_LOG_LEVEL=DEBUG`. Aplicado ao
+  Dashboard — 24 pontos em `Dashboard_Screen.py` e 10 em `Dashboard_Charts.py` (**Item 11**).
+  Restam 17 `except ...: pass` em outros módulos, a avaliar caso a caso.
+- Estado atual (26/10/2026, após a transição): **112 chamadas de logger** no código de produção
+  (36 `exception`, 15 `info`, 5 `warning`, 53 `debug`, 3 `error`) — as de resultado já no início da
+  função; nenhuma duplicação entrada+saída. O salto de 12 → 53 `debug` vem dos `except` do
+  Dashboard convertidos no **Item 11**.
 
 ### 6.3 Segurança e dados
 - **Nunca** gravar credenciais em arquivo versionado; `Config.ini` está no `.gitignore`.
@@ -271,8 +335,14 @@ Se testes falharem após mudança, o plano foi executado incorretamente — info
 
 ### 6.4 Testes
 - Testes cobrem funções **puras**; não fazer testes importarem telas com UI/display.
+  Exceções já existentes: `tests/test_dashboard_charts.py` (render **Agg**, sem display) e
+  `tests/test_dashboard_screen_helpers.py` (importa `Dashboard_Screen`, mas só chama
+  `_periodo_anterior`/`_formatar_variacao` — o import não cria janela).
 - **Não alterar testes existentes** sem aprovação explícita; acrescentar casos novos apenas
   com plano prévio (regra Item 3).
+- Ao mexer nos dados do Dashboard, rode também
+  `pytest tests/test_dashboard_func.py tests/test_dashboard_screen_helpers.py` (40 casos, banco
+  mockado — ver **Item 11**).
 
 ### 6.5 Cuidados com o ambiente (lições desta sessão)
 - **PowerShell 5.1**: NÃO usar `&&`, `| head`, `| tail`, `rg` (não existem). Usar
@@ -281,6 +351,10 @@ Se testes falharem após mudança, o plano foi executado incorretamente — info
   que o console mostra como `??`. Para acessar no Python, usar escape `'\xe7\xe3o'` ou walk,
   nunca digitar o caminho acentuado literalmente no shell.
 - Scripts gerados temporários: prefira `docs/` ou temp; não deixar soltos na raiz.
+- **Dependências (`26/10/2026`):** o `requirements.txt` precisa estar instalado **e** atualizado
+  quando o código ganha import novo. `scipy` (usado por `_curva_suave` no gráfico) ficou fora do
+  `requirements.txt` entre `3d7d9ef` e 26/10/2026: `compileall` **não detecta** isso (não importa
+  módulos) — quem detecta é `pytest` (falha de coleta) e a execução do app (tela do Dashboard).
 
 ### 6.6 Documentação
 - Manter sincronizados: `docs/Status_Refatoracao.md`, `docs/Mapeamento_Refatoracao_Datas.md`,
@@ -317,6 +391,8 @@ Se testes falharem após mudança, o plano foi executado incorretamente — info
 - **`KPI previa` (`QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL`) ~20 s é I/O, não SQL.** O join é
   um-para-um (`fatur` repetido = **0**; pares do join = **111.757** < entradas 115.847;
   maior fan-out = **1**). Nada a otimizar na query.
+  *(Histórico: essa query foi **substituída** em 26/10/2026 por `QUERY_MOVIMENTO_ESTOQUE_CUSTO`
+  — ver o bloco de abertura do arquivo; as medições abaixo continuam válidas como registro.)*
 - **NÃO filtrar a CTE `saidas` por período.** Testado: fica **mais lento** (23,05 s vs 20,86 s)
   **e muda o KPI** (2024: 3.190.616,54 → 3.124.194,69; 2025: 3.701.052,83 → 3.596.048,63).
   Já era alertado no Item 6.7; agora está medido.
@@ -625,6 +701,31 @@ de dados (normal e séries quase iguais) × 2 tamanhos × 5/7/12 pontos, nos **d
 `test_rotulos_de_barras_nao_cobrem_outras_barras` e
 `test_rotulos_de_linhas_usam_halo_e_fonte_8`. Suíte: **139 passed**; `compileall` limpo.
 
+### 8.9 Recursos do commit `3d7d9ef` documentados em 26/10/2026
+
+O commit `3d7d9ef` ("Harden dashboard and thread workflows") foi criado pelo usuário depois da
+sessão de 23/10/2026 e contém, além do que o Item 8.8 já descrevia, quatro recursos que **não
+estavam registrados** (descobertos na varredura de abertura de 26/10/2026):
+
+| Recurso | Onde | O que faz |
+|---|---|---|
+| **KPI comparativo** | `Dashboard/Dashboard_Screen.py` (`_periodo_anterior`, `_formatar_variacao`, `_criar_kpi_card(..., variacao, cor_variacao)`, `_atualizar_dashboard(..., kpis_anterior)`) + `Dashboard/Dashboard_Func.py` (`_calcular_kpis`, `carregar_kpis(ini, fim, ini_ant, fim_ant)`) | cada card exibe **"±x,x% vs período anterior"**; o período anterior tem a **mesma duração** e termina no dia anterior ao início do período atual (verde se ≥ 0, vermelho se < 0). Com `ini_ant`/`fim_ant`, `carregar_kpis` devolve **tupla** `(atual, anterior)`; as chaves `*_num_ant` são montadas no callback de `_carregar_dados` |
+| **Curvas suavizadas** | `Dashboard/Dashboard_Charts.py` (`_curva_suave`, `numpy` + `scipy.interpolate.make_interp_spline`, 200 pontos) | no modo **Linhas**, o traçado é uma spline (k = min(3, n−1)); os **pontos/marcadores e a legenda** continuam sendo plotados com os dados originais (`linestyle='none'`), para o tooltip e os rótulos usarem os valores reais |
+| **Barra de ferramentas** | `criar_grafico_tendencia` (`NavigationToolbar2Tk`, `side='bottom'`) | controles padrão do matplotlib (zoom/pan/salvar) embaixo do gráfico; falha é silenciada (`try/except`) |
+| **Tooltip** | `adicionar_tooltip` (`CTkLabel` via `place`) | mostra o valor (`R$ …`) sob o cursor em barras/pontos; registrado por `mpl_connect('motion_notify_event'/'axes_leave_event')` |
+
+**Dependência nova:** `numpy` e `scipy` passaram a ser imports **diretos** de `Dashboard_Charts.py`
+(antes o numpy só vinha como dependência transitiva do matplotlib). Em **26/10/2026** o `scipy`
+foi **instalado** na `.venv` (1.18.1) e ambos foram **declarados no `requirements.txt`** — sem
+isso o módulo não importava e a suíte abortava na coleta.
+
+**Observações (sem ação tomada):**
+- `Dashboard_Screen.py:11` importava `adicionar_tooltip` sem usar (o tooltip é registrado dentro
+  de `criar_grafico_tendencia`) — **o usuário removeu esse import do código em 26/10/2026**
+  (alteração dele no working tree; o agente não tocou no arquivo).
+- `tests/test_dashboard_charts.py` tem **31 casos** (o doc anterior dizia 28); a suíte total
+  continua **139 passed**.
+
 ---
 
 ## 9. KPI "Total de Entradas" × série "Entradas" do gráfico — DIVERGÊNCIA DE FÓRMULA (22/10/2026)
@@ -734,6 +835,8 @@ view `V_FAT_VALOR_SAIDA`; fórmulas "de entradas" em todo o app.
 `MAX(c.valno)` (valor da **nota**), e não pela expressão `EXPR_VALOR_ENTRADA` (valor extendido).
 Conceito diferente (diferença entradas−saídas por nota) — **não misturar** com o KPI
 "Total de Entradas".
+*(Histórico: em 26/10/2026 o KPI passou a usar `QUERY_MOVIMENTO_ESTOQUE_CUSTO`, que não usa
+`in01com`/`V_FAT_VALOR_SAIDA`; a observação acima vale para o código anterior a essa data.)*
 
 **Nota de ambiente:** `RDB$VIEWS` e `RDB$INDEX_FIELDS` **não são consultáveis** neste banco
 ("Table unknown") — mesmo bloqueio do Item 6.7. A view do banco foi conferida **funcionalmente**
@@ -772,7 +875,10 @@ universo); `'03'` sem ação imediata; `l.cance` sem ação.
 
 > **Descarte (23/10/2026):** o usuário informou que o item **já foi solucionado** e pediu para
 > descartá-lo. O diff abaixo **não foi aplicado pelo agente** e permanece apenas como registro
-> histórico da decisão.
+> histórico da decisão. **Atualização (26/10/2026):** o usuário aplicou a parte (a) por conta
+> própria — `QUERY_DISTORCAO_SALDO` passou a incluir `'03'`, então os universos de
+> `QUERY_INVENTARIO` e da distorção são agora **idênticos** (`'00'`–`'06'`); a parte (c)
+> (`l.cance` nas entradas) **continua não aplicada**, com impacto medido de **0,00**.
 
 **Decisão (palavras do usuário):** *"Normalize a distorção e o inventário, inclua `'03'` na
 distorção. `'07'` indica produtos de uso e consumo, eles não são inclusos em **NENHUM** cálculo
@@ -866,3 +972,104 @@ Script `%TEMP%\opencode\exemplos_classes.py`. Amostra por cliente (maior valor p
 5. Rodar `compileall` + `pytest -v`.
 6. Atualizar docs de status (se a mudança afetar status).
 7. **Não commitar.** Relatar o que foi feito e o que ficou pendente.
+
+---
+
+## 10. FILA DE IDEIAS PARA SESSÕES FUTURAS
+
+### 10.1 Paralelizar as consultas do Dashboard em threads separadas — **avaliar** (registrado em 26/10/2026)
+
+**Pedido do usuário (26/10/2026):** "introduzir threads separadas nas consultas do banco de dados
+dentro do dashboard, **apenas se esse já não for o caso**". A apuração abaixo foi feita na sessão
+de 26/10/2026 (somente leitura) e **nada foi alterado**.
+
+**O que JÁ é paralelo hoje:**
+- A **UI (Tk) nunca executa query**: tudo passa por `thread_execução()`
+  (`Thread_Manager/Thread_Executor.py`), que cria uma `threading.Thread` por chamada.
+- **KPIs × tendência já rodam em duas threads independentes**, disparadas na abertura do
+  Dashboard (`Dashboard_Screen.py:448` `_carregar_dados` → `carregar_kpis`; `:461`
+  `carregar_tendencia` → `_recarregar_tendencia` → `carregar_dados_tendencia`).
+- O **pool** (`Thread_Manager/Gerenciador_Thread_BD.py`) já suporta operações concorrentes:
+  `Queue` de conexões, limite `min(max(cpu*2, 2), 50)`, contador `_operacoes_ativas` e
+  `aguardar_operacoes()`; cada `query_executor` pega/devolve uma conexão. **Não há infra nova a
+  criar** para consultas paralelas.
+
+**O que NÃO é paralelo (o que o pedido alcança):**
+- Dentro de cada thread, as consultas são **sequenciais** (`_executar_consulta` /
+  `_executar_select`, uma de cada vez):
+  - `carregar_kpis` (`Dashboard/Dashboard_Func.py:250`) → `_calcular_kpis` (`:216`): inventário
+    → vendas → entradas → **previsão** (`_previa_inventario`, `QUERY_MOVIMENTO_ESTOQUE_CUSTO`,
+    a mais pesada). Desde 26/10/2026 a previsão só roda no **período atual**
+    (`incluir_previa=False` no anterior) → **7 consultas sequenciais**, 1 pesada.
+  - `carregar_dados_tendencia` (`:174`): vendas → entradas (2 consultas sequenciais).
+- Não há `ThreadPoolExecutor`/`concurrent.futures` no código (nenhum uso hoje).
+
+**Onde mexer (se aprovado):** `Dashboard/Dashboard_Func.py` — `_calcular_kpis` (3 consultas
+independentes + previsão que depende só de `valor_inventario`) e `carregar_dados_tendencia`
+(vendas × entradas independentes). As duas chamadas de `_calcular_kpis` (atual × anterior) também
+são independentes entre si. *(Atualização 26/10/2026: a previsão deixou de ser calculada no
+período anterior, então a 2ª chamada tem só 3 consultas leves.)*
+
+**Cuidados obrigatórios:**
+- **Não tocar em Tk** dentro das threads: os callbacks de UI devem continuar no `callback` externo
+  do `thread_execução` (padrão atual, Item 6.2/`02afd20`).
+- **Preservar a semântica de erro** de `_executar_consulta` (falha de uma consulta → log + retorna
+  `0`, sem derrubar o bloco inteiro) e a de `carregar_dados_tendencia` (erro → séries vazias).
+- **Consumo do pool**: cada consulta paralela ocupa 1 conexão; com 2 blocos × N consultas dá para
+  passar do pool desta máquina (8 conexões) — dimensionar `max_workers` ou serializar parte.
+- **Sem ganho garantido:** pelo Item 6.7/6.8 a `previa` (~20 s) é **I/O do servidor**
+  (`DefaultDbCachePages = 2048`, máquina com 3,8 GB de RAM); paralelizar pode apenas **contender**
+  pelo mesmo disco. **Medir antes e depois** (só SELECT, banco = cópia de cliente,
+  `perf_counter`), como nas sessões de 20–21/10/2026.
+- Ganho plausível só se: (a) o tempo total cair para o da consulta mais lenta, ou (b) a previsão
+  do período atual rodar junto com a do período anterior.
+
+**Status:** ⬜ **não iniciado** — aguardando uma sessão dedicada (decisão do usuário em 26/10/2026:
+"nesta sessão vamos focar em outras ideias"). Começar por **medição**, não por código.
+
+---
+
+## 11. ITENS 1 E 4 DAS PENDÊNCIAS + B3 — **APLICADOS em 26/10/2026** (sem commit)
+
+**Origem:** relatório de pendências produzido na varredura desta mesma sessão. O usuário aprovou os
+**itens 1 e 4** e o **B3**; as correções de documentação foram autorizadas junto.
+
+### 11.1 Item 1 — testes dos helpers puros do Dashboard (44 casos novos)
+
+| Arquivo | Casos | Cobre |
+|---|---|---|
+| `tests/test_dashboard_func.py` (**novo**) | 23 | `_extrair_series` (chave ano/mês, `None`→0, `Decimal`→`float`, série vazia, chave repetida), `_previa_inventario` (diferença entre anos, parâmetros enviados, 1 linha, vazio), `_calcular_kpis` (formatação pt-BR, números crus, `vendas_130` = ×1,30, parâmetros de cada query, zeros), `carregar_kpis` (sem/com comparação, limites incompletos) e `carregar_dados_tendencia` (união por mês/ano, preenchimento de períodos ausentes, `diferenca = entradas - vendas`, CFOPs, erro → séries vazias) |
+| `tests/test_dashboard_screen_helpers.py` (**novo**) | 17 | `_periodo_anterior` (mês, ano, 1 dia, bissexto, duração, sem sobreposição, entrada inválida) e `_formatar_variacao` (sinal/cor, zero, queda total, 1 casa, base zero/`None`, strings, base negativa) |
+| `tests/test_periodo.py` (editado) | +4 | `periodo_tendencia_ultimos_5_anos` (agora **16 casos** no arquivo) |
+
+**Como:** tudo por `monkeypatch` em `_executar_select` / `_executar_consulta` /
+`_previa_inventario` / `_calcular_kpis` — **nenhum acesso ao Firebird** e nenhum display aberto.
+`tests/test_dashboard_screen_helpers.py` importa `Dashboard.Dashboard_Screen` apenas para pegar as
+funções puras (o import não instancia Tk).
+
+### 11.2 Item 4 — logging em vez de `except: pass` na UI do Dashboard
+
+- **24 pontos** em `Dashboard/Dashboard_Screen.py` (geometria, `grab`, botão, fechar, combos,
+  `loading_label`, `messagebox`, filtros) e **10** em `Dashboard/Dashboard_Charts.py` (tooltip,
+  toolbar, registro de eventos) trocados de `pass` para `logger.debug('<o que falhou>',
+  exc_info=True)`. **0** `pass` soltos restantes nos dois arquivos.
+- **Sem mudança de comportamento:** o nível padrão do logger é `INFO`; as mensagens só aparecem com
+  `INVENTARIO_LOG_LEVEL=DEBUG` (ver Item 6.2).
+
+### 11.3 B3 — código morto no tooltip (aprovado junto)
+
+- Removidas 3 linhas mortas do loop de linhas em `adicionar_tooltip`
+  (`Dashboard_Charts.py`): `px`/`py` via `ax.transData.transform` e `dist` via `np.hypot`
+  (o valor era sobrescrito logo abaixo por `dist = abs(dados_x[idx] - event.xdata)`).
+
+### 11.4 Validação e estado
+
+- `compileall` OK; `pytest tests -q` → **183 passed** em 15 arquivos (139 anteriores + 44).
+- **Docs sincronizados:** `docs/Status_Refatoracao.md` (Fase 5 por arquivo, working tree, Fase 6,
+  item 9.7 e parágrafos desta sessão), `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (v5.2 —
+  Fases 3.1/3.3/5.2/5.3/6, §5.4/§5.8, Features 1/2, roadmap/horas e §8) e `AGENTS.md` (estrutura,
+  capa de dados do Dashboard, convenção de logging).
+- **Edições do usuário encontradas no caminho (não revertidas):** `loading_label` em
+  `Dashboard_Screen.py` e `'03'` em `QUERY_DISTORCAO_SALDO` (`Queries/Consulta_Queries.py`).
+- **Não commitado.** Nada de git foi alterado por esta sessão.
+

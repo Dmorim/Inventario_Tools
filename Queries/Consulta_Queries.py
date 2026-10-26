@@ -219,7 +219,7 @@ QUERY_DISTORCAO_SALDO = """
                 WHERE
                     COALESCE(l.controlaestoque, 'S') = 'S'
                     AND COALESCE(l.cance, 'N') = 'N'
-                    AND classificacao_produto IN ('00', '01', '02', '04', '05', '06')
+                    AND classificacao_produto IN ('00', '01', '02', '03', '04', '05', '06')
                     AND l.venda <> 'R'
                     AND (COALESCE(c.alterarsaldo, 'S') = 'S' OR l.venda <> 'J')
                 GROUP BY

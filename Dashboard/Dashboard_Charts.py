@@ -7,7 +7,12 @@ import matplotlib
 import matplotlib.patheffects as path_effects
 import numpy as np
 from scipy.interpolate import make_interp_spline
+
+from Outros.Logger.Get_Logger import get_logger
+
 matplotlib.use('Agg')
+
+logger = get_logger(__name__)
 
 
 COR_SERIES_VENDAS = '#2ecc71'
@@ -291,7 +296,8 @@ def adicionar_tooltip(grafico_frame):
                 try:
                     tooltip.destroy()
                 except Exception:
-                    pass
+                    logger.debug('Falha ao destruir tooltip antigo.',
+                                 exc_info=True)
             tooltip = CTkLabel(grafico_frame, text='', font=('', 9),
                                text_color='#ffffff', fg_color='#1f1f1f',
                                corner_radius=4)
@@ -309,7 +315,8 @@ def adicionar_tooltip(grafico_frame):
                     try:
                         tooltip.place_forget()
                     except Exception:
-                        pass
+                        logger.debug('Falha ao esconder o tooltip do gráfico.',
+                                     exc_info=True)
                 return
             melhor = None
             melhor_dist = None
@@ -323,6 +330,8 @@ def adicionar_tooltip(grafico_frame):
                                 melhor_dist = dist
                                 melhor = ('bar', barra.get_height())
                 except Exception:
+                    logger.debug('Falha ao ler barra do gráfico para o tooltip.',
+                                 exc_info=True)
                     continue
             for linha in ax.lines:
                 try:
@@ -331,23 +340,21 @@ def adicionar_tooltip(grafico_frame):
                     if len(dados_x) == 0:
                         continue
                     idx = np.argmin(np.abs(np.array(dados_x) - event.xdata))
-                    if idx < len(dados_y):
-                        px = ax.transData.transform((dados_x[idx], dados_y[idx]))
-                        py = ax.transData.transform((event.xdata, event.ydata))
-                        dist = np.hypot(px[0] - event.xdata * ax.figure.dpi /
-                                        ax.figure.dpi, 0)
                     dist = abs(float(dados_x[idx]) - float(event.xdata))
                     if melhor_dist is None or dist < melhor_dist:
                         melhor_dist = dist
                         melhor = ('line', float(dados_y[idx]), int(idx))
                 except Exception:
+                    logger.debug('Falha ao ler linha do gráfico para o tooltip.',
+                                 exc_info=True)
                     continue
             if melhor is None or melhor_dist is None or melhor_dist > 0.4:
                 if tooltip is not None:
                     try:
                         tooltip.place_forget()
                     except Exception:
-                        pass
+                        logger.debug('Falha ao esconder o tooltip (sem alvo).',
+                                     exc_info=True)
                 return
             if melhor[0] == 'bar':
                 texto = _formatar(melhor[1])
@@ -358,19 +365,21 @@ def adicionar_tooltip(grafico_frame):
                 tooltip.place(x=event.guiEvent.x + 12, y=event.guiEvent.y - 12)
                 tooltip.lift()
             except Exception:
-                pass
+                logger.debug('Falha ao posicionar o tooltip do gráfico.',
+                             exc_info=True)
 
         def _on_leave(event):
             if tooltip is not None:
                 try:
                     tooltip.place_forget()
                 except Exception:
-                    pass
+                    logger.debug('Falha ao esconder o tooltip ao sair do gráfico.',
+                                 exc_info=True)
 
         canvas.mpl_connect('motion_notify_event', _on_move)
         canvas.mpl_connect('axes_leave_event', _on_leave)
     except Exception:
-        pass
+        logger.debug('Falha ao registrar o tooltip do gráfico.', exc_info=True)
 
 
 def criar_grafico_tendencia(master, dados, tipo='Barras'):
@@ -433,9 +442,10 @@ def criar_grafico_tendencia(master, dados, tipo='Barras'):
         toolbar.update()
         toolbar.pack(side='bottom', fill='x')
     except Exception:
-        pass
+        logger.debug('Falha ao montar a barra de ferramentas do gráfico.',
+                     exc_info=True)
     try:
         adicionar_tooltip(master)
     except Exception:
-        pass
+        logger.debug('Falha ao adicionar tooltip ao gráfico.', exc_info=True)
     return canvas

@@ -110,7 +110,9 @@ Verificadas assinaturas e uso de período:
 
 ### Testes e compilação
 - compileall: OK (sem erros).
-- pytest -v: **69 passed** (0 failed).
+- pytest -v: **69 passed** (0 failed) no fechamento da refatoração de datas.
+  **Estado atual (26/10/2026): 139 passed** — suíte cresceu com `PeriodoManager`,
+  `Dashboard_Charts`, `Create_Views`, `Thread_Executor` e `GerenciadorThreadBD`.
 
 ### Sincronização docs
 - docs/Status_Refatoracao.md atualizado com seção "Checklist de Migração (anexo...)" e itens marcados conforme execução.
