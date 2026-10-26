@@ -20,7 +20,7 @@ def _fake_consulta(monkeypatch, retornos):
     """Substitui `_executar_consulta` e registra (query, params) de cada chamada."""
     chamadas = []
 
-    def fake(query, params=None):
+    def fake(query, params=None, **kwargs):
         chamadas.append((query, params))
         return retornos[len(chamadas) - 1]
 
@@ -84,7 +84,8 @@ class TestPreviaInventario:
             10000, '01.01.2025', '31.12.2025') == 10000
 
     def test_movimento_nulo_mantem_o_inventario(self, monkeypatch):
-        _fake_consulta(monkeypatch, [None])
+        monkeypatch.setattr(Dashboard_Func, 'query_executor',
+                            lambda *a, **k: [(None,)])
         assert Dashboard_Func._previa_inventario(
             10000, '01.01.2025', '31.12.2025') == 10000
 
@@ -99,6 +100,23 @@ class TestPreviaInventario:
         _fake_consulta(monkeypatch, [250])
         assert Dashboard_Func._previa_inventario(
             None, '01.01.2025', '31.12.2025') == 250
+
+    def test_falha_na_consulta_devolve_none(self, monkeypatch):
+        _fake_consulta(monkeypatch, [None])
+        assert Dashboard_Func._previa_inventario(
+            10000, '01.01.2025', '31.12.2025') is None
+
+    def test_pede_none_em_erro_para_nao_mascarar_a_falha(self, monkeypatch):
+        kwargs_vistos = []
+
+        def fake(query, params=None, **kwargs):
+            kwargs_vistos.append(kwargs)
+            return 0
+
+        monkeypatch.setattr(Dashboard_Func, '_executar_consulta', fake)
+        Dashboard_Func._previa_inventario(1000, '01.01.2025', '31.12.2025')
+
+        assert kwargs_vistos[0].get('padrao_em_erro', 0) is None
 
 
 class TestCalcularKpis:
@@ -176,6 +194,18 @@ class TestCalcularKpis:
 
         assert kpis['valor_inventario'] == '0,00'
         assert kpis['valor_vendas'] == '0,00'
+
+    def test_falha_na_previa_mostra_erro_no_card(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_executar_consulta',
+                            lambda *a, **k: 1000)
+        monkeypatch.setattr(Dashboard_Func, '_previa_inventario',
+                            lambda valor, ini, fim: None)
+
+        kpis = Dashboard_Func._calcular_kpis('01.01.2025', '31.12.2025')
+
+        assert kpis['previa_inventario'] == 'Erro'
+        assert kpis['previa_inventario_num'] == 0.0
+        assert kpis['valor_inventario'] == '1.000,00'
 
     def test_sem_previa_nao_consulta_nem_expoe_o_kpi(self, monkeypatch):
         chamadas = []
@@ -295,3 +325,29 @@ class TestCarregarDadosTendencia:
         assert Dashboard_Func.carregar_dados_tendencia(
             '01.01.2025', '31.12.2025', 'mes') == {
             'labels': [], 'vendas': [], 'entradas': [], 'diferenca': []}
+
+
+class TestExecutarConsulta:
+    def test_falha_usa_o_padrao_em_erro_informado(self, monkeypatch):
+        def falhar(*args, **kwargs):
+            raise RuntimeError('falha simulada')
+
+        monkeypatch.setattr(Dashboard_Func, 'query_executor', falhar)
+
+        assert Dashboard_Func._executar_consulta(
+            'SELECT 1', None, padrao_em_erro=None) is None
+
+    def test_falha_sem_padrao_mantem_zero(self, monkeypatch):
+        def falhar(*args, **kwargs):
+            raise RuntimeError('falha simulada')
+
+        monkeypatch.setattr(Dashboard_Func, 'query_executor', falhar)
+
+        assert Dashboard_Func._executar_consulta('SELECT 1') == 0
+
+    def test_resultado_nulo_nao_e_tratado_como_erro(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, 'query_executor',
+                            lambda *a, **k: [(None,)])
+
+        assert Dashboard_Func._executar_consulta(
+            'SELECT 1', None, padrao_em_erro=None) == 0

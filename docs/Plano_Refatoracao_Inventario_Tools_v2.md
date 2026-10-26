@@ -4,10 +4,11 @@
 **Autor:** Daniel Amorim (com colaboração de Cícero Romão nas consultas SQL)
 **Licença:** CC0 1.0 Universal (domínio público)
 **Documento atualizado em:** 26/10/2026
-**Versão do documento:** 5.3 (atualizado — reflete o estado atual do código na branch
-`refatoracao_v3.5`, HEAD `3d7d9ef`: Dashboard completo com KPI comparativo, curvas suavizadas,
-toolbar e tooltip; KPI "Previsão de Inventário" redefinido como estimativa do fim do período;
-pool endurecido; **203 testes** passando em 16 arquivos)
+**Versão do documento:** 5.4 (atualizado — reflete o estado atual do código na branch
+`refatoracao_v3.5`, HEAD `56093b1`: Dashboard completo com KPI comparativo, curvas suavizadas,
+toolbar e tooltip; KPI "Previsão de Inventário" redefinido como estimativa do fim do período
+(falha da consulta visível como `Erro` no card — B2); pool endurecido; **209 testes** passando em
+15 arquivos)
 
 > Este documento atualiza o plano original (`Plano_Refatoracao_Inventario_Tools.pdf`) e as revisões
 > 1.x/2.0/3.0. Ele incorpora as **modificações já feitas no projeto** (branch `QoL` integrada ao
@@ -161,13 +162,13 @@ Todas as mudanças abaixo já estão no código (a maioria na branch `refatoraca
 | `help_base64_image` sem vírgula inválida (`Banco_Images.py`) | N7/§5.6 | ✅ Feito |
 | `Listagem_Treeview` — `grab_set()` + `WM_DELETE_WINDOW` (via `toplevel.protocol`) | N7/§5.6 | ✅ Feito |
 | `executa_comandos` — feedback de status via `atualizar_ui_main` (sem `after()` na thread) | N3/§5.3 | ✅ Feito |
-| Suíte ampliada para **203 testes** em 16 arquivos (`pytest` → 203 passed) | Fase 5 | ✅ Feito |
+| Suíte ampliada para **209 testes** em 15 arquivos (`pytest` → 209 passed; 203 no HEAD `56093b1` + 6 do B2) | Fase 5 | ✅ Feito |
 | **Feature 1 — Dashboard** (`Dashboard/`): KPIs + KPI comparativo, gráfico de tendência (Barras/Linhas × Mês/Ano), toolbar, tooltip e persistência de filtros | Feature 1 | ✅ Feito |
 | **Logging** nos `except` de UI do Dashboard (24 em `Dashboard_Screen.py`, 10 em `Dashboard_Charts.py`) e remoção do cálculo morto do tooltip | Fase 3.3 / §5.8 | ✅ Feito (26/10/2026) |
 
 > **Nota sobre branches:** As modificações de UI foram consolidadas no `main` via PR #14
 > (merge `48e7fe3`). A refatoração estrutural é conduzida na branch `refatoracao_v3.5`, hoje
-> sincronizada com `origin/refatoracao_v3.5` no HEAD `3d7d9ef` (o commit `fc40fdd`, citado nas
+> sincronizada com `origin/refatoracao_v3.5` no HEAD `56093b1` (o commit `fc40fdd`, citado nas
 > revisões anteriores, já foi enviado).
 
 ---
@@ -244,7 +245,7 @@ O marker `py.typed` não existe. Criar na raiz para indicar suporte a type check
 
 ### Fase 5 — Testes Unitários (restante)
 
-#### 5.2 Testar funções puras — ✅ COMPLETO (203 testes na suíte, 16 arquivos)
+#### 5.2 Testar funções puras — ✅ COMPLETO (209 testes na suíte, 15 arquivos)
 
 Principais grupos (a suíte completa está detalhada em `docs/Status_Refatoracao.md`, Fase 5):
 
@@ -257,7 +258,7 @@ Principais grupos (a suíte completa está detalhada em `docs/Status_Refatoracao
 | `_montar_operacoes()` / `comandos_true()` | Comandos_Func.py | ✅ coberto (`test_comandos_func.py`, 12) |
 | `query_updater` / `_safe_schedule_ui` / validações UI | Thread_Manager / Configuracoes | ✅ coberto (`test_query_operations.py` 12, `test_validacao.py` 10) |
 | `PeriodoManager` | Data_Manager/PeriodoManager.py | ✅ coberto (`test_periodo_manager.py`, 16) |
-| `_extrair_series()` / `_previa_inventario()` / `_calcular_kpis()` / `carregar_kpis()` / `carregar_dados_tendencia()` | Dashboard/Dashboard_Func.py | ✅ coberto (`test_dashboard_func.py`, 27 — banco mockado) |
+| `_extrair_series()` / `_previa_inventario()` / `_calcular_kpis()` / `carregar_kpis()` / `carregar_dados_tendencia()` | Dashboard/Dashboard_Func.py | ✅ coberto (`test_dashboard_func.py`, 33 — banco mockado) |
 | `_periodo_anterior()` / `_formatar_variacao()` | Dashboard/Dashboard_Screen.py | ✅ coberto (`test_dashboard_screen_helpers.py`, 17) |
 | `_desenhar_series()` (render Agg, sem display) | Dashboard/Dashboard_Charts.py | ✅ coberto (`test_dashboard_charts.py`, 31) |
 
@@ -399,7 +400,11 @@ de tendência dos últimos 5 anos (Barras/Linhas × Mês/Ano, curvas suavizadas 
 Os quatro primeiros cards mostram variação percentual vs período anterior; a **Previsão de
 Inventário** (redefinida em 26/10/2026) é uma **estimativa do fim do período** — inventário base +
 movimento líquido do período a custo atual (`tpmov`/`precu`) — e exibe o subtexto fixo
-"estimativa do período", sem comparativo.
+"estimativa do período", sem comparativo. **Ressalvas medidas em 26/10/2026:** (a) falha da consulta
+da previsão agora exibe `Erro` no card (B2, aplicado); (b) a premissa de inventário "normalizado para
+o ano base" **não se confirmou** nesta base (o saldo é o corrente, então o movimento é contado duas
+vezes e o erro chega a −21,1% em 2024) — a correção (rolar o saldo a partir de `hoje`) é o
+**Item 10.2 (B1)**, para sessão dedicada.
 
 **Não implementado da proposta original:** o indicador de *saúde do banco*
 (`saude = 100 - (total_problemas / total_produtos * 100)` com faixas verde/amarelo/vermelho)
@@ -428,8 +433,9 @@ contagem e ação corretiva, no módulo `Validacao/` (`Validacao_Screen.py`, `Va
 | 4 | **Fase 4** — type hints + `py.typed` | Legibilidade | 2 h |
 | 5 | **Fase 6** — PyInstaller (regerar `*.spec` a partir do `Auto_py_to_exe config.json` obsoleto) | Validar executável | 1 h |
 | 6 | Feature: Validação Pré-Inventário | Checklist automático | 4 h |
-| 7 | **Item 10.1** — avaliar paralelizar as consultas *dentro* de `_calcular_kpis` (medir antes) | Desempenho | a medir |
-| 8 | **Item 6.10** — rotação da senha do banco (credenciais antigas no histórico do git) | Segurança | 30 min |
+| 7 | **Item 10.1** — paralelizar as consultas *dentro* de `_calcular_kpis` — **medido em 26/10/2026**: série 0,17–0,24 s × paralelo 0,10–0,14 s (ganho de décimos) — ⏹️ **encerrado sem código por decisão do usuário** | Desempenho | 0 h |
+| 8 | **Item 10.2 (B1)** — previsão de inventário: rolar o saldo corrente a partir de `hoje` em vez de `saldo + movimento do período` (erro atual até −21,1%; alternativa ≈ +0,03%, 1 consulta; reescrever `TestPreviaInventario`) | Correção de KPI | 1–2 h |
+| 9 | **Item 6.10** — rotação da senha do banco (credenciais antigas no histórico do git) | Segurança | 30 min |
 
 Já concluídos desde a revisão anterior: **Fase 1.2** (credenciais em `[Credenciais]`), **N4**
 (pool), **Fase 3.1** (imports no topo), **Fase 5.2/5.3** (testes puros e de queries) e
@@ -449,7 +455,7 @@ Já concluídos desde a revisão anterior: **Fase 1.2** (credenciais em `[Creden
 - Eliminação do risco residual do SQL livre não validado (`com_ger`)
 - Bugs estruturais já corrigidos: N1–N9 e o pool de conexões (N4)
 - Código tipado, testável e com queries centralizadas (base pronta; faltam type hints)
-- Suíte de testes ampliada: **203 testes** cobrindo funções puras, Dashboard, threads e contrato
+- Suíte de testes ampliada: **209 testes** cobrindo funções puras, Dashboard, threads e contrato
   das queries
 - Dashboard entregue; falta apenas a Validação automática antes de fechar inventário
 

@@ -78,10 +78,11 @@ tests/             Testes unitários (pytest)
   positivo** — o desenho usa os valores como chegam (sem negação). A fonte dos
   rótulos de valor é adaptada à densidade (`_fonte_rotulos_valor`): com as três
   séries no mesmo hemisfério, rótulos de meses vizinhos podem se encostar.
-- **Capa de dados do Dashboard (desde 26/10/2026):** `tests/test_dashboard_func.py` (27 casos)
-  cobre `_extrair_series`, `_previa_inventario`, `_calcular_kpis`, `carregar_kpis` e
-  `carregar_dados_tendencia` com `monkeypatch` em `_executar_select`/`_executar_consulta`/
-  `_previa_inventario`/`_calcular_kpis` — **nenhum acesso ao Firebird**. Os helpers de UI
+- **Capa de dados do Dashboard (desde 26/10/2026):** `tests/test_dashboard_func.py` (33 casos)
+  cobre `_extrair_series`, `_previa_inventario`, `_calcular_kpis`, `carregar_kpis`,
+  `carregar_dados_tendencia` e `_executar_consulta` (incluindo o `padrao_em_erro` do B2) com
+  `monkeypatch` em `_executar_select`/`_executar_consulta`/`_previa_inventario`/`_calcular_kpis`/
+  `query_executor` — **nenhum acesso ao Firebird**. Os helpers de UI
   `_periodo_anterior`/`_formatar_variacao` ficam em `tests/test_dashboard_screen_helpers.py`
   (17 casos); importar `Dashboard.Dashboard_Screen` **não** abre janela (só define funções).
   Ao mexer nessas funções, rode
@@ -101,6 +102,14 @@ tests/             Testes unitários (pytest)
   estoque inicial de fev/2021). O card **não** exibe mais o selo "vs período anterior" (substituído
   pelo subtexto fixo "estimativa do período") e o período anterior é calculado com
   `_calcular_kpis(..., incluir_previa=False)`.
+  **Falha visível (B2, 26/10/2026):** `_executar_consulta` aceita `padrao_em_erro` (default `0`);
+  `_previa_inventario` usa `None` e, se a consulta falhar, `_calcular_kpis` grava `'Erro'` no card
+  em vez de repetir o inventário. Resultado `NULL` legítimo continua valendo `0`.
+  **Premissa contestada (26/10/2026):** medição mostrou que `in01pro.saldo` nesta base é o **saldo
+  corrente**, não um valor normalizado para o ano-base; o modelo atual conta o movimento duas vezes
+  e erra −21,1% (2024), −8,7% (2025) e −7,7% (2026 jan–set). A correção (rolar o saldo a partir de
+  `hoje`) está no **Item 10.2** de `AGENTS_SESSAO.md`, para sessão dedicada — **não aplicar sem
+  reescrever `TestPreviaInventario`**.
 - **Logging (convenção desde 26/10/2026):** use `get_logger(__name__)`
   (`Outros/Logger/Get_Logger.py`); nível por `INVENTARIO_LOG_LEVEL` (padrão `INFO`) e arquivos em
   `logs/AAAAMM/DDMMAAAA_log.txt`. Não deixe `except ...: pass` silencioso em código novo: registre

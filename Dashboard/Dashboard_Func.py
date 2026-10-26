@@ -107,13 +107,17 @@ def _previa_inventario(valor_inventario, ini, fim):
     ao fornecedor e ajustes de saída subtraem.
 
     É uma estimativa: não substitui inventário contado/fechamento.
+    Devolve None quando a consulta falha, para o card sinalizar o erro em vez
+    de exibir o inventário como se fosse uma estimativa válida.
     """
     movimento = _executar_consulta(
-        QUERY_MOVIMENTO_ESTOQUE_CUSTO, (ini, fim))
+        QUERY_MOVIMENTO_ESTOQUE_CUSTO, (ini, fim), padrao_em_erro=None)
+    if movimento is None:
+        return None
     return float(valor_inventario or 0) + float(movimento or 0)
 
 
-def _executar_consulta(query, params=None):
+def _executar_consulta(query, params=None, padrao_em_erro=0):
     try:
         rows = query_executor(query_selector, query, params)
         valor = rows[0][0] if rows else None
@@ -121,7 +125,7 @@ def _executar_consulta(query, params=None):
     except Exception:
         logger.exception('Erro ao executar query do dashboard: %s',
                          _nome_query(query))
-        return 0
+        return padrao_em_erro
 
 
 def _executar_select(query, params=None):
@@ -227,10 +231,14 @@ def _calcular_kpis(ini, fim, incluir_previa=True):
     if incluir_previa:
         valor_previa_inventario = _previa_inventario(
             valor_inventario, ini, fim)
-        kpis['previa_inventario'] = (
-            banco_codigo_valueform(valor_previa_inventario)
-            if valor_previa_inventario else '0,00')
-        kpis['previa_inventario_num'] = float(valor_previa_inventario or 0)
+        if valor_previa_inventario is None:
+            kpis['previa_inventario'] = 'Erro'
+            kpis['previa_inventario_num'] = 0.0
+        else:
+            kpis['previa_inventario'] = (
+                banco_codigo_valueform(valor_previa_inventario)
+                if valor_previa_inventario else '0,00')
+            kpis['previa_inventario_num'] = float(valor_previa_inventario)
     return kpis
 
 

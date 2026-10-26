@@ -46,8 +46,10 @@ previsões no banco cópia: 2024 = 4.647.236,00; 2025 = 4.559.194,73; 2026 jan�
 **Custo:** 23–28 s → **3,4–13,1 s** e **1 chamada** por carga (o período anterior usa
 `_calcular_kpis(..., incluir_previa=False)`, pois o KPI não é mais comparado). Removida a
 `QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL`. Testes: `TestPreviaInventario` reescrito (7 casos),
-`incluir_previa` coberto em `_calcular_kpis`/`carregar_kpis`. Baseline: **203 passed** em 16
-arquivos; `compileall` OK. **Não commitado.**
+`incluir_previa` coberto em `_calcular_kpis`/`carregar_kpis`. Baseline: **203 passed** em 15
+arquivos; `compileall` OK. **Commitado pelo usuário em `56093b1`.** *(A premissa do "inventário
+normalizado para o ano base" foi **contestada por medição** em 26/10/2026 — ver Item 10.2; a falha
+silenciosa da consulta foi corrigida no **Item 12 (B2)**.)*
 
 **Sessão anterior:** 23/10/2026 — **varredura de abertura** (somente leitura + sincronia de
 docs) seguida de **limpeza de código morto + testes de threads/pool** (plano aprovado pelo
@@ -157,14 +159,18 @@ e/ou compactar o `.fdb` (`gbak`/`gfix`). Decisão do usuário, não da sessão.
 **Não remedir:** o que foi apurado aqui está consolidado no Item 6.7.
 Sessão anterior (20/10/2026): otimização de desempenho (views `V_LAN_COM`/`V_DIFF_ENTRADA_SAIDA_MES`
 removidas → entradas 22 s→0,04 s, diferença 41 s→1,3 s). Sessão de 19/10/2026: refatoração de datas concluída.
-**Próximo passo (neste momento):** nenhuma etapa de código aberta. O **Item 9.7 foi descartado
+**Próximo passo (neste momento):** nenhuma etapa de código aberta além do **B2**, aplicado em
+26/10/2026 e aguardando revisão/commit do usuário (ver **Item 12**). O **Item 9.7 foi descartado
 pelo usuário** em 23/10/2026 (considerado solucionado; em 26/10/2026 o usuário aplicou `'03'` na
 distorção, deixando os dois universos idênticos); a correção da legenda/rótulos do modo
 Linhas foi aplicada no Item 8.8; os **itens 1 e 4** das pendências (testes dos helpers do Dashboard
 + logging nos `except` de UI) e o **B3** foram aplicados em 26/10/2026 (ver **Item 11**). **Fila de
-ideias para sessões futuras: Item 10** — em 26/10/2026 foi registrado o **Item 10.1** (paralelizar
-as consultas do Dashboard em threads separadas — hoje KPIs e tendência já rodam em threads
-distintas, mas as consultas **dentro** de cada bloco são sequenciais).
+ideias para sessões futuras: Item 10** — o **Item 10.1** (paralelizar as consultas do Dashboard em
+threads separadas) foi **medido** em 26/10/2026: KPIs e tendência já rodam em threads distintas e o
+ganho do paralelismo intra-bloco é de **décimos de segundo** (§10.1) — **ENCERRADO em 26/10/2026
+sem código, por decisão do usuário**; o **Item 10.2** (B1 — modelo de previsão rolado a partir do
+saldo atual) foi
+**registrado para uma sessão dedicada** (§10.2).
 **Pendências herdadas:** testes manuais (troca de período + reabertura das telas);
 `DROP VIEW V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` no banco (SQL a cargo do usuário — Item 6.8);
 **rotação da senha do banco** (`config.ini` já desrastreado **e commitado** — Item 6.10);
@@ -172,15 +178,14 @@ distintas, mas as consultas **dentro** de cada bloco são sequenciais).
 `Banco_de_Dados_Func` 1, `Consultas_Val_Screen` 1, `Consultas_Val_Inv_Screen` 2,
 `Tk_Progress_Bar` 3, `Tk_Status_Animator` 2, `Gerenciador_Thread_BD` 3, `Thread_Executor` 2);
 **PyInstaller** sem receita válida (`Outros/Auto_py_to_exe config.json` obsoleto).
-**Branch:** `refatoracao_v3.5` · **HEAD:** `3d7d9ef` · **baseline:** **183 passed** em 15 arquivos
+**Branch:** `refatoracao_v3.5` · **HEAD:** `56093b1` · **baseline:** **209 passed** em 15 arquivos
+(o HEAD tinha **203**; +6 casos do **B2** em `tests/test_dashboard_func.py`)
 **Working tree (nada commitado — regra de ouro):** o trabalho **desta sessão** (26/10/2026):
-`requirements.txt` (`numpy`/`scipy` explícitos), `AGENTS.md`, `AGENTS_SESSAO.md`,
-`docs/Status_Refatoracao.md`, `docs/Mapeamento_Refatoracao_Datas.md` e o `docs/Plano_*.md`
-(ignorado pelo git) — sincronia de status; `Dashboard/Dashboard_Charts.py` e
-`Dashboard/Dashboard_Screen.py` (logging + B3, convivendo com a edição **do usuário** do
-`loading_label`); `tests/test_periodo.py`; **novos** (untracked) `tests/test_dashboard_func.py` e
-`tests/test_dashboard_screen_helpers.py`; e as edições **do usuário** em `Queries/Consulta_Queries.py`
-(`'03'` na distorção). O trabalho de 23/10/2026 está **commitado pelo usuário** em `3d7d9ef`.
+`Dashboard/Dashboard_Func.py` e `tests/test_dashboard_func.py` (**B2** — ver Item 12), além da
+sincronia de status em `AGENTS.md`, `AGENTS_SESSAO.md` e `docs/Status_Refatoracao.md`. O trabalho
+anterior está **commitado pelo usuário** em `56093b1` ("Harden dashboard KPIs and test coverage") e
+o de 23/10/2026 em `3d7d9ef`; `requirements.txt`, `Dashboard/Dashboard_Charts.py` (logging + B3),
+`tests/test_periodo.py` etc. seguem commitados.
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
 ---
@@ -977,7 +982,7 @@ Script `%TEMP%\opencode\exemplos_classes.py`. Amostra por cliente (maior valor p
 
 ## 10. FILA DE IDEIAS PARA SESSÕES FUTURAS
 
-### 10.1 Paralelizar as consultas do Dashboard em threads separadas — **avaliar** (registrado em 26/10/2026)
+### 10.1 Paralelizar as consultas do Dashboard em threads separadas — ⏹️ **ENCERRADO sem código** (medido em 26/10/2026)
 
 **Pedido do usuário (26/10/2026):** "introduzir threads separadas nas consultas do banco de dados
 dentro do dashboard, **apenas se esse já não for o caso**". A apuração abaixo foi feita na sessão
@@ -1004,7 +1009,7 @@ de 26/10/2026 (somente leitura) e **nada foi alterado**.
   - `carregar_dados_tendencia` (`:174`): vendas → entradas (2 consultas sequenciais).
 - Não há `ThreadPoolExecutor`/`concurrent.futures` no código (nenhum uso hoje).
 
-**Onde mexer (se aprovado):** `Dashboard/Dashboard_Func.py` — `_calcular_kpis` (3 consultas
+**Onde mexer (registro histórico, caso seja retomado algum dia):** `Dashboard/Dashboard_Func.py` — `_calcular_kpis` (3 consultas
 independentes + previsão que depende só de `valor_inventario`) e `carregar_dados_tendencia`
 (vendas × entradas independentes). As duas chamadas de `_calcular_kpis` (atual × anterior) também
 são independentes entre si. *(Atualização 26/10/2026: a previsão deixou de ser calculada no
@@ -1024,8 +1029,65 @@ período anterior, então a 2ª chamada tem só 3 consultas leves.)*
 - Ganho plausível só se: (a) o tempo total cair para o da consulta mais lenta, ou (b) a previsão
   do período atual rodar junto com a do período anterior.
 
-**Status:** ⬜ **não iniciado** — aguardando uma sessão dedicada (decisão do usuário em 26/10/2026:
-"nesta sessão vamos focar em outras ideias"). Começar por **medição**, não por código.
+**Medição feita em 26/10/2026** (banco = cópia de cliente, **somente SELECT**; script
+`%TEMP%\opencode\medir_paralelo.py`):
+- Bloco de KPIs do período atual (4 consultas, 1 pesada): **0,26–0,33 s** no total. As 4 consultas
+  em **série** custam **0,17–0,24 s**; em **paralelo**, **0,10–0,14 s**. A previsão domina
+  (**0,09–0,14 s**).
+- Tendência (vendas × entradas): **0,08–0,09 s** — paralelizar economiza ~0,04 s.
+- Ou seja, o ganho absoluto é de **décimos de segundo** por carga (a tela responde em ~0,3–0,4 s
+  nesta base). O gargalo real continua sendo **I/O do servidor** (Item 6.7: 3,4–13,1 s de previsão
+  na base de 1,3 GB), onde 2 workers tendem a **contender** pelo mesmo disco, não a acelerar.
+
+**Status:** ⏹️ **ENCERRADO em 26/10/2026 — sem código** (decisão do usuário: "vamos deixar como está
+atualmente"). A opção de **2 workers** em `_calcular_kpis`/`carregar_dados_tendencia` foi descartada;
+se algum dia for retomada, exige **remedir na base grande** e preservar a semântica de erro (incluindo
+o `padrao_em_erro` do B2). Nenhum arquivo foi alterado por este item.
+
+---
+
+### 10.2 B1 — Previsão de inventário: rolar o saldo atual em vez de somar o movimento ao saldo — **sessão dedicada** (registrado em 26/10/2026)
+
+**Origem:** verificação do KPI "Previsão de Inventário" (commit `56093b1`) na sessão de 26/10/2026.
+A premissa documentada no código ("o snapshot é o inventário na **data inicial** do período") **não
+se sustenta** nesta base: `in01pro.saldo` é o **saldo corrente do ERP** (o mesmo que
+`QUERY_INVENTARIO` soma), não um valor normalizado para o ano-base. Como o modelo atual faz
+`saldo_corrente + movimento_do_período`, o movimento é contado **duas vezes** (o saldo já o contém).
+
+**Erro medido** (referência = saldo corrente rolado para a data final do período; diferença
+`previsão atual − referência`, negativa = subestima):
+
+| Período | Erro | Erro relativo |
+|---|---|---|
+| 2024 | −318.799,10 | **−21,1%** |
+| 2025 | −129.391,38 | −8,7% |
+| 2026 (jan–set) | −105.387,32 | −7,7% |
+
+**Modelo proposto (B1):**
+- `fim < hoje` → `inventário_corrente − movimento(fim+1 .. hoje)` (rolar **para trás**);
+- `fim ≥ hoje` → `inventário_corrente + movimento(hoje+1 .. fim)` (rolar **para frente**);
+- deixa de usar `ini`; **1 consulta**, a mesma `QUERY_MOVIMENTO_ESTOQUE_CUSTO`.
+- Resíduo medido da referência: **≈ +0,03%** (o histórico converge com o saldo: 4.156.492,44 ×
+  4.207.242,01; a diferença é o estoque inicial de fev/2021).
+
+**Cuidados/custos medidos:**
+- Ancorar em **`hoje`** é mais barato do que em `MAX(dtpro)`: **0,24 s** sem join × **0,72 s** com
+  join nesta base (na base de 1,3 GB, `MAX(dtpro)` com join pode custar segundos).
+- `hoje` precisa ser **injetável** (parâmetro com default `date.today()`) para testes determinísticos;
+  a assinatura de `_previa_inventario` muda e os casos de `TestPreviaInventario` precisam ser
+  reescritos (hoje eles pressupõem "soma movimento ao inventário", inclusive
+  `test_soma_o_movimento_liquido_ao_inventario` e `test_envia_o_periodo_selecionado_para_a_query`).
+- **Preservar o B2:** falha de consulta continua devolvendo `None` → card mostra `Erro`
+  (`_executar_consulta(..., padrao_em_erro=None)`).
+- Atualizar os docstrings de `QUERY_MOVIMENTO_ESTOQUE_CUSTO`, `_previa_inventario` e os textos em
+  `AGENTS.md`/`docs/Plano_Refatoracao_Inventario_Tools_v2.md` que hoje descrevem a premissa
+  "normalizada para o ano base" (que este item **derruba**).
+- O banco de teste tem movimento em **outubro/2026** e **1 linha com data 2027-07-21** (+418,30):
+  o rolar para frente até um `fim` futuro deve incluir esses lançamentos — decidir com o usuário se
+  lançamentos futuros entram (recomendação: entrar, é o que o ERP tem lançado).
+
+**Fora de escopo aqui:** mudar o rótulo do card (hoje o subtexto é fixo "estimativa do período") e
+qualquer alteração de SQL de valorização.
 
 ---
 
@@ -1038,7 +1100,7 @@ período anterior, então a 2ª chamada tem só 3 consultas leves.)*
 
 | Arquivo | Casos | Cobre |
 |---|---|---|
-| `tests/test_dashboard_func.py` (**novo**) | 23 | `_extrair_series` (chave ano/mês, `None`→0, `Decimal`→`float`, série vazia, chave repetida), `_previa_inventario` (diferença entre anos, parâmetros enviados, 1 linha, vazio), `_calcular_kpis` (formatação pt-BR, números crus, `vendas_130` = ×1,30, parâmetros de cada query, zeros), `carregar_kpis` (sem/com comparação, limites incompletos) e `carregar_dados_tendencia` (união por mês/ano, preenchimento de períodos ausentes, `diferenca = entradas - vendas`, CFOPs, erro → séries vazias) |
+| `tests/test_dashboard_func.py` (**novo**) | 23 na criação (hoje **33**: +4 na redefinição do KPI e +6 no B2) | `_extrair_series` (chave ano/mês, `None`→0, `Decimal`→`float`, série vazia, chave repetida), `_previa_inventario` (soma do movimento, parâmetros enviados, vazio/NULL, `Decimal`, falha → `None`), `_executar_consulta` (`padrao_em_erro`), `_calcular_kpis` (formatação pt-BR, números crus, `vendas_130` = ×1,30, parâmetros de cada query, zeros, `'Erro'` na previsão), `carregar_kpis` (sem/com comparação, limites incompletos) e `carregar_dados_tendencia` (união por mês/ano, preenchimento de períodos ausentes, `diferenca = entradas - vendas`, CFOPs, erro → séries vazias) |
 | `tests/test_dashboard_screen_helpers.py` (**novo**) | 17 | `_periodo_anterior` (mês, ano, 1 dia, bissexto, duração, sem sobreposição, entrada inválida) e `_formatar_variacao` (sinal/cor, zero, queda total, 1 casa, base zero/`None`, strings, base negativa) |
 | `tests/test_periodo.py` (editado) | +4 | `periodo_tendencia_ultimos_5_anos` (agora **16 casos** no arquivo) |
 
@@ -1072,4 +1134,36 @@ funções puras (o import não instancia Tk).
 - **Edições do usuário encontradas no caminho (não revertidas):** `loading_label` em
   `Dashboard_Screen.py` e `'03'` em `QUERY_DISTORCAO_SALDO` (`Queries/Consulta_Queries.py`).
 - **Não commitado.** Nada de git foi alterado por esta sessão.
+
+---
+
+## 12. B2 — FALHA SILENCIOSA DA PREVISÃO DE INVENTÁRIO — **APLICADO em 26/10/2026** (sem commit)
+
+**Problema:** se `QUERY_MOVIMENTO_ESTOQUE_CUSTO` falhasse, `_executar_consulta` registrava o erro e
+devolvia **0**; `_previa_inventario` então devolvia `saldo + 0` e o card "Previsão de Inventário"
+mostrava o **valor do inventário** como se fosse uma estimativa válida — erro invisível.
+
+**Correção (2 arquivos):**
+- `Dashboard/Dashboard_Func.py`
+  - `_executar_consulta(query, params=None, padrao_em_erro=0)`: novo parâmetro; o `except` devolve
+    `padrao_em_erro` (default **0** preserva todo o comportamento existente).
+  - `_previa_inventario`: chama com `padrao_em_erro=None` e devolve **`None`** quando a consulta
+    falha (+docstring). Resultado **NULL** legítimo continua virando **0** (não é erro).
+  - `_calcular_kpis`: quando a previsão é `None`, grava `previa_inventario = 'Erro'` e
+    `previa_inventario_num = 0.0`. `Dashboard_Screen._atualizar_dashboard` já lê a string pronta —
+    **nenhuma mudança na UI**.
+- `tests/test_dashboard_func.py` (**+6 casos**, 27 → 33 no arquivo): `test_falha_na_consulta_devolve_none`,
+  `test_pede_none_em_erro_para_nao_mascarar_a_falha`, `test_falha_na_previa_mostra_erro_no_card`,
+  `test_falha_usa_o_padrao_em_erro_informado`, `test_falha_sem_padrao_mantem_zero`,
+  `test_resultado_nulo_nao_e_tratado_como_erro`; `_fake_consulta` passou a aceitar `**kwargs`
+  (o novo parâmetro) e `test_movimento_nulo_mantem_o_inventario` agora fakes `query_executor`
+  retornando `[(None,)]`, exercitando o caminho real (NULL → 0).
+
+**Validação:** `pytest tests -q` → **209 passed**; `compileall` OK.
+
+**Limitação conhecida (não tratada):** se `QUERY_INVENTARIO` falhar, `valor_inventario` vira 0 (card
+de inventário mostra `'0,00'`) e a previsão passa a ser **só o movimento**. O B2 cobre a falha da
+consulta **da previsão**; sinalizar a falha do inventário nos dois cards é decisão à parte.
+
+**Não commitado.** Nada de git foi alterado por esta sessão.
 
