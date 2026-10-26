@@ -5,10 +5,10 @@
 **Licença:** CC0 1.0 Universal (domínio público)
 **Documento atualizado em:** 26/10/2026
 **Versão do documento:** 5.4 (atualizado — reflete o estado atual do código na branch
-`refatoracao_v3.5`, HEAD `56093b1`: Dashboard completo com KPI comparativo, curvas suavizadas,
+`refatoracao_v3.5`, HEAD `228787b`: Dashboard completo com KPI comparativo, curvas suavizadas,
 toolbar e tooltip; KPI "Previsão de Inventário" redefinido como estimativa do fim do período
-(falha da consulta visível como `Erro` no card — B2); pool endurecido; **209 testes** passando em
-15 arquivos)
+(falha da consulta visível como `Erro` no card — B2, commitado em `228787b`); pool endurecido;
+**209 testes** passando em 15 arquivos)
 
 > Este documento atualiza o plano original (`Plano_Refatoracao_Inventario_Tools.pdf`) e as revisões
 > 1.x/2.0/3.0. Ele incorpora as **modificações já feitas no projeto** (branch `QoL` integrada ao
@@ -162,13 +162,13 @@ Todas as mudanças abaixo já estão no código (a maioria na branch `refatoraca
 | `help_base64_image` sem vírgula inválida (`Banco_Images.py`) | N7/§5.6 | ✅ Feito |
 | `Listagem_Treeview` — `grab_set()` + `WM_DELETE_WINDOW` (via `toplevel.protocol`) | N7/§5.6 | ✅ Feito |
 | `executa_comandos` — feedback de status via `atualizar_ui_main` (sem `after()` na thread) | N3/§5.3 | ✅ Feito |
-| Suíte ampliada para **209 testes** em 15 arquivos (`pytest` → 209 passed; 203 no HEAD `56093b1` + 6 do B2) | Fase 5 | ✅ Feito |
+| Suíte ampliada para **209 testes** em 15 arquivos (`pytest` → 209 passed; 203 em `56093b1` + 6 do B2, commitado em `228787b`) | Fase 5 | ✅ Feito |
 | **Feature 1 — Dashboard** (`Dashboard/`): KPIs + KPI comparativo, gráfico de tendência (Barras/Linhas × Mês/Ano), toolbar, tooltip e persistência de filtros | Feature 1 | ✅ Feito |
 | **Logging** nos `except` de UI do Dashboard (24 em `Dashboard_Screen.py`, 10 em `Dashboard_Charts.py`) e remoção do cálculo morto do tooltip | Fase 3.3 / §5.8 | ✅ Feito (26/10/2026) |
 
 > **Nota sobre branches:** As modificações de UI foram consolidadas no `main` via PR #14
 > (merge `48e7fe3`). A refatoração estrutural é conduzida na branch `refatoracao_v3.5`, hoje
-> sincronizada com `origin/refatoracao_v3.5` no HEAD `56093b1` (o commit `fc40fdd`, citado nas
+> sincronizada com `origin/refatoracao_v3.5` no HEAD `228787b` (o commit `fc40fdd`, citado nas
 > revisões anteriores, já foi enviado).
 
 ---

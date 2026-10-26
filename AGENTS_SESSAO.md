@@ -1,9 +1,18 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 26/10/2026 — **varredura de abertura + restauração da baseline** (plano
-aprovado pelo usuário). O working tree estava **limpo** e o trabalho de 23/10/2026 já havia sido
-**commitado pelo usuário** em `3d7d9ef` ("Harden dashboard and thread workflows"). A varredura
+**Última sessão:** 26/10/2026 — **varredura de abertura pós-B2** (somente leitura + sincronia de
+docs/agents). O working tree estava **limpo** e o **B2 foi commitado pelo usuário** em `228787b`
+("Expose dashboard forecast query failures"). Apurado: HEAD `228787b`, **209 passed** em 15
+arquivos, `compileall` OK, **0 resíduos** de período (`dt_ini`/`dt_fim`/`data_banco_*`; a única
+ocorrência é o *nome* de um teste em `tests/test_dashboard_func.py`), **17 `except: pass`**
+restantes nos mesmos 8 arquivos (Dashboard com **0**) e `scipy 1.18.1` / `numpy 2.5.4` /
+`matplotlib 3.11.2` instalados na `.venv`. Contagem real de loggers: **114** chamadas (37
+`exception`, 15 `info`, 5 `warning`, 54 `debug`, 3 `error`) — o número registrado antes (112) era
+erro de contagem, corrigido no Item 6.2. **Nenhuma linha de código foi alterada.**
+**Sessão anterior (mesma data):** 26/10/2026 — **varredura de abertura + restauração da baseline**
+(plano aprovado pelo usuário). O working tree estava **limpo** e o trabalho de 23/10/2026 já havia
+sido **commitado pelo usuário** em `3d7d9ef` ("Harden dashboard and thread workflows"). A varredura
 achou a baseline **quebrada**: `Dashboard/Dashboard_Charts.py:9` importa `scipy.interpolate`
 (`_curva_suave`, suavização do modo Linhas) e o `scipy` **não estava instalado** na `.venv` nem
 declarado no `requirements.txt` → `import Dashboard.Dashboard_Charts` falhava (a tela do
@@ -159,8 +168,9 @@ e/ou compactar o `.fdb` (`gbak`/`gfix`). Decisão do usuário, não da sessão.
 **Não remedir:** o que foi apurado aqui está consolidado no Item 6.7.
 Sessão anterior (20/10/2026): otimização de desempenho (views `V_LAN_COM`/`V_DIFF_ENTRADA_SAIDA_MES`
 removidas → entradas 22 s→0,04 s, diferença 41 s→1,3 s). Sessão de 19/10/2026: refatoração de datas concluída.
-**Próximo passo (neste momento):** nenhuma etapa de código aberta além do **B2**, aplicado em
-26/10/2026 e aguardando revisão/commit do usuário (ver **Item 12**). O **Item 9.7 foi descartado
+**Próximo passo (neste momento):** nenhuma etapa de código aberta no working tree — o **B2** foi
+**commitado pelo usuário em `228787b`** (ver **Item 12**); a fila viva é o **Item 10.2 / B1**
+(rolar o saldo a partir de `hoje`), que exige sessão dedicada. O **Item 9.7 foi descartado
 pelo usuário** em 23/10/2026 (considerado solucionado; em 26/10/2026 o usuário aplicou `'03'` na
 distorção, deixando os dois universos idênticos); a correção da legenda/rótulos do modo
 Linhas foi aplicada no Item 8.8; os **itens 1 e 4** das pendências (testes dos helpers do Dashboard
@@ -178,14 +188,14 @@ saldo atual) foi
 `Banco_de_Dados_Func` 1, `Consultas_Val_Screen` 1, `Consultas_Val_Inv_Screen` 2,
 `Tk_Progress_Bar` 3, `Tk_Status_Animator` 2, `Gerenciador_Thread_BD` 3, `Thread_Executor` 2);
 **PyInstaller** sem receita válida (`Outros/Auto_py_to_exe config.json` obsoleto).
-**Branch:** `refatoracao_v3.5` · **HEAD:** `56093b1` · **baseline:** **209 passed** em 15 arquivos
-(o HEAD tinha **203**; +6 casos do **B2** em `tests/test_dashboard_func.py`)
-**Working tree (nada commitado — regra de ouro):** o trabalho **desta sessão** (26/10/2026):
-`Dashboard/Dashboard_Func.py` e `tests/test_dashboard_func.py` (**B2** — ver Item 12), além da
-sincronia de status em `AGENTS.md`, `AGENTS_SESSAO.md` e `docs/Status_Refatoracao.md`. O trabalho
-anterior está **commitado pelo usuário** em `56093b1` ("Harden dashboard KPIs and test coverage") e
-o de 23/10/2026 em `3d7d9ef`; `requirements.txt`, `Dashboard/Dashboard_Charts.py` (logging + B3),
-`tests/test_periodo.py` etc. seguem commitados.
+**Branch:** `refatoracao_v3.5` · **HEAD:** `228787b` · **baseline:** **209 passed** em 15 arquivos
+(203 em `56093b1` + 6 casos do **B2** em `tests/test_dashboard_func.py`)
+**Working tree (nada commitado — regra de ouro):** **limpo** no início desta sessão (26/10/2026,
+verificação pós-B2). Todo o trabalho das sessões anteriores está **commitado pelo usuário**:
+`228787b` ("Expose dashboard forecast query failures" — B2 + docs), `56093b1` ("Harden dashboard
+KPIs and test coverage"), `3d7d9ef` e `02afd20`. Nesta sessão só há a **sincronia de status** em
+`AGENTS_SESSAO.md`, `docs/Status_Refatoracao.md` e `docs/Plano_Refatoracao_Inventario_Tools_v2.md`
+(HEAD/baseline/contagem de loggers) — **nenhum `.py` foi tocado**.
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
 ---
@@ -252,7 +262,7 @@ permissão, mas qualquer **escrita** exige plano + prévia + confirmação.
 .\.venv\Scripts\python.exe -m pytest tests -v
 ```
 
-Estado de referência saudável: **183 passed** em 15 arquivos, `compileall` sem erros (exige
+Estado de referência saudável: **209 passed** em 15 arquivos, `compileall` sem erros (exige
 `requirements.txt` instalado — `matplotlib`/`numpy`/`scipy` são importados por
 `Dashboard/Dashboard_Charts.py`).
 Se testes falharem após mudança, o plano foi executado incorretamente — informar o usuário.
@@ -329,10 +339,11 @@ Se testes falharem após mudança, o plano foi executado incorretamente — info
   zero no padrão (`INFO`); as mensagens só aparecem com `INVENTARIO_LOG_LEVEL=DEBUG`. Aplicado ao
   Dashboard — 24 pontos em `Dashboard_Screen.py` e 10 em `Dashboard_Charts.py` (**Item 11**).
   Restam 17 `except ...: pass` em outros módulos, a avaliar caso a caso.
-- Estado atual (26/10/2026, após a transição): **112 chamadas de logger** no código de produção
-  (36 `exception`, 15 `info`, 5 `warning`, 53 `debug`, 3 `error`) — as de resultado já no início da
-  função; nenhuma duplicação entrada+saída. O salto de 12 → 53 `debug` vem dos `except` do
-  Dashboard convertidos no **Item 11**.
+- Estado atual (26/10/2026, após a transição; **recontado na varredura pós-B2**): **114 chamadas de
+  logger** no código de produção (37 `exception`, 15 `info`, 5 `warning`, 54 `debug`, 3 `error`) —
+  as de resultado já no início da função; nenhuma duplicação entrada+saída. O salto de 12 → 54
+  `debug` vem dos `except` do Dashboard convertidos no **Item 11**. *(O número 112 registrado antes
+  era erro de contagem: já eram 114 em `56093b1`.)*
 
 ### 6.3 Segurança e dados
 - **Nunca** gravar credenciais em arquivo versionado; `Config.ini` está no `.gitignore`.
@@ -1137,7 +1148,7 @@ funções puras (o import não instancia Tk).
 
 ---
 
-## 12. B2 — FALHA SILENCIOSA DA PREVISÃO DE INVENTÁRIO — **APLICADO em 26/10/2026** (sem commit)
+## 12. B2 — FALHA SILENCIOSA DA PREVISÃO DE INVENTÁRIO — **APLICADO em 26/10/2026** (commitado em `228787b`)
 
 **Problema:** se `QUERY_MOVIMENTO_ESTOQUE_CUSTO` falhasse, `_executar_consulta` registrava o erro e
 devolvia **0**; `_previa_inventario` então devolvia `saldo + 0` e o card "Previsão de Inventário"
@@ -1165,5 +1176,6 @@ mostrava o **valor do inventário** como se fosse uma estimativa válida — err
 de inventário mostra `'0,00'`) e a previsão passa a ser **só o movimento**. O B2 cobre a falha da
 consulta **da previsão**; sinalizar a falha do inventário nos dois cards é decisão à parte.
 
-**Não commitado.** Nada de git foi alterado por esta sessão.
+**Commitado pelo usuário em `228787b`** ("Expose dashboard forecast query failures", 26/10/2026).
+O agente não executa comandos de git.
 
