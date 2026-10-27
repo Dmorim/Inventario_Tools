@@ -61,52 +61,80 @@ class TestExtrairSeries:
 
 
 class TestPreviaInventario:
-    def test_soma_o_movimento_liquido_ao_inventario(self, monkeypatch):
+    def test_rola_para_tras_quando_fim_no_passado(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
         _fake_consulta(monkeypatch, [600])
         assert Dashboard_Func._previa_inventario(
-            10000, '01.01.2025', '31.12.2025') == 10600
+            10000, '01.01.2025', '31.12.2025') == 9400
 
-    def test_movimento_negativo_reduz_o_inventario(self, monkeypatch):
+    def test_rola_para_tras_movimento_negativo_aumenta_inventario(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
         _fake_consulta(monkeypatch, [-450.5])
         assert Dashboard_Func._previa_inventario(
-            10000, '01.01.2025', '31.12.2025') == 9549.5
+            10000, '01.01.2025', '31.12.2025') == 10450.5
 
-    def test_envia_o_periodo_selecionado_para_a_query(self, monkeypatch):
+    def test_envia_periodo_de_rolagem_quando_fim_no_passado(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
         chamadas = _fake_consulta(monkeypatch, [0])
-        Dashboard_Func._previa_inventario(1000, '01.01.2025', '30.06.2025')
+        Dashboard_Func._previa_inventario(1000, '01.01.2025', '31.12.2025')
         query, params = chamadas[0]
         assert query == Dashboard_Func.QUERY_MOVIMENTO_ESTOQUE_CUSTO
-        assert params == ('01.01.2025', '30.06.2025')
+        assert params == ('2026-01-01', '2026-10-27')
 
-    def test_movimento_ausente_mantem_o_inventario(self, monkeypatch):
-        _fake_consulta(monkeypatch, [0])
+    def test_rola_para_frente_quando_fim_no_futuro(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
+        _fake_consulta(monkeypatch, [500])
         assert Dashboard_Func._previa_inventario(
-            10000, '01.01.2025', '31.12.2025') == 10000
+            10000, '01.01.2025', '31.12.2026') == 10500
+
+    def test_rola_para_frente_movimento_negativo_reduz_inventario(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
+        _fake_consulta(monkeypatch, [-200])
+        assert Dashboard_Func._previa_inventario(
+            10000, '01.01.2025', '31.12.2026') == 9800
+
+    def test_envia_periodo_de_rolagem_quando_fim_no_futuro(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
+        chamadas = _fake_consulta(monkeypatch, [0])
+        Dashboard_Func._previa_inventario(1000, '01.01.2025', '31.12.2026')
+        query, params = chamadas[0]
+        assert query == Dashboard_Func.QUERY_MOVIMENTO_ESTOQUE_CUSTO
+        assert params == ('2026-10-28', '2026-12-31')
+
+    def test_fim_igual_a_hoje_sem_movimento_futuro(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
+        _fake_consulta(monkeypatch, [])
+        assert Dashboard_Func._previa_inventario(10000, '01.01.2025', '27.10.2026') == 10000
 
     def test_movimento_nulo_mantem_o_inventario(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
         monkeypatch.setattr(Dashboard_Func, 'query_executor',
                             lambda *a, **k: [(None,)])
         assert Dashboard_Func._previa_inventario(
             10000, '01.01.2025', '31.12.2025') == 10000
 
     def test_decimal_e_convertido_para_float(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
         _fake_consulta(monkeypatch, [Decimal('12.50')])
         resultado = Dashboard_Func._previa_inventario(
             10000, '01.01.2025', '31.12.2025')
-        assert resultado == 10012.5
+        assert resultado == 9987.5
         assert isinstance(resultado, float)
 
     def test_inventario_nulo_e_tratado_como_zero(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
         _fake_consulta(monkeypatch, [250])
         assert Dashboard_Func._previa_inventario(
-            None, '01.01.2025', '31.12.2025') == 250
+            None, '01.01.2025', '31.12.2025') == -250
 
     def test_falha_na_consulta_devolve_none(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
         _fake_consulta(monkeypatch, [None])
         assert Dashboard_Func._previa_inventario(
             10000, '01.01.2025', '31.12.2025') is None
 
     def test_pede_none_em_erro_para_nao_mascarar_a_falha(self, monkeypatch):
+        monkeypatch.setattr(Dashboard_Func, '_hoje', lambda: __import__('datetime').date(2026, 10, 27))
         kwargs_vistos = []
 
         def fake(query, params=None, **kwargs):

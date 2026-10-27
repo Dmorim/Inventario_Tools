@@ -57,13 +57,13 @@ def on_click_confirm_btt(distorcao_saldo, parent, val_list, confirm_button):
     def executa_distorcao():
         tp_distorc = val_list[0].get()
         if tp_distorc == 'PRO = LAN':  # Verifica se a distorção é PRO = LAN
-            for item in distorcao_saldo.campos_em_lista:  # Para cada item na lista de distorção de saldo
+            for item in distorcao_saldo.obter_distorcao().campos_em_lista:  # Para cada item na lista de distorção de saldo
                 # Cria a query de distorção de saldo, deixando o saldo do produto igual ao saldo do lançamento, onde o código do produto é informado na lista
                 query = QUERY_ATUALIZA_SALDO_PRODUTO
                 params = (item[2], item[0])  # Define os parâmetros da query
                 query_executor(query_updater, query, params)  # Executa a query
         else:
-            for item in distorcao_saldo.campos_em_lista:  # Para cada item na lista de distorção de saldo
+            for item in distorcao_saldo.obter_distorcao().campos_em_lista:  # Para cada item na lista de distorção de saldo
                 # Define o tipo de movimento como N se o saldo do produto for maior que o saldo do lançamento, caso contrário, define como S
                 tpmov = 'N' if item[2] > item[3] else 'S'
                 quant = abs(item[2] - item[3])

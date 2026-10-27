@@ -21,7 +21,7 @@ def _alternar_controles_periodo(grupo_controles, posicoes, data_setada):
         controle.place(**posicoes[controle])
 
 
-def _create_command_buttons(periodo_manager, master, root, entrys_list: list):
+def _create_command_buttons(periodo_manager, distorcao, master, root, entrys_list: list):
     def obter_periodo_dos_controles():
         tipo = data_setada.get()
 
@@ -54,7 +54,7 @@ def _create_command_buttons(periodo_manager, master, root, entrys_list: list):
     def abrir_tela(tela, *args):
         atualizar_periodo_manager()
         periodo = periodo_manager.obter_periodo()
-        tela(periodo, *args)
+        tela(periodo, distorcao, *args)
 
     def exibir_periodo_atual():
         _alternar_controles_periodo(grupo_controles, posicoes, data_setada)
@@ -162,9 +162,10 @@ def _create_command_buttons(periodo_manager, master, root, entrys_list: list):
         'B', lambda event: event_invoke_button(event, database))
 
 
-def criar_top_frame(periodo_manager, master, root, entry_list: list, *args, **kwargs):
+
+def criar_top_frame(periodo_manager, distorcao_manager, master, root, entry_list: list, *args, **kwargs):
     top_frame = CTkFrame(master, *args, **kwargs)
     top_frame.pack()
-    _create_command_buttons(periodo_manager, top_frame, root, entry_list)
+    _create_command_buttons(periodo_manager, distorcao_manager, top_frame, root, entry_list)
 
     return top_frame

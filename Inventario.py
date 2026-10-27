@@ -10,6 +10,8 @@ from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import BancoDeDados
 from Queries.Create_Views import deletar_views
 from Data_Manager.PeriodoInventario import PeriodoInventario
 from Data_Manager.PeriodoManager import PeriodoManager
+from Distorcao_Manager.DistorcaoInventario import DistorcaoInventario
+from Distorcao_Manager.DistorcaoManager import DistorcaoManager
 
 logger = get_logger(__name__)
 
@@ -33,8 +35,9 @@ class Inventario:
         inicio, fim = periodo_padrao()
 
         self.periodo_manager = PeriodoManager(PeriodoInventario(inicio, fim))
+        self.distorcao_manager = DistorcaoManager(DistorcaoInventario([], [], [], []))
 
-        self.frame_top = criar_top_frame(self.periodo_manager, root, self.root, entry_alter_list, width=620,
+        self.frame_top = criar_top_frame(self.periodo_manager, self.distorcao_manager, root, self.root, entry_alter_list, width=620,
                                          height=60, border_width=2, border_color='silver', corner_radius=2)
 
         self.frame_bot = criar_bot_frame(root, entry_alter_list, width=620,

@@ -11,14 +11,11 @@ from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 from Thread_Manager.Query_Operations import query_selector, query_executor
 from Outros.Logger.Get_Logger import get_logger
 from Distorcao_Manager.DistorcaoInventario import DistorcaoInventario
-from Distorcao_Manager.DistorcaoManager import DistorcaoManager
 
 logger = get_logger(__name__)
 
-distorcao_manager = DistorcaoManager(DistorcaoInventario([], [], [], []))
 
-
-def dist_saldo_screen(Consulta_Screen, consulta_button, container_manager: ContainerManager):
+def dist_saldo_screen(Consulta_Screen, consulta_button, container_manager: ContainerManager, distorcao):
     def centraliza_tela():
         # Calcula a posição central da tela para o progress bar
         screen_width = Consulta_Screen.winfo_screenwidth()
@@ -49,7 +46,7 @@ def dist_saldo_screen(Consulta_Screen, consulta_button, container_manager: Conta
     val_ven_button = ctk.CTkButton(
         hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_ven_text), state='disabled')
     listagem_button = ctk.CTkButton(hub, text='Listar Produtos', width=15,
-                                    height=20, command=lambda: List_Treeview_Screen(hub, distorcao_manager), state='disabled')
+                                    height=20, command=lambda: List_Treeview_Screen(hub, distorcao), state='disabled')
 
     # Posiciona os labels e botões na tela
     val_ven_label.place(relx=0.5, y=15, anchor='center')
@@ -64,7 +61,7 @@ def dist_saldo_screen(Consulta_Screen, consulta_button, container_manager: Conta
         logger.info("Finalizando consulta de distorção de saldo.")
         progress_bar.finalizar()
         val_ven_text.configure(
-            text=str(distorcao_manager.obter_distorcao().tamanho)
+            text=str(distorcao.obter_distorcao().tamanho)
         )
         val_ven_button.configure(state='normal')
         listagem_button.configure(state='normal')
@@ -94,7 +91,7 @@ def dist_saldo_screen(Consulta_Screen, consulta_button, container_manager: Conta
             saldo_lan.append(float(row[2]))
             saldo_pro.append(float(row[3]))
 
-        distorcao_manager.atualizar_distorcao(DistorcaoInventario(
+        distorcao.atualizar_distorcao(DistorcaoInventario(
             cdpro=cdpro,
             nmpro=nmpro,
             saldo_lan=saldo_lan,

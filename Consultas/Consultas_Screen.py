@@ -15,7 +15,7 @@ from Consultas.Quantidade_Exorbitante.Consultas_Quant_Maior_Screen import Quant_
 from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_Screen import dist_saldo_screen
 
 
-def Consulta_Total_Screen(periodo, root):
+def Consulta_Total_Screen(periodo, distorcao, root):
     container_manager = ContainerManager()
 
     Consulta_Screen = ctk.CTkToplevel(root)  # Cria a tela principal
@@ -50,7 +50,7 @@ def Consulta_Total_Screen(periodo, root):
     saldo_nzerado_button = ctk.CTkButton(frame_l, text='Produtos com Saldo Não Zerado', width=380, height=25,
                                          command=lambda: Prod_NZer_Screen(Consulta_Screen, saldo_nzerado_button, container_manager), text_color='silver', font=('', 14, 'bold'))
     dist_saldo_button = ctk.CTkButton(frame_l, text='Distorções de Saldo', width=380, height=25, command=lambda: dist_saldo_screen(
-        Consulta_Screen, dist_saldo_button, container_manager), text_color='silver', font=('', 14, 'bold'))
+        Consulta_Screen, dist_saldo_button, container_manager, distorcao), text_color='silver', font=('', 14, 'bold'))
 
     # Criação dos botões e Labels da aba direita
     precu_zer_button = ctk.CTkButton(frame_r, text='Produtos com Preço de Custo Zerado', width=380, height=25,

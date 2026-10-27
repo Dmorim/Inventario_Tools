@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from Outros.Logger.Get_Logger import get_logger
 from Thread_Manager.Query_Operations import query_selector, query_executor, _nome_query
 from Consultas.Generics_Functions.Gen_Funcs_Consulta import banco_codigo_valueform
@@ -10,6 +12,10 @@ from Queries.Consulta_Queries import (
 )
 
 logger = get_logger(__name__)
+
+
+def _hoje():
+    return date.today()
 
 QUERY_VENDAS_MES_ANO_AGRUPADO = """
     SELECT extract(month FROM dtemi) AS mes,
@@ -98,23 +104,56 @@ _PLACEHOLDERS_CFOP = ', '.join(['?'] * len(CFOP_LIST))
 
 
 def _previa_inventario(valor_inventario, ini, fim):
-    """Estima o inventário no fim do período.
+    """Estima o inventário no fim do período pelo modelo B1.
 
-    Premissa: `valor_inventario` é o inventário na data inicial do período
-    (base normalizada para o ano do inventário). Soma ao valor base o movimento
-    líquido de estoque do período valorizado ao custo atual (`precu`):
-    compras, devoluções de venda e ajustes de entrada somam; vendas, devoluções
-    ao fornecedor e ajustes de saída subtraem.
+    Rola a partir do saldo corrente (`hoje`) com base em movimentação a custo atual
+    (`precu`), mesmo universo de classificação de QUERY_INVENTARIO:
 
-    É uma estimativa: não substitui inventário contado/fechamento.
+    - fim < hoje: inv_corrente - movimento(fim+1 .. hoje)
+    - fim >= hoje: inv_corrente + movimento(hoje+1 .. fim)
+
+    `l.tpmov = 'S'` entra no estoque; demais saem.
     Devolve None quando a consulta falha, para o card sinalizar o erro em vez
     de exibir o inventário como se fosse uma estimativa válida.
     """
-    movimento = _executar_consulta(
-        QUERY_MOVIMENTO_ESTOQUE_CUSTO, (ini, fim), padrao_em_erro=None)
-    if movimento is None:
+
+    hoje = date.today()
+    try:
+        fim_data = date.fromisoformat(str(fim))
+    except Exception:
+        try:
+            # compatibilidade com formatos dd.mm.aaaa usados no projeto
+            partes = str(fim).split('.')
+            if len(partes) == 3:
+                fim_data = date(int(partes[2]), int(partes[1]), int(partes[0]))
+            else:
+                raise
+        except Exception:
+            fim_data = hoje
+
+    try:
+        if fim_data < hoje:
+            ini_mov = fim_data + timedelta(days=1)
+            fim_mov = hoje
+            movimento = _executar_consulta(
+                QUERY_MOVIMENTO_ESTOQUE_CUSTO, (ini_mov.isoformat(), fim_mov.isoformat()),
+                padrao_em_erro=None)
+            if movimento is None:
+                return None
+            return float(valor_inventario or 0) - float(movimento or 0)
+        ini_mov = hoje + timedelta(days=1)
+        fim_mov = fim_data
+        if ini_mov > fim_mov:
+            return float(valor_inventario or 0)
+        movimento = _executar_consulta(
+            QUERY_MOVIMENTO_ESTOQUE_CUSTO, (ini_mov.isoformat(), fim_mov.isoformat()),
+            padrao_em_erro=None)
+        if movimento is None:
+            return None
+        return float(valor_inventario or 0) + float(movimento or 0)
+    except Exception:
+        logger.exception('Erro ao calcular previsão B1 do inventário.')
         return None
-    return float(valor_inventario or 0) + float(movimento or 0)
 
 
 def _executar_consulta(query, params=None, padrao_em_erro=0):

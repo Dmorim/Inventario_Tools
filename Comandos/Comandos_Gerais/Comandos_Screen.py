@@ -3,13 +3,11 @@ import customtkinter as ctk
 
 from Interface_Tools.Tk_Tooltip import ToolTip
 from Comandos.Distorcao_Saldo.Comandos_Dist_Saldo import on_click_dist_saldo
-from Comandos.Comandos_Gerais.Comandos_Func import Funcoes_Comandos 
-from Distorcao_Manager.DistorcaoManager import DistorcaoManager
-
-# Inicializa a instância do DistorcaoManager com None
+from Comandos.Comandos_Gerais.Comandos_Func import Funcoes_Comandos
 
 
-def Comandos_Screen(periodo, parent):
+
+def Comandos_Screen(periodo, distorcao, parent):
     # Cria a janela comando como um Toplevel do parent
     comando = ctk.CTkToplevel(parent)
     comando.geometry("820x292+150+135")
@@ -19,7 +17,6 @@ def Comandos_Screen(periodo, parent):
     comando.focus_set()
     comando.grab_set()
 
-    distorcao = DistorcaoManager.obter_distorcao()
     comandos = Funcoes_Comandos(periodo)
 
     # Criação dos frames a esquerda(frame_l) e a direita(frame_r) da janela comando

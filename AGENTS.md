@@ -19,6 +19,11 @@ Todo acesso ao banco passa por `Thread_Manager.Query_Operations` (`query_selecto
 `query_updater`, `query_executor`) e por `thread_execução()` (`Thread_Manager.Thread_Executor`),
 que executa em thread e usa callbacks para atualizar a UI na thread principal.
 
+## Responsabilidades e convenções (NEXO)
+
+- **Testes do sistema:** passo a responsabilidade da criação, alteração e exclusão dos arquivos de testes do sistema ao agente **NEXO**. Não é necessário pedir autorização para criar, modificar ou apagar testes quando julgar adequado para manter a consistência do sistema.
+- **Imports:** devem ser realizados **apenas no topo do arquivo**. Imports **externos** (biblioteca padrão / terceiros) devem vir **primeiro**, seguidos dos imports **internos** do projeto, com linha em branco entre os grupos quando houver ambos.
+
 ## Comandos
 
 Ambiente virtual: `.venv` (Windows, PowerShell). Use o executável da venv explicitamente:
