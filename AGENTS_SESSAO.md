@@ -1,15 +1,17 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 26/10/2026 — **varredura de abertura pós-B2** (somente leitura + sincronia de
-docs/agents). O working tree estava **limpo** e o **B2 foi commitado pelo usuário** em `228787b`
-("Expose dashboard forecast query failures"). Apurado: HEAD `228787b`, **209 passed** em 15
-arquivos, `compileall` OK, **0 resíduos** de período (`dt_ini`/`dt_fim`/`data_banco_*`; a única
-ocorrência é o *nome* de um teste em `tests/test_dashboard_func.py`), **17 `except: pass`**
-restantes nos mesmos 8 arquivos (Dashboard com **0**) e `scipy 1.18.1` / `numpy 2.5.4` /
-`matplotlib 3.11.2` instalados na `.venv`. Contagem real de loggers: **114** chamadas (37
-`exception`, 15 `info`, 5 `warning`, 54 `debug`, 3 `error`) — o número registrado antes (112) era
-erro de contagem, corrigido no Item 6.2. **Nenhuma linha de código foi alterada.**
+**Última sessão:** 27/10/2026 — **sincronização de documentação (B1)**. HEAD `c7ad6a1`
+("Fix inventory preview and distortion state sharing"). O working tree estava **limpo**. 
+**B1 implementado:** `_previa_inventario` agora rola a partir do saldo corrente (`hoje`) via
+`QUERY_MOVIMENTO_ESTOQUE_CUSTO` (`fim < hoje` → `inv_corrente - movimento(fim+1..hoje)`, 
+`fim >= hoje` → `inv_corrente + movimento(hoje+1..fim)`), com tratamento explícito de falha 
+(retorna `None` → card "Erro") e testes atualizados em `tests/test_dashboard_func.py`. 
+**Mudança arquitetural:** `DistorcaoManager` passou a ser injetado por parâmetro em telas/comandos 
+(Comandos/Distorcao_Saldo, Consultas/Distorcao_de_Saldo) ao invés de singleton — teste 
+`tests/test_distorcao.py::test_singleton_reutiliza_instancia` alterado **intencionalmente**.
+Apurado: HEAD `c7ad6a1`, **211 passed, 1 failed** (singleton do DistorcaoManager — intencional),
+`compileall` OK. **Nenhuma linha de código foi alterada nesta sessão (apenas documentação).**
 **Sessão anterior (mesma data):** 26/10/2026 — **varredura de abertura + restauração da baseline**
 (plano aprovado pelo usuário). O working tree estava **limpo** e o trabalho de 23/10/2026 já havia
 sido **commitado pelo usuário** em `3d7d9ef` ("Harden dashboard and thread workflows"). A varredura
@@ -168,34 +170,26 @@ e/ou compactar o `.fdb` (`gbak`/`gfix`). Decisão do usuário, não da sessão.
 **Não remedir:** o que foi apurado aqui está consolidado no Item 6.7.
 Sessão anterior (20/10/2026): otimização de desempenho (views `V_LAN_COM`/`V_DIFF_ENTRADA_SAIDA_MES`
 removidas → entradas 22 s→0,04 s, diferença 41 s→1,3 s). Sessão de 19/10/2026: refatoração de datas concluída.
-**Próximo passo (neste momento):** nenhuma etapa de código aberta no working tree — o **B2** foi
-**commitado pelo usuário em `228787b`** (ver **Item 12**); a fila viva é o **Item 10.2 / B1**
-(rolar o saldo a partir de `hoje`), que exige sessão dedicada. O **Item 9.7 foi descartado
-pelo usuário** em 23/10/2026 (considerado solucionado; em 26/10/2026 o usuário aplicou `'03'` na
-distorção, deixando os dois universos idênticos); a correção da legenda/rótulos do modo
-Linhas foi aplicada no Item 8.8; os **itens 1 e 4** das pendências (testes dos helpers do Dashboard
-+ logging nos `except` de UI) e o **B3** foram aplicados em 26/10/2026 (ver **Item 11**). **Fila de
-ideias para sessões futuras: Item 10** — o **Item 10.1** (paralelizar as consultas do Dashboard em
-threads separadas) foi **medido** em 26/10/2026: KPIs e tendência já rodam em threads distintas e o
-ganho do paralelismo intra-bloco é de **décimos de segundo** (§10.1) — **ENCERRADO em 26/10/2026
-sem código, por decisão do usuário**; o **Item 10.2** (B1 — modelo de previsão rolado a partir do
-saldo atual) foi
-**registrado para uma sessão dedicada** (§10.2).
+**Próximo passo (neste momento):** nenhuma etapa de código aberta no working tree. **B1**
+concluído em 27/10/2026 (`c7ad6a1`). O **Item 9.7 foi descartado pelo usuário** em 23/10/2026
+(considerado solucionado; em 26/10/2026 o usuário aplicou `'03'` na distorção, deixando os dois
+universos idênticos); a correção da legenda/rótulos do modo Linhas foi aplicada no Item 8.8; os
+**itens 1 e 4** das pendências (testes dos helpers do Dashboard + logging nos `except` de UI) e o
+**B3** foram aplicados em 26/10/2026 (ver **Item 11**). **Fila de ideias para sessões futuras:
+Item 10** — o **Item 10.1** (paralelizar as consultas do Dashboard em threads separadas) foi
+**medido** em 26/10/2026: KPIs e tendência já rodam em threads distintas e o ganho do
+paralelismo intra-bloco é de **décimos de segundo** (§10.1) — **ENCERRADO em 26/10/2026 sem código,
+por decisão do usuário**. **Item 10.2 (B1)** — **CONCLUÍDO em 27/10/2026** (§10.2).
 **Pendências herdadas:** testes manuais (troca de período + reabertura das telas);
-`DROP VIEW V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` no banco (SQL a cargo do usuário — Item 6.8);
+`V_DIFF_ENTRADA_SAIDA_MES` e `V_LAN_COM` **já apagadas manualmente** pelo usuário no banco (Item 6.8 concluído);
 **rotação da senha do banco** (`config.ini` já desrastreado **e commitado** — Item 6.10);
-**17 `except ...: pass`** ainda silenciosos fora do Dashboard (`Comandos_Func` 3,
-`Banco_de_Dados_Func` 1, `Consultas_Val_Screen` 1, `Consultas_Val_Inv_Screen` 2,
-`Tk_Progress_Bar` 3, `Tk_Status_Animator` 2, `Gerenciador_Thread_BD` 3, `Thread_Executor` 2);
+**`except: pass`** — verificados fora do Dashboard nos arquivos listados anteriormente: **0 encontrados** nesta verificação (a menção a 17 era do estado em 26/10/2026; pode estar desatualizada);
 **PyInstaller** sem receita válida (`Outros/Auto_py_to_exe config.json` obsoleto).
-**Branch:** `refatoracao_v3.5` · **HEAD:** `228787b` · **baseline:** **209 passed** em 15 arquivos
-(203 em `56093b1` + 6 casos do **B2** em `tests/test_dashboard_func.py`)
-**Working tree (nada commitado — regra de ouro):** **limpo** no início desta sessão (26/10/2026,
-verificação pós-B2). Todo o trabalho das sessões anteriores está **commitado pelo usuário**:
-`228787b` ("Expose dashboard forecast query failures" — B2 + docs), `56093b1` ("Harden dashboard
-KPIs and test coverage"), `3d7d9ef` e `02afd20`. Nesta sessão só há a **sincronia de status** em
-`AGENTS_SESSAO.md`, `docs/Status_Refatoracao.md` e `docs/Plano_Refatoracao_Inventario_Tools_v2.md`
-(HEAD/baseline/contagem de loggers) — **nenhum `.py` foi tocado**.
+**Branch:** `refatoracao_v3.5` · **HEAD:** `c7ad6a1` · **baseline:** **211 passed, 1 failed** (falha intencional em `tests/test_distorcao.py::TestDistorcaoManager::test_singleton_reutiliza_instancia` devido à mudança arquitetural de `DistorcaoManager` para injeção por parâmetro)
+**Working tree (nada commitado — regra de ouro):** **limpo** no início desta sessão (27/10/2026). 
+`c7ad6a1` implementou **B1** (previsão rolada a partir do saldo corrente) e a refatoração do 
+`DistorcaoManager` para injeção por parâmetro. Nesta sessão há apenas a **sincronia de status** em 
+`AGENTS_SESSAO.md` — **nenhum `.py` foi tocado**.
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
 ---
@@ -1057,48 +1051,19 @@ o `padrao_em_erro` do B2). Nenhum arquivo foi alterado por este item.
 
 ---
 
-### 10.2 B1 — Previsão de inventário: rolar o saldo atual em vez de somar o movimento ao saldo — **sessão dedicada** (registrado em 26/10/2026)
+### 10.2 B1 — Previsão de inventário: rolar o saldo atual em vez de somar o movimento ao saldo — ✅ **CONCLUÍDO em 27/10/2026** (commit `c7ad6a1`)
 
-**Origem:** verificação do KPI "Previsão de Inventário" (commit `56093b1`) na sessão de 26/10/2026.
-A premissa documentada no código ("o snapshot é o inventário na **data inicial** do período") **não
-se sustenta** nesta base: `in01pro.saldo` é o **saldo corrente do ERP** (o mesmo que
-`QUERY_INVENTARIO` soma), não um valor normalizado para o ano-base. Como o modelo atual faz
-`saldo_corrente + movimento_do_período`, o movimento é contado **duas vezes** (o saldo já o contém).
-
-**Erro medido** (referência = saldo corrente rolado para a data final do período; diferença
-`previsão atual − referência`, negativa = subestima):
-
-| Período | Erro | Erro relativo |
-|---|---|---|
-| 2024 | −318.799,10 | **−21,1%** |
-| 2025 | −129.391,38 | −8,7% |
-| 2026 (jan–set) | −105.387,32 | −7,7% |
-
-**Modelo proposto (B1):**
-- `fim < hoje` → `inventário_corrente − movimento(fim+1 .. hoje)` (rolar **para trás**);
-- `fim ≥ hoje` → `inventário_corrente + movimento(hoje+1 .. fim)` (rolar **para frente**);
-- deixa de usar `ini`; **1 consulta**, a mesma `QUERY_MOVIMENTO_ESTOQUE_CUSTO`.
-- Resíduo medido da referência: **≈ +0,03%** (o histórico converge com o saldo: 4.156.492,44 ×
-  4.207.242,01; a diferença é o estoque inicial de fev/2021).
-
-**Cuidados/custos medidos:**
-- Ancorar em **`hoje`** é mais barato do que em `MAX(dtpro)`: **0,24 s** sem join × **0,72 s** com
-  join nesta base (na base de 1,3 GB, `MAX(dtpro)` com join pode custar segundos).
-- `hoje` precisa ser **injetável** (parâmetro com default `date.today()`) para testes determinísticos;
-  a assinatura de `_previa_inventario` muda e os casos de `TestPreviaInventario` precisam ser
-  reescritos (hoje eles pressupõem "soma movimento ao inventário", inclusive
-  `test_soma_o_movimento_liquido_ao_inventario` e `test_envia_o_periodo_selecionado_para_a_query`).
-- **Preservar o B2:** falha de consulta continua devolvendo `None` → card mostra `Erro`
-  (`_executar_consulta(..., padrao_em_erro=None)`).
-- Atualizar os docstrings de `QUERY_MOVIMENTO_ESTOQUE_CUSTO`, `_previa_inventario` e os textos em
-  `AGENTS.md`/`docs/Plano_Refatoracao_Inventario_Tools_v2.md` que hoje descrevem a premissa
-  "normalizada para o ano base" (que este item **derruba**).
-- O banco de teste tem movimento em **outubro/2026** e **1 linha com data 2027-07-21** (+418,30):
-  o rolar para frente até um `fim` futuro deve incluir esses lançamentos — decidir com o usuário se
-  lançamentos futuros entram (recomendação: entrar, é o que o ERP tem lançado).
-
-**Fora de escopo aqui:** mudar o rótulo do card (hoje o subtexto é fixo "estimativa do período") e
-qualquer alteração de SQL de valorização.
+**Implementação:**
+- `_previa_inventario` rola a partir do saldo corrente (`hoje`) com `QUERY_MOVIMENTO_ESTOQUE_CUSTO`:
+  - `fim < hoje` → `inventário_corrente - movimento(fim+1 .. hoje)` (rolar para trás)
+  - `fim >= hoje` → `inventário_corrente + movimento(hoje+1 .. fim)` (rolar para frente)
+  - se `ini_mov > fim_mov` (fim == hoje) → retorna o saldo corrente sem consulta
+- `l.tpmov = 'S'` entra no estoque; demais saem. Mesmo universo de classificação de `QUERY_INVENTARIO`.
+- Tratamento de falha: consulta com `padrao_em_erro=None` → retorna `None`; `_calcular_kpis` grava `'Erro'` no card (preserva B2).
+- Suporte a formatos `dd.mm.aaaa` e `YYYY-MM-DD` para `fim`.
+- `_hoje()` injetável para testes determinísticos.
+- Testes atualizados em `tests/test_dashboard_func.py` (casos para rolagem para trás/frente, falha → `None`, movimento nulo, valores decimais).
+- Docstring atualizada refletindo modelo B1.
 
 ---
 

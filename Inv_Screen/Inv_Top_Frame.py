@@ -54,7 +54,7 @@ def _create_command_buttons(periodo_manager, distorcao, master, root, entrys_lis
     def abrir_tela(tela, *args):
         atualizar_periodo_manager()
         periodo = periodo_manager.obter_periodo()
-        tela(periodo, distorcao, *args)
+        tela(periodo, *args)
 
     def exibir_periodo_atual():
         _alternar_controles_periodo(grupo_controles, posicoes, data_setada)
@@ -65,9 +65,9 @@ def _create_command_buttons(periodo_manager, distorcao, master, root, entrys_lis
         TelaInicial.help_image_tela_inicial, size=(14, 14))
 
     consulta = CTkButton(master, text='Consultas (F1)', width=80, height=48,
-                         command=lambda: abrir_tela(Consulta_Total_Screen, root), state='normal')
+                         command=lambda: abrir_tela(Consulta_Total_Screen, distorcao, root), state='normal')
     comando = CTkButton(master, text='Comandos (F2)', width=60, height=48,
-                        command=lambda: abrir_tela(Comandos_Screen, root), state='disabled')
+                        command=lambda: abrir_tela(Comandos_Screen, distorcao, root), state='disabled')
     database = CTkButton(master, text='Selecione o Banco de Dados', width=100,
                          height=48, command=lambda: Interface_Banco(master, entrys_list, [consulta, comando, dashboard]))
     dashboard = CTkButton(master, text='Dashboard (F3)', width=70, height=48,
@@ -162,10 +162,10 @@ def _create_command_buttons(periodo_manager, distorcao, master, root, entrys_lis
         'B', lambda event: event_invoke_button(event, database))
 
 
-
 def criar_top_frame(periodo_manager, distorcao_manager, master, root, entry_list: list, *args, **kwargs):
     top_frame = CTkFrame(master, *args, **kwargs)
     top_frame.pack()
-    _create_command_buttons(periodo_manager, distorcao_manager, top_frame, root, entry_list)
+    _create_command_buttons(
+        periodo_manager, distorcao_manager, top_frame, root, entry_list)
 
     return top_frame

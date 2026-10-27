@@ -92,29 +92,24 @@ tests/             Testes unitários (pytest)
   (17 casos); importar `Dashboard.Dashboard_Screen` **não** abre janela (só define funções).
   Ao mexer nessas funções, rode
   `pytest tests/test_dashboard_func.py tests/test_dashboard_screen_helpers.py`.
-- **KPI "Previsão de Inventário" (redefinido em 26/10/2026):** é uma **estimativa do inventário
-  no fim do período selecionado**, não mais um comparativo entre anos-calendário. Fórmula:
-  `inventário_base + movimento líquido do período a custo atual`, via
-  `QUERY_MOVIMENTO_ESTOQUE_CUSTO` (`Dashboard/Dashboard_Func.py`), que soma `quant × precu` com
-  sinal por `l.tpmov` (`'S'` entra: compras, devoluções de venda, transferências de entrada; as
-  demais saem: vendas, devoluções ao fornecedor, ajustes), usando o **mesmo custo e o mesmo
-  universo de classificação** de `QUERY_INVENTARIO`. **Premissa explícita do usuário:** a base do
-  cliente tem o valor de inventário **normalizado para o ano base do inventário** — o snapshot é
-  tratado como o inventário na data **inicial** do período. A query antiga
-  (`QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL`, `SUM(ABS(...))` por ano, com `in01com.valno` ×
-  `V_FAT_VALOR_SAIDA`) foi **removida**; histórico no git (`16e26ec`, `89d702a`, `e7d479f`).
+- **KPI "Previsão de Inventário" (B1 concluído em 27/10/2026):** é uma **estimativa do inventário
+  no fim do período selecionado**, rolando a partir do **saldo corrente** (`hoje`) com base em
+  movimentação a custo atual (`precu`), via `QUERY_MOVIMENTO_ESTOQUE_CUSTO`
+  (`Dashboard/Dashboard_Func.py`): `fim < hoje` → `inv_corrente - movimento(fim+1 .. hoje)`;
+  `fim >= hoje` → `inv_corrente + movimento(hoje+1 .. fim)`. `l.tpmov = 'S'` entra (compras,
+  devoluções de venda, transferências de entrada); demais saem. Mesmo custo e mesmo universo de
+  classificação de `QUERY_INVENTARIO`. A query antiga
+  (`QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL`) foi **removida**; histórico no git (`16e26ec`, `89d702a`,
+  `e7d479f`).
   Validação no banco cópia: movimento histórico 4.156.492,44 × saldo 4.207.242,01 (diferença =
   estoque inicial de fev/2021). O card **não** exibe mais o selo "vs período anterior" (substituído
   pelo subtexto fixo "estimativa do período") e o período anterior é calculado com
   `_calcular_kpis(..., incluir_previa=False)`.
   **Falha visível (B2, 26/10/2026):** `_executar_consulta` aceita `padrao_em_erro` (default `0`);
-  `_previa_inventario` usa `None` e, se a consulta falhar, `_calcular_kpis` grava `'Erro'` no card
-  em vez de repetir o inventário. Resultado `NULL` legítimo continua valendo `0`.
-  **Premissa contestada (26/10/2026):** medição mostrou que `in01pro.saldo` nesta base é o **saldo
-  corrente**, não um valor normalizado para o ano-base; o modelo atual conta o movimento duas vezes
-  e erra −21,1% (2024), −8,7% (2025) e −7,7% (2026 jan–set). A correção (rolar o saldo a partir de
-  `hoje`) está no **Item 10.2** de `AGENTS_SESSAO.md`, para sessão dedicada — **não aplicar sem
-  reescrever `TestPreviaInventario`**.
+  `_previa_inventario` usa `padrao_em_erro=None` e, se a consulta falhar, retorna `None` e
+  `_calcular_kpis` grava `'Erro'` no card. Resultado `NULL` legítimo continua valendo `0`.
+  **B1 (27/10/2026):** corrige a contagem dupla do modelo anterior (movimento já contido no saldo
+  corrente). Implementado em `c7ad6a1` com testes atualizados em `tests/test_dashboard_func.py`.
 - **Logging (convenção desde 26/10/2026):** use `get_logger(__name__)`
   (`Outros/Logger/Get_Logger.py`); nível por `INVENTARIO_LOG_LEVEL` (padrão `INFO`) e arquivos em
   `logs/AAAAMM/DDMMAAAA_log.txt`. Não deixe `except ...: pass` silencioso em código novo: registre

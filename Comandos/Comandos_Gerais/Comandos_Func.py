@@ -54,7 +54,8 @@ class Funcoes_Comandos:
             except Exception:
                 periodo = None
 
-        inicio_formatado = getattr(periodo, 'inicio_formatado', None) if periodo else None
+        inicio_formatado = getattr(
+            periodo, 'inicio_formatado', None) if periodo else None
 
         self.comandos_query = {
             checkbox_List[0]: (QUERY_UPDATE_PRECU_PORCENTAGEM, (self.porcent_precu,)),
@@ -162,7 +163,7 @@ class Funcoes_Comandos:
         atualizar_ui_main(comando, progress_bar.atualizar_status,
                           'Executando comandos')
         thread_execução(comando, self.executa_comandos,
-                        update_finalizado, update_erro, operacoes, total, status_label)
+                        update_finalizado, update_erro, comando, operacoes, total, status_label)
 
     def montar_operacoes(self, checkbox_List, comando=None) -> list:
         nomes = [

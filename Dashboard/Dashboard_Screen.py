@@ -4,6 +4,8 @@ import datetime
 import json
 import os
 
+import pyperclip
+
 from Outros.Logger.Get_Logger import get_logger
 from Outros.Periodo_Inventario import periodo_tendencia_ultimos_5_anos
 from Thread_Manager.Thread_Executor import thread_execução
@@ -78,8 +80,23 @@ def _criar_kpi_card(master, titulo, valor, cor_valor=COR_TEXTO, prefix='',
     ctk.CTkLabel(card, text=titulo, font=('', 12),
                  text_color=COR_KPI_LABEL, wraplength=140).pack(
         padx=10, pady=(8, 2), anchor='center')
-    ctk.CTkLabel(card, text=prefix + str(valor), font=('', 20, 'bold'),
-                 text_color=cor_valor).pack(padx=10, pady=(2, 0), anchor='center')
+
+    valor_texto = prefix + str(valor)
+
+    def _copiar_valor(event=None):
+        try:
+            texto_copia = f'{titulo}: {valor_texto}'
+            pyperclip.copy(texto_copia)
+        except Exception:
+            logger.debug('Falha ao copiar valor do KPI para o clipboard.', exc_info=True)
+
+    lbl_valor = ctk.CTkLabel(card, text=valor_texto, font=('', 20, 'bold'),
+                             text_color=cor_valor, cursor='hand2')
+    lbl_valor.pack(padx=10, pady=(2, 0), anchor='center')
+    try:
+        lbl_valor.bind('<Button-1>', _copiar_valor)
+    except Exception:
+        logger.debug('Falha ao vincular clique para copia do KPI.', exc_info=True)
     if variacao:
         cor_variacao = cor_variacao or COR_SUBTEXTO
         ctk.CTkLabel(card, text=variacao, font=('', 11, 'bold'),
@@ -117,7 +134,7 @@ def _atualizar_dashboard(screen, kpis, cards_frame, kpis_anterior=None):
         widget.destroy()
 
     try:
-        _criar_kpi_card(cards_frame, 'Valor do Inventario',
+        _criar_kpi_card(cards_frame, 'Valor do Inventário',
                         kpis.get('valor_inventario', '0,00'), COR_TEXTO, 'R$ ')
         v_ven, c_ven = _formatar_variacao(
             kpis.get('valor_vendas_num'), kpis.get('valor_vendas_num_ant'))
@@ -135,7 +152,7 @@ def _atualizar_dashboard(screen, kpis, cards_frame, kpis_anterior=None):
         _criar_kpi_card(cards_frame, 'Vendas 1.3',
                         kpis.get('vendas_130', '0,00'), COR_TEXTO, 'R$ ',
                         v_v13, c_v13)
-        _criar_kpi_card(cards_frame, 'Previsão de Inventario',
+        _criar_kpi_card(cards_frame, 'Previsão de Inventário',
                         kpis.get('previa_inventario',
                                  '0,00'), COR_PREVISAO, 'R$ ',
                         'estimativa do período', COR_SUBTEXTO)
