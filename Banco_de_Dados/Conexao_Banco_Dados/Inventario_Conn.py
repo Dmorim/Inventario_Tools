@@ -1,5 +1,8 @@
 import fdb
+from Outros.Logger.Get_Logger import get_logger
 from Thread_Manager.Gerenciador_Thread_BD import GerenciadorThreadBD
+
+logger = get_logger(__name__)
 
 
 class ConfiguracaoBanco:
@@ -8,13 +11,17 @@ class ConfiguracaoBanco:
     port = ''
     database = ''
     fbclient = ''
+    user = ''
+    password = ''
 
     @classmethod
-    def definir(cls, host, port, database, fbclient):
+    def definir(cls, host, port: int | None, database, fbclient, user, password):
         cls.host = host
         cls.port = port
         cls.database = database
         cls.fbclient = fbclient
+        cls.user = user
+        cls.password = password
 
 
 class BancoDeDados:
@@ -28,8 +35,10 @@ class BancoDeDados:
     @classmethod
     def conectar(cls):
         """Cria o pool uma única vez. Chamadas seguintes reaproveitam."""
+        logger.info(
+            'Conectando ao banco de dados e preparando o pool de conexões.')
         if cls._gerenciador is not None:
-            return cls._gerenciador  # idempotente — já existe, não recria
+            return cls._gerenciador
 
         cls._gerenciador = GerenciadorThreadBD(cls._criar_conexao)
         return cls._gerenciador
@@ -38,11 +47,11 @@ class BancoDeDados:
     def _criar_conexao():
         return fdb.connect(
             host=ConfiguracaoBanco.host,
-            port=int(ConfiguracaoBanco.port),
+            port=ConfiguracaoBanco.port,
             database=ConfiguracaoBanco.database,
             fb_library_name=ConfiguracaoBanco.fbclient,
-            user='SYSDBA',
-            password='masterkey',
+            user=ConfiguracaoBanco.user,
+            password=ConfiguracaoBanco.password,
             charset='WIN1252'
         )
 
@@ -63,6 +72,7 @@ class BancoDeDados:
     @classmethod
     def fechar(cls):
         if cls._gerenciador is not None:
+            logger.info('Encerrando pool de conexões do banco.')
             cls._gerenciador.fechar()
             cls._gerenciador = None
 

@@ -1,13 +1,13 @@
-def Comandos_Screen(self, parent):
-    import customtkinter as ctk  # Importa a biblioteca customtkinter como ctk
+import customtkinter as ctk
 
-    # Importa a função ToolTip do arquivo Tk_Tooltip da pasta Outros
-    from Interface_Tools.Tk_Tooltip import ToolTip
-    # Importa as funções on_click_confirm e precu_porcent_entry_validate do arquivo Comandos_Func da pasta Comandos
-    from Comandos.Comandos_Gerais.Comandos_Func import on_click_confirm, precu_porcent_entry_validate
-    # Importa a função on_click_dist_saldo do arquivo Comandos_Dist_Saldo da pasta Comandos
-    from Comandos.Distorcao_Saldo.Comandos_Dist_Saldo import on_click_dist_saldo
 
+from Interface_Tools.Tk_Tooltip import ToolTip
+from Comandos.Distorcao_Saldo.Comandos_Dist_Saldo import on_click_dist_saldo
+from Comandos.Comandos_Gerais.Comandos_Func import Funcoes_Comandos
+
+
+
+def Comandos_Screen(periodo, distorcao, parent):
     # Cria a janela comando como um Toplevel do parent
     comando = ctk.CTkToplevel(parent)
     comando.geometry("820x292+150+135")
@@ -16,6 +16,8 @@ def Comandos_Screen(self, parent):
     comando.transient(parent)
     comando.focus_set()
     comando.grab_set()
+
+    comandos = Funcoes_Comandos(periodo)
 
     # Criação dos frames a esquerda(frame_l) e a direita(frame_r) da janela comando
     frame_l = ctk.CTkFrame(comando, width=410, height=260,
@@ -31,8 +33,8 @@ def Comandos_Screen(self, parent):
     # Criação dos botões confirmar e cancelar
     status_label = ctk.CTkLabel(comando, text='', width=400, height=14,
                                 font=('verdana', 11), text_color='gray')
-    confirm_button = ctk.CTkButton(comando, text='Confirmar', width=60, height=26, command=lambda: on_click_confirm(
-        self, comando, checkbox_list, values_list, confirm_button, status_label))
+    confirm_button = ctk.CTkButton(comando, text='Confirmar', width=60, height=26, command=lambda: comandos.on_click_confirm(
+        comando, checkbox_list, values_list, confirm_button, status_label))
     cancel_button = ctk.CTkButton(
         comando, text='Cancelar', width=70, height=26, command=lambda: comando.destroy())
 
@@ -47,7 +49,8 @@ def Comandos_Screen(self, parent):
                                'Custo Médio', 'Preço de Venda * 0,65']
 
     # Validação do Entry precu_porcent_entry
-    precu_porcent_vcmd = (comando.register(precu_porcent_entry_validate), '%P')
+    precu_porcent_vcmd = (comando.register(
+        comandos.precu_porcent_entry_validate), '%P')
 
     # Itens do Frame Left
     com_precu_label = ctk.CTkLabel(
@@ -113,7 +116,7 @@ def Comandos_Screen(self, parent):
     dtope_dtpro_chkbox = ctk.CTkCheckBox(frame_r, text='Deixar DTOPE igual DTPRO ', font=(
         'verdana', 12, 'bold'), checkbox_height=13, checkbox_width=13)
     dist_saldo_button = ctk.CTkButton(frame_r, text='Correção de Distorção de Saldo ', font=(
-        'verdana', 12, 'bold'), width=390, anchor='center', command=lambda: on_click_dist_saldo(self, comando))
+        'verdana', 12, 'bold'), width=390, anchor='center', command=lambda: on_click_dist_saldo(distorcao, comando))
 
     # ToolTip dos itens do Frame Right
     ToolTip(classi_pro_null_chkbox,
@@ -152,12 +155,7 @@ def Comandos_Screen(self, parent):
     precu_igual_cbb.set('Preço de Compra')
 
     # Verificar se a lista de distorção de saldo está vazia ou foi criada
-    if hasattr(self, 'dist_saldo_list'):
-        if len(self.dist_saldo_list) == 0:
-            # Desabilita o botão de distorção de saldo caso não haja produtos com distorções
-            dist_saldo_button.configure(state='disabled')
-    else:
-        # Desabilita o botão de distorção caso a lista de distorção não tenha sido criada
+    if distorcao is None or not distorcao.possui_itens():
         dist_saldo_button.configure(state='disabled')
 
     # Atalhos do teclado para sair da tela e executar a função confirmar

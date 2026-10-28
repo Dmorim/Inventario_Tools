@@ -1,36 +1,44 @@
-def theme_def(cbb_entry):
-    # Função chamada para definir o tema do sistema e salvar o valor no arquivo config.ini
-    # Args:
-        # cbb_entry: combobox do tema
-    
-    from customtkinter import set_appearance_mode # Importa a função set_appearance_mode do customtkinter
-    from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Func import salvar_diretorio # Importa a função salvar_diretorio do Banco_de_Dados_Func
-    
-    theme = cbb_entry.get() # Obtem o valor do combobox
-    if theme == 'Claro': # Se o valor for claro, define o tema como claro
-        salvar_diretorio('Configurações', 'Cor_do_tema', 'Light') # Salva o valor no arquivo config.ini
-        set_appearance_mode("Light")
-        
-    elif theme == 'Escuro': # Se o valor for escuro, define o tema como escuro
-        salvar_diretorio('Configurações', 'Cor_do_tema', 'Dark') # Salva o valor no arquivo config.ini
-        set_appearance_mode("Dark")
-    
-    elif theme == 'Sistema': # Se o valor for sistema, define o tema como sistema
-        salvar_diretorio('Configurações', 'Cor_do_tema', 'System') # Salva o valor no arquivo config.ini
-        set_appearance_mode("System")
+from customtkinter import set_appearance_mode
+from Configuracoes.Config_Manager import get_config
 
-def on_click_confirm(self, config, cbb_entry):
-    # Função chamada ao apertar o botão de confirmar, se o tema escolhido for diferente do atual,executa a função theme_def e fecha a janela
-    # Args:
-        # self: objeto da classe
-        # config: janela do tkinter
-        # cbb_entry: combobox do tema
-    
-    if cbb_entry.get() == self.color_theme: # Verifica se o tema escolhido é igual ao atual
-        return
-    else:
-        theme_def(cbb_entry) # Executa a função theme_def caso não seja
-    
-    config.grab_release() # Libera o foco da janela
-    config.destroy() # Fecha a janela
-       
+
+def _theme_def(cbb_entry):
+    tema_dict = {
+        "Claro": "light",
+        "Escuro": "dark",
+        "Sistema": "system"
+    }
+
+    config = get_config()  # Obtém o objeto de configuração
+    # Define o valor do tema no arquivo config.ini
+    config.set("Tema", "cor_do_tema", tema_dict.get(cbb_entry.get(), "system"))
+    config.save()  # Salva as alterações no arquivo config.ini
+    # Define o tema do sistema
+    set_appearance_mode(config.get("Tema", "cor_do_tema", fallback="System"))
+
+
+def _db_def(entry_widgets):
+    config = get_config()
+    user_db = entry_widgets[0].get()
+    pass_db = entry_widgets[1].get()
+
+    config.set("Credenciais", "user_db", user_db)
+    config.set("Credenciais", "pass_db", pass_db)
+    config.save()
+
+
+def set_default_values(entry_widgets):
+    config = get_config()
+    user_db = config.get("Credenciais", "user_db", fallback="")
+    pass_db = config.get("Credenciais", "pass_db", fallback="")
+
+    entry_widgets[0].insert(0, user_db)
+    entry_widgets[1].insert(0, pass_db)
+
+
+def on_click_confirm(config, cbb_entry, entry_widgets):
+    _theme_def(cbb_entry)
+    _db_def(entry_widgets)
+
+    config.grab_release()  # Libera o foco da janela
+    config.destroy()  # Fecha a janela

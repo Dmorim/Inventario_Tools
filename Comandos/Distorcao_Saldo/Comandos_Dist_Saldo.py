@@ -1,17 +1,15 @@
-def on_click_dist_saldo(self, parent):
-    # Função chamada ao apertar o botão de distorção de saldo, cria a tela de distorção de saldo
-    # Args:
-    # self: objeto da classe
-    # parent: janela do tkinter
+import customtkinter as ctk
+from datetime import datetime
+from tkcalendar import DateEntry
+from tkinter import messagebox
 
-    # Importações de bibliotecas externas
-    import customtkinter as ctk
-    from datetime import datetime
-    from tkcalendar import DateEntry
+from Thread_Manager.Query_Operations import query_updater, query_executor
+from Thread_Manager.Thread_Executor import thread_execução
+from Queries.Comando_Queries import QUERY_ATUALIZA_SALDO_PRODUTO, QUERY_INSERE_AJUSTE_LAN
 
-    # Importação da função update_executor do arquivo Thread_Manager/Thread_Executor.py
 
-    # Cria a janela distorcao como um Toplevel do parent
+def on_click_dist_saldo(distorcao_saldo, parent):
+
     distorcao = ctk.CTkToplevel(parent)
     distorcao.geometry("330x120+150+135")
     distorcao.title("Distorção de Saldo")
@@ -32,7 +30,7 @@ def on_click_dist_saldo(self, parent):
 
     # Criação dos botões confirmar e cancelar
     confirm_button = ctk.CTkButton(distorcao, text='Confirmar', width=60, height=26,
-                                   command=lambda: on_click_confirm_btt(self, distorcao, val_list, confirm_button))
+                                   command=lambda: on_click_confirm_btt(distorcao_saldo, distorcao, val_list, confirm_button))
     cancel_button = ctk.CTkButton(
         distorcao, text='Cancelar', width=75, height=26, command=lambda: distorcao.destroy())
 
@@ -55,38 +53,28 @@ def on_click_dist_saldo(self, parent):
     cancel_button.place(x=175, y=90)
 
 
-def on_click_confirm_btt(self, parent, val_list, confirm_button):
-    # Função chamada ao apertar o botão de confirmar, executa a distorção de saldo
-    # Args:
-    # self: objeto da classe
-    # parent: janela do tkinter
-    # val_list: lista de valores da aba distorção de saldo
-
-    from datetime import datetime  # Importa a classe datetime
-    from tkinter import messagebox  # Importa a classe messagebox do tkinter
-
-    from Thread_Manager.Query_Operations import query_updater, query_executor
-    from Thread_Manager.Thread_Executor import thread_execução
-
+def on_click_confirm_btt(distorcao_saldo, parent, val_list, confirm_button):
     def executa_distorcao():
         tp_distorc = val_list[0].get()
         if tp_distorc == 'PRO = LAN':  # Verifica se a distorção é PRO = LAN
-            for item in self.dist_saldo_list:  # Para cada item na lista de distorção de saldo
+            for item in distorcao_saldo.obter_distorcao().campos_em_lista:  # Para cada item na lista de distorção de saldo
                 # Cria a query de distorção de saldo, deixando o saldo do produto igual ao saldo do lançamento, onde o código do produto é informado na lista
-                query = f"UPDATE IN01PRO SET SALDO = {item[2]} WHERE CDPRO = {item[0]}"
-                query_executor(query_updater, query)  # Executa a query
+                query = QUERY_ATUALIZA_SALDO_PRODUTO
+                params = (item[2], item[0])  # Define os parâmetros da query
+                query_executor(query_updater, query, params)  # Executa a query
         else:
-            for item in self.dist_saldo_list:  # Para cada item na lista de distorção de saldo"
+            for item in distorcao_saldo.obter_distorcao().campos_em_lista:  # Para cada item na lista de distorção de saldo
                 # Define o tipo de movimento como N se o saldo do produto for maior que o saldo do lançamento, caso contrário, define como S
                 tpmov = 'N' if item[2] > item[3] else 'S'
                 quant = abs(item[2] - item[3])
                 data = datetime.strptime(
                     val_list[1].get(), "%d/%m/%Y").strftime("%d.%m.%Y")
-                nmpro = item[1].replace("'", "")
-                # Cria a query de distorção de saldo, inserindo um novo lançamento no banco de dados
-                query = f"INSERT INTO IN01LAN (NOTFI, CDPRO, VENDA, DTEMI, DTPRO, QUANT, TPMOV, HISTO, NMOPE, DTOPE, HISTORICO_AJUSTE) VALUES ('AJUSTE', '{item[0]}', 'J', '{data}', '{data}', '{quant}', '{tpmov}', 'AJUSTE DE ESTOQUE (DISTORÇÃO DE SALDO)', 'SISTECH', '{data}', 'AJUSTADO LANÇAMENTO {item[0]} - {nmpro}, DISTORÇÃO DE SALDO, AJUSTADO POR SISTECH')"
 
-                query_executor(query_updater, query)  # Executa a query
+                # Cria a query de distorção de saldo, inserindo um novo lançamento no banco de dados
+                historico = f'AJUSTADO LANÇAMENTO {item[0]} - {item[1]}, DISTORÇÃO DE SALDO, AJUSTADO POR SISTECH'
+                query = QUERY_INSERE_AJUSTE_LAN
+                params = (item[0], data, data, quant, tpmov, data, historico)
+                query_executor(query_updater, query, params)  # Executa a query
 
     def update_finalizado(_):
         messagebox.showinfo(

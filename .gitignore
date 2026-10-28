@@ -31,6 +31,7 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+!Inv Tools 3.5.0.spec
 
 # Installer logs
 pip-log.txt
@@ -161,10 +162,9 @@ cython_debug/
 .vscode/launch.json
 Teste.py
 config.ini
-config.ini
 *.ini
 *.exe
 *.env
-config.ini
-docs/Plano_Refatoracao_Inventario_Tools.pdf
-docs/Plano_Refatoracao_Inventario_Tools_v2.md
+/logs
+/ignore
+/scripts

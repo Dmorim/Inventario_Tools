@@ -1,67 +1,47 @@
 import ctypes
 from ctypes import wintypes
+from tkinter import filedialog
+from tkinter import messagebox
+from pathlib import Path
+
+from Configuracoes.Config_Manager import salvar_diretorio, carregar_diretorio
+from Queries.Consulta_Queries import QUERY_PROPRI, QUERY_EMISSOES_MAXIMA
+from Queries.Create_Views import criar_views
+from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import ConfiguracaoBanco, BancoDeDados
+from Thread_Manager.Query_Operations import query_executor, query_selector
+from Thread_Manager.Thread_Executor import thread_execução
+from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
+from Interface_Tools.Tk_Status_Animator import TextAnimator
+from Thread_Manager.Thread_Executor import atualizar_ui_main
+from Outros.Logger.Get_Logger import get_logger
+from Queries.Create_Views import deletar_views
+
+logger = get_logger(__name__)
 
 
 def Set_Dados_Padrao(entrys_list):
-    # Função para preencher os entrys com os dados padrão
-    # Args:
-    # entrys_list: list -> Lista de entrys que serão utilizadas para armazenar os dados informados pelo usuário para obtenção dos valores escolhidos
+    default_dir = Path(__file__).resolve(
+    ).parents[2]/"Recursos"/"Firebird"/"fbclient.dll"
 
-    # Carrega a última porta utilizada do arquivo config.ini
-    porta = carregar_diretorio('Porta', 'last_dir')
-    # Carrega o último caminho da fbclient utilizado do arquivo config.ini
-    fbclient = carregar_diretorio('FBClient', 'dir_banco')
-    entrys_list[0].insert(0, 'localhost')  # Insere o host padrão
-    # Insere a porta padrão
-    entrys_list[1].insert(0, porta if porta else '3050')
-    entrys_list[3].insert(
-        0, fbclient if fbclient else 'C:/Program Files/Firebird/Firebird_3_0/bin/fbclient.dll')
+    if len(entrys_list) != 4:
+        logger.error(
+            'Lista de entradas inválida para configuração padrão: %s', len(entrys_list))
+        raise ValueError(
+            "A lista de entrys deve conter exatamente 4 elementos.")
 
-
-def salvar_diretorio(diretorio, name: str, last_dir):
-    # Função para salvar os dados no arquivo config.ini
-    # Args:
-    # diretorio: str -> Diretório que definirá qual a secção será utilizada no arquivo config.ini
-    # name: str -> Nome da subsecção que será salva no arquivo config.ini
-    # last_dir: str -> Valor que será salvo no arquivo config.ini
-
-    import configparser
-    # Cria um objeto config como instância da classe ConfigParser
-    config = configparser.ConfigParser()
-    config.read('config.ini')  # Lê o arquivo config.ini
-    # Verifica se a secção diretorio existe no arquivo config.ini
-    if not config.has_section(diretorio):
-        # Adiciona a secção diretorio no arquivo config.ini
-        config.add_section(diretorio)
-    # Seta os valores da secção, subsecção e valor no arquivo config.ini
-    config.set(diretorio, name, last_dir)
-    with open('config.ini', 'w') as configfile:  # Abre o arquivo config.ini em modo de escrita
-        config.write(configfile)  # Escreve as alterações no arquivo config.ini
-
-
-def carregar_diretorio(diretorio, dir_busca):
-    # Função para carregar os dados do arquivo config.ini
-    # Args:
-    # diretorio: str -> Diretório que definirá qual a secção será lida no arquivo config.ini
-    # dir_busca: str -> Nome da subsecção que será lida no arquivo config.ini
-
-    import configparser
-    # Cria um objeto config como instância da classe ConfigParser
-    config = configparser.ConfigParser()
-    config.read('config.ini')  # Lê o arquivo config.ini
-    # Retorna o valor da subsecção dir_busca da secção diretorio do arquivo config.ini se existir, caso contrário retorna None
-    return config[diretorio][dir_busca] if config.has_option(diretorio, dir_busca) else None
+    entrys_dict = {
+        entrys_list[0]: carregar_diretorio('Servidor', 'last_dir') or 'localhost',
+        entrys_list[1]: carregar_diretorio('Porta', 'last_dir') or '3050',
+        entrys_list[2]: '',
+        entrys_list[3]: carregar_diretorio(
+            'FBClient', 'dir_banco') or str(default_dir)
+    }
+    for entry, value in entrys_dict.items():
+        entry.delete(0, 'end')
+        entry.insert(0, value)
 
 
 def Caminho_Banco_Dir(Banco_Screen, entrys_list):
-    # Função para abrir uma janela de seleção de arquivo e obter o caminho do banco de dados
-    # Args:
-    # Banco_Screen: ctk.CTkToplevel -> Tela que será utilizada como parent da janela de seleção de arquivo
-    # entrys_list: list -> Lista de entrys que serão utilizadas para armazenar os dados informados pelo usuário para obtenção dos valores escolhidos
-
-    from tkinter import filedialog  # Importa a função filedialog da biblioteca tkinter
-
-    # Carrega o último caminho do banco de dados utilizado do arquivo config.ini
     dir = carregar_diretorio('Banco', 'last_dir')
 
     # Abre a janela de seleção de arquivo e obtém o caminho do banco de dados usando como parent a tela Banco_Screen e como caminho padrão o ultimo local usado pelo usuário
@@ -70,63 +50,44 @@ def Caminho_Banco_Dir(Banco_Screen, entrys_list):
     if caminho:  # Verifica se o caminho foi obtido
         entrys_list[2].delete(0, 'end')  # Deleta o conteúdo do entry
         entrys_list[2].insert(0, caminho)  # Insere o caminho obtido no entry
-        # Salva o caminho obtido no arquivo config.ini
-        salvar_diretorio('Banco', 'last_dir', caminho[:caminho.rfind('/')])
 
 
 def Caminho_Fb_Dir(Banco_Screen, entrys_list):
-    # Função para abrir uma janela de seleção de arquivo e obter o caminho da fbclient
-    # Args:
-    # Banco_Screen: ctk.CTkToplevel -> Tela que será utilizada como parent da janela de seleção de arquivo
-    # entrys_list: list -> Lista de entrys que serão utilizadas para armazenar os dados informados pelo usuário para obtenção dos valores escolhidos
-
-    # Funcionamento idêntico ao da função Caminho_Banco_Dir
-    from tkinter import filedialog
-
     dir = carregar_diretorio('FBClient', 'last_dir')
     caminho = filedialog.askopenfilename(title='Caminho para o fbclient', parent=Banco_Screen, filetypes=[
                                          ('Firebird Dll', '*.dll')], initialdir=dir)
     if caminho:
         entrys_list[3].delete(0, 'end')
         entrys_list[3].insert(0, caminho)
-        salvar_diretorio('FBClient', 'last_dir', caminho[:caminho.rfind('/')])
 
 
 def _iniciar_animacao(parent, texto_base):
     estados = ['.', '..', '...']
-    ciclo = {'i': 0, 'job': None}
+    ciclo = {'i': 0, 'job': None, 'animator': None}
 
     def tick():
+        if parent is None or not parent.winfo_exists():
+            return
+
         parent.configure(text=f'{texto_base}{estados[ciclo["i"]]}')
         ciclo['i'] = (ciclo['i'] + 1) % len(estados)
-        ciclo['job'] = parent.after(500, tick)
 
     def stop(texto_final=''):
-        if ciclo['job'] is not None:
-            parent.after_cancel(ciclo['job'])
-            ciclo['job'] = None
-        parent.configure(text=texto_final)
+        if ciclo['animator'] is not None:
+            ciclo['animator'].cancel()
+            ciclo['animator'] = None
+        if parent is not None and parent.winfo_exists():
+            try:
+                parent.configure(text=texto_final)
+            except Exception:
+                pass
 
-    tick()  # Inicia a animação
+    ciclo['animator'] = TextAnimator(parent, 500)
+    ciclo['animator'].start(tick)
     return stop
 
 
 def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, confirm_button, status_label):
-    # Função realizada ao clicar no botão de confirmar da tela Banco_Screen
-    # Args:
-    # entrys_list: list -> Lista de entrys que serão utilizadas para armazenar os dados informados pelo usuário para obtenção dos valores escolhidos
-    # Banco_Screen: ctk.CTkToplevel -> Tela que será utilizada como parent da janela de seleção de arquivo
-    # entry_alter_list: list -> Lista de labels que serão utilizadas para armazenar os valores obtidos do banco de dados
-    # button_list: list -> Lista de botões que serão utilizados para habilitar ou desabilitar a interação do usuário com a tela
-
-    # Importa as classes Dados e Connect do arquivo Inventario_Conn
-    from Banco_de_Dados.Conexao_Banco_Dados.Inventario_Conn import ConfiguracaoBanco, BancoDeDados
-    from Thread_Manager.Query_Operations import query_executor, query_selector
-    from Thread_Manager.Thread_Executor import thread_execução
-    from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
-
-    from tkinter import messagebox  # Importa a função messagebox da biblioteca tkinter
-
     def centraliza_tela():
         # Calcula a posição central da tela para o progress bar
         screen_width = Banco_Screen.winfo_screenwidth()
@@ -136,26 +97,43 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
         return progress_x, progress_y
 
     def executa_conexao():
-        progress_bar.create_screen()
-        progress_bar.atualizar_status("Conectando ao banco de dados...")
         if BancoDeDados.retorna_gerenciador() is not None:
             BancoDeDados.fechar()  # Cria o gerenciador de conexões
 
         BancoDeDados.conectar()  # Cria o gerenciador de conexões
 
+    def ao_conectar(_):
+        atualizar_ui_main(Banco_Screen, parar_animacao,
+                          'Conectado ao banco de dados')
+
+        salvar_diretorio('Servidor', 'last_dir', entrys_list[0].get())
         salvar_diretorio('Porta', 'last_dir', entrys_list[1].get())
         salvar_diretorio('FBClient', 'dir_banco', entrys_list[3].get())
 
-    def ao_conectar(_):
-        parar_animacao('Conectado ao banco de dados')  # Para a animação
-        _disparar_queries()
+        def _criar_views_em_thread():
+            return criar_views()
+
+        def _apos_criar_views(_):
+            logger.info(
+                'Disparando consultas após criar as views auxiliares.')
+            _disparar_queries()
+
+        def _falha_criar_views(erro):
+            logger.exception('Falha ao criar views auxiliares: %s', erro)
+            _disparar_queries()
+
+        thread_execução(Banco_Screen, _criar_views_em_thread,
+                        _apos_criar_views, _falha_criar_views)
 
     def ao_conectar_erro(erro):
+        logger.exception(
+            'Erro ao conectar ao banco de dados durante a inicialização do pool.')
         parar_animacao('Erro ao conectar ao banco de dados')  # Para a animação
         progress_bar.finalizar()
         confirm_button.configure(state='normal')
-        messagebox.showerror(
-            'Erro', f'Não foi possível conectar ao banco de dados\n {erro}', parent=Banco_Screen)
+        atualizar_ui_main(Banco_Screen, messagebox.showerror,
+                          'Erro', f'Não foi possível conectar ao banco de dados\n {erro}',
+                          parent=Banco_Screen)
 
     def _disparar_queries():
         resultados = {}
@@ -168,6 +146,14 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
             propri = resultados['propri']
             datas = resultados['datas']
 
+            if propri is None or len(propri) == 0:
+                logger.warning(
+                    'Dados da empresa retornaram vazios para a tela de conexão.')
+                messagebox.showerror(
+                    'Erro', 'Não foi possível obter os dados da empresa', parent=Banco_Screen)
+                confirm_button.configure(state='normal')
+                return
+
             nome, rsocial, cnpj, cgf, codcrt, fone = propri[0]
 
             codcrt_map = {
@@ -177,6 +163,7 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
             }
 
             codcrt = codcrt_map.get(codcrt, codcrt)
+
             max_data = datas[0][0].strftime(
                 '%d/%m/%Y') if datas and datas[0][0] is not None else 'Sem emissões'
 
@@ -205,10 +192,12 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
                 finalizar()
 
         def falha_propri(erro):
+            logger.exception('Falha ao buscar os dados da empresa no banco.')
             parar_propri('Erro ao buscar dados da empresa')
             confirm_button.configure(state='normal')
-            messagebox.showerror(
-                'Erro', f'Não foi possível buscar os dados da empresa\n {erro}', parent=Banco_Screen)
+            atualizar_ui_main(Banco_Screen, messagebox.showerror,
+                              'Erro', f'Não foi possível buscar os dados da empresa\n {erro}',
+                              parent=Banco_Screen)
 
         def buscar_datas():
             return query_executor(query_selector, query_emissoes)
@@ -222,35 +211,58 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
                 finalizar()
 
         def falha_datas(erro):
+            logger.exception('Falha ao buscar as datas de emissão.')
             if parar_emissoes[0]:
                 parar_emissoes[0]('Erro ao buscar datas de emissão')
             confirm_button.configure(state='normal')
-            messagebox.showerror(
-                'Erro', f'Não foi possível buscar as datas de emissão\n {erro}', parent=Banco_Screen)
+            atualizar_ui_main(Banco_Screen, messagebox.showerror,
+                              'Erro', f'Não foi possível buscar as datas de emissão\n {erro}',
+                              parent=Banco_Screen)
 
         thread_execução(Banco_Screen, buscar_propri,
                         finalizar_propri, falha_propri)
         thread_execução(Banco_Screen, buscar_datas,
                         ao_terminar_datas, falha_datas)
 
+    def delete_views():
+        deletar_views()
+
+    def falha_ao_deletar_views(erro):
+        logger.exception('Falha ao deletar views auxiliares: %s', erro)
+        atualizar_ui_main(Banco_Screen, messagebox.showerror,
+                          'Erro', f'Não foi possível deletar as views auxiliares\n {erro}',
+                          parent=Banco_Screen)
+
+    def iniciar_conexao(_=None):
+        thread_execução(Banco_Screen, executa_conexao,
+                        ao_conectar, ao_conectar_erro)
+
     # Verifica se todos os entrys foram preenchidos
     for entry in entrys_list:
         if entry.get() == '':
-            from tkinter import messagebox
             messagebox.showerror(
                 'Erro', 'Preencha todos os campos', parent=Banco_Screen)
             return
 
-    ConfiguracaoBanco.definir(
-        host=entrys_list[0].get(),
-        port=entrys_list[1].get(),
-        database=obter_caminho_curto_banco_dados(entrys_list[2].get()),
-        fbclient=entrys_list[3].get()
-    )
-    
+    try:
+        ConfiguracaoBanco.definir(
+            host=entrys_list[0].get(),
+            port=int(entrys_list[1].get()
+                     ) if entrys_list[1].get().isdigit() else None,
+            database=obter_caminho_curto_banco_dados(entrys_list[2].get()),
+            fbclient=entrys_list[3].get(),
+            user=carregar_diretorio('Credenciais', 'user_db'),
+            password=carregar_diretorio('Credenciais', 'pass_db')
+        )
+    except Exception as e:
+        logger.exception('Erro ao preparar os dados de conexão com o banco.')
+        messagebox.showerror(
+            'Erro', f'Não foi possível definir os dados de conexão\n {e}', parent=Banco_Screen)
+        return
+
     progress_x, progress_y = centraliza_tela()
     progress_bar = ProgressBarHandler(
-            Banco_Screen, "Aguarde", x=progress_x, y=progress_y)
+        Banco_Screen, "Aguarde", x=progress_x, y=progress_y)
 
     # Desabilita o botão de confirmar para evitar múltiplos cliques
     confirm_button.configure(state='disabled')
@@ -258,11 +270,19 @@ def on_click_confirm(entrys_list, Banco_Screen, entry_alter_list, button_list, c
     parar_animacao = _iniciar_animacao(
         status_label, 'Conectando ao banco de dados')
 
-    query_propri = "SELECT NOME, RSOCIAL, CNPJ, CGF, CODCRT, FONE FROM PROPRI"
-    query_emissoes = "SELECT MAX(L.DTEMI) FROM IN01LAN L LEFT JOIN IN01FAT F ON L.NOTFI = F.FATUR WHERE L.VENDA IN ('V', 'A', 'W', 'D') AND F.EMITE = 'S' AND F.CANCE <> 'S'"
+    query_propri = QUERY_PROPRI
+    query_emissoes = QUERY_EMISSOES_MAXIMA
 
-    thread_execução(Banco_Screen, executa_conexao,
-                    ao_conectar, ao_conectar_erro)
+    atualizar_ui_main(Banco_Screen, progress_bar.create_screen)
+    atualizar_ui_main(Banco_Screen, progress_bar.atualizar_status,
+                      'Conectando ao banco de dados...')
+
+    if BancoDeDados.retorna_gerenciador() is not None:
+        thread_execução(Banco_Screen, delete_views, iniciar_conexao,
+                        falha_ao_deletar_views)
+    else:
+        iniciar_conexao()
+
     # Salva os valores dos entrys no arquivo config.ini
 
 
@@ -274,9 +294,19 @@ def obter_caminho_curto_banco_dados(caminho_longo):
             buffer,
             wintypes.MAX_PATH
         )
-
-        print(f"Caminho curto: {buffer.value}")
         return buffer.value
     except Exception as e:
-        # Retorna o original se falhar
-        print(f"Erro ao obter caminho curto: {e}")
+        logger.exception(
+            'Erro ao obter o caminho curto do banco de dados: %s', caminho_longo)
+        raise RuntimeError(f"Erro ao obter o caminho curto: {e}")
+
+
+def validar_credenciais():
+    user = carregar_diretorio('Credenciais', 'user_db')
+    password = carregar_diretorio('Credenciais', 'pass_db')
+
+    if not user or not password:
+        logger.warning('Credenciais do banco de dados não encontradas.')
+        return False
+
+    return True

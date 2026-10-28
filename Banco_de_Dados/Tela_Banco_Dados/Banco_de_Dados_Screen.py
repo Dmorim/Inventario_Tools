@@ -1,9 +1,10 @@
-def Interface_Banco(self, root, entry_alter_list, button_list):
-    import customtkinter as ctk  # Importa a biblioteca customtkinter como ctk
+import customtkinter as ctk
+from tkinter import messagebox
 
-    # Importa as funções Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir, on_click_confirm do arquivo Banco_de_Dados_Func
-    from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Func import Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir, on_click_confirm
+from Banco_de_Dados.Tela_Banco_Dados.Banco_de_Dados_Func import Set_Dados_Padrao, Caminho_Banco_Dir, Caminho_Fb_Dir, on_click_confirm, validar_credenciais
 
+
+def Interface_Banco(root, entry_alter_list, button_list):
     # Cria a tela Banco_Screen como TopLevel e define suas configurações
     Banco_Screen = ctk.CTkToplevel(root)
     Banco_Screen.title("Configurações de Banco de Dados")
@@ -72,9 +73,15 @@ def Interface_Banco(self, root, entry_alter_list, button_list):
     caminho_fb_file_button.place(x=322, y=134)
 
     # Lista de entrys que serão utilizadas para armazenar os dados informados pelo usuário para obtenção dos valores escolhidos
-    entrys_list = [serv_entry, porta_entry, caminho_bd_entry, caminho_fb_entry]
+    entrys_list = [serv_entry, porta_entry, caminho_bd_entry,
+                   caminho_fb_entry]
 
-    # Chama a função Set_Dados_Padrao do arquivo Banco_de_Dados_Func para preencher os entrys com os dados padrão
+    if not validar_credenciais():
+        messagebox.showerror(
+            'Erro', 'Credenciais do banco de dados não encontradas.\nPreencha as credenciais nas configurações.', parent=Banco_Screen)
+        Banco_Screen.destroy()
+        return
+
     Set_Dados_Padrao(entrys_list)
 
     # Define a tecla de atalho para fechar a tela e para confirmar a seleção

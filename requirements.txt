@@ -3,3 +3,6 @@ tkcalendar
 Pillow
 fdb
 pyperclip
+matplotlib
+numpy
+scipy

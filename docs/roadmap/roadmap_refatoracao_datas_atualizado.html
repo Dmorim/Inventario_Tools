@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Roadmap - Refatoração do Gerenciamento de Datas (Atualizado)</title>
+  <style>
+    @page { size: A4; margin: 2cm; }
+    body { font-family: Arial, sans-serif; color: #222; line-height: 1.5; font-size: 10.5pt; }
+    h1 { color: #17365d; font-size: 18pt; margin-bottom: 4pt; }
+    h2 { color: #1f4e79; border-bottom: 1px solid #9fbad0; padding-bottom: 3pt; margin-top: 16pt; }
+    h3 { color: #365f91; margin-top: 12pt; }
+    .subtitle { color: #666; font-size: 10pt; margin-top: 0; }
+    .meta { background: #eef4f8; border-left: 4px solid #1f4e79; padding: 8px 12px; margin: 12px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 8px 0 12px; font-size: 9.5pt; }
+    th { background: #1f4e79; color: white; text-align: left; }
+    th, td { border: 1px solid #b7c9d6; padding: 4px 6px; vertical-align: top; }
+    tr:nth-child(even) { background: #f7f9fb; }
+    code { font-family: monospace; background: #f1f1f1; padding: 1px 3px; }
+    .done { color: #2e7d32; font-weight: bold; }
+    .partial { color: #f57f17; font-weight: bold; }
+    .pending { color: #c62828; font-weight: bold; }
+    .small { font-size: 8.5pt; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Roadmap — Refatoração do Gerenciamento de Datas</h1>
+  <p class="subtitle">Inventario_Tools • Estado atualizado em 18/10/2026</p>
+  <div class="meta">
+    <b>Branch:</b> refatoracao_v3.5 • <b>Commit:</b> 12a6a49 • <b>Testes:</b> 69/69 passando
+  </div>
+
+  <h2>1. Estado atual</h2>
+  <table>
+    <tr><th>Área</th><th>Status</th><th>Observação</th></tr>
+    <tr><td>PeriodoInventario/PeriodoManager</td><td><span class="done">✅</span></td><td>Modelo, validação, listeners, formatação <code>dd.mm.yyyy</code></td></tr>
+    <tr><td>Inventario + Top Frame</td><td><span class="partial">🔄</span></td><td>Manager integrado; propriedades legadas ainda presentes</td></tr>
+    <tr><td>Telas de consulta</td><td><span class="done">✅</span></td><td>Snapshot <code>periodo</code> em todas; Quant_Maior/Contr_Estq/Val_Ent corrigidos</td></tr>
+    <tr><td>Distorção de saldo</td><td><span class="done">✅</span></td><td>Manager + 10 testes; integrado às telas</td></tr>
+    <tr><td>Comandos</td><td><span class="pending">⬜</span></td><td><code>self.data_banco_inicial</code> + check legado de distorção</td></tr>
+    <tr><td>Dashboard</td><td><span class="pending">⬜</span></td><td>Precisa <code>periodo_manager</code> + listener + remoção no fechamento</td></tr>
+  </table>
+
+  <h2>2. Próximos passos</h2>
+  <table>
+    <tr><th>Etapa</th><th>Ação</th><th>Prioridade</th></tr>
+    <tr><td>E6a</td><td>Comandos: <code>Comandos_Screen(periodo, parent)</code>; migrar check para <code>DistorcaoManager.possui_itens()</code></td><td>Alta</td></tr>
+    <tr><td>E6b</td><td>Ajustar <code>test_comandos_func.py</code> para novo contrato de período</td><td>Alta</td></tr>
+    <tr><td>E5</td><td>Dashboard: <code>periodo_manager</code> + listener + remoção no fechamento (WM_DELETE_WINDOW/ESC)</td><td>Alta</td></tr>
+    <tr><td>E7</td><td>Remover <code>data_banco_inicial/final</code> e <code>_periodo_selecionado</code> de <code>Inventario.py</code></td><td>Média</td></tr>
+    <tr><td>E1a</td><td>Criar <code>tests/test_periodo_manager.py</code></td><td>Média</td></tr>
+    <tr><td>E8</td><td>Regressão completa + commit consolidado</td><td>Média</td></tr>
+  </table>
+  <p class="small">Fase 6 (Consultas): concluída. Fase 6 (Comandos): pendente. Fase 5 (Dashboard): pendente.</p>
+</body>
+</html>

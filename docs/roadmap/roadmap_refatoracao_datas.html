@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Roadmap - Refatoração do Gerenciamento de Datas</title>
+  <style>
+    @page { size: A4; margin: 2cm; }
+    body { font-family: Arial, sans-serif; color: #222; line-height: 1.42; font-size: 10.5pt; }
+    h1 { color: #17365d; font-size: 24pt; margin-bottom: 4pt; }
+    h2 { color: #1f4e79; border-bottom: 1px solid #9fbad0; padding-bottom: 3pt; margin-top: 20pt; }
+    h3 { color: #365f91; margin-top: 14pt; }
+    .subtitle { color: #666; font-size: 11pt; margin-top: 0; }
+    .meta { background: #eef4f8; border-left: 4px solid #1f4e79; padding: 10px 14px; margin: 14px 0; }
+    .status { padding: 8px 12px; margin: 8px 0; border-radius: 3px; }
+    .done { background: #e2f0d9; border-left: 4px solid #70ad47; }
+    .partial { background: #fff2cc; border-left: 4px solid #bf9000; }
+    .pending { background: #fce4d6; border-left: 4px solid #c55a11; }
+    .info { background: #eaf2f8; border-left: 4px solid #5b9bd5; padding: 8px 12px; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0 14px; }
+    th { background: #1f4e79; color: white; text-align: left; }
+    th, td { border: 1px solid #b7c9d6; padding: 6px 7px; vertical-align: top; }
+    tr:nth-child(even) { background: #f7f9fb; }
+    code { font-family: "Liberation Mono", monospace; background: #f1f1f1; padding: 1px 3px; }
+    pre { background: #f4f6f7; border: 1px solid #d9e2f3; padding: 9px; font-size: 8.5pt; white-space: pre-wrap; }
+    li { margin-bottom: 4px; }
+    .pagebreak { page-break-before: always; }
+    .small { font-size: 9pt; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Roadmap de Refatoração do Gerenciamento de Datas</h1>
+  <p class="subtitle">Inventario_Tools — migração para <code>PeriodoInventario</code> e <code>PeriodoManager</code></p>
+
+  <div class="meta">
+    <b>Data do levantamento:</b> 15/10/2026<br>
+    <b>Escopo:</b> seleção de período anual, mensal e personalizado; compartilhamento do período entre telas;
+    eliminação gradual de <code>app_self</code> como dependência global.<br>
+    <b>Estado avaliado:</b> working tree com implementação parcial não commitada.
+  </div>
+
+  <h2>1. Objetivo da refatoração</h2>
+  <p>
+    Centralizar o período selecionado em um objeto próprio, permitir que a tela inicial altere esse estado
+    através de uma API explícita e notificar somente as telas que precisam reagir à mudança. O resultado
+    esperado é que as telas não precisem acessar <code>app_self.data_banco_inicial</code>,
+    <code>app_self.data_banco_final</code> ou os widgets de data da tela inicial.
+  </p>
+
+  <h3>Resultado arquitetural desejado</h3>
+  <pre>
+Inventario
+  ├─ cria um único PeriodoManager
+  ├─ conecta ações das telas
+  └─ cria o Top Frame
+       ├─ mantém os widgets de seleção localmente
+       ├─ lê os widgets
+       ├─ cria PeriodoInventario
+       └─ chama PeriodoManager.atualizar_periodo(...)
+
+PeriodoManager
+  ├─ mantém o período atual
+  ├─ evita notificações redundantes
+  └─ notifica listeners registrados
+
+Dashboard / Consultas / Comandos
+  ├─ recebem o manager ou um snapshot do período
+  └─ nunca acessam os widgets da tela inicial
+  </pre>
+
+  <h2>2. Estado atual: o que já foi feito</h2>
+  <div class="partial">
+    <b>Importante:</b> os itens abaixo foram encontrados no working tree e representam trabalho já iniciado,
+    mas ainda não devem ser considerados concluídos até que a integração e os testes sejam finalizados.
+  </div>
+  <table>
+    <tr><th>Item</th><th>Status</th><th>Evidência atual</th><th>Observação</th></tr>
+    <tr>
+      <td>Objeto de período</td><td>🔄 Parcial</td>
+      <td><code>Data_Manager/PeriodoInventario.py</code></td>
+      <td>Já existe dataclass imutável, validação de ordem e formatação.</td>
+    </tr>
+    <tr>
+      <td>Gerenciador do período</td><td>🔄 Parcial</td>
+      <td><code>Data_Manager/PeriodoManager.py</code></td>
+      <td>Já possui obter, atualizar, adicionar/remover listener e notificação.</td>
+    </tr>
+    <tr>
+      <td>Criação do manager</td><td>🔄 Parcial</td>
+      <td><code>Inventario.py</code></td>
+      <td>O manager é criado, porém está em variável local e ainda há código legado na classe.</td>
+    </tr>
+    <tr>
+      <td>Top Frame sem referências aos controles em <code>app_self</code></td><td>🔄 Parcial</td>
+      <td><code>Inv_Screen/Inv_Top_Frame.py</code></td>
+      <td>Os widgets passaram a ser locais e a função recebe <code>periodo_manager</code>.</td>
+    </tr>
+    <tr>
+      <td>Uso do manager para alterar o período</td><td>⬜ Pendente</td>
+      <td>Não há chamada efetiva de atualização conectada aos eventos.</td>
+      <td>A função de leitura ainda não chama o manager e não há listeners integrados.</td>
+    </tr>
+    <tr>
+      <td>Migração das telas consumidoras</td><td>⬜ Pendente</td>
+      <td>Dashboard, Consultas e Comandos ainda usam atributos legados.</td>
+      <td>O uso de <code>app_self</code> continua em vários módulos.</td>
+    </tr>
+  </table>
+
+  <h2>3. Componentes e responsabilidades</h2>
+  <h3>3.1 <code>PeriodoInventario</code></h3>
+  <p>
+    É o valor do período. Deve conter somente as datas e regras diretamente relacionadas a elas.
+    Deve permanecer imutável depois de criado, para que uma consulta assíncrona possa usar um snapshot
+    estável.
+  </p>
+  <pre>
+@dataclass(frozen=True)
+class PeriodoInventario:
+    inicio: date
+    fim: date
+
+    def __post_init__(self):
+        if self.inicio &gt; self.fim:
+            raise ValueError(...)
+
+    @property
+    def inicio_banco(self) -&gt; str: ...
+    @property
+    def fim_banco(self) -&gt; str: ...
+  </pre>
+  <p>
+    Decisão pendente: padronizar os nomes de formatação. O código atual usa
+    <code>inicio_formatado</code>/<code>fim_formatado</code>, enquanto a discussão arquitetural
+    usa <code>inicio_banco</code>/<code>fim_banco</code>. Escolher uma convenção antes da migração.
+  </p>
+
+  <h3>3.2 <code>PeriodoManager</code></h3>
+  <p>
+    É o ponto único de leitura e substituição do período compartilhado. Ele não deve importar Tkinter,
+    consultar banco ou ler widgets. A tela inicial cria o novo valor; o manager apenas o armazena e notifica.
+  </p>
+  <ul>
+    <li><code>obter_periodo()</code>: devolve o snapshot atual.</li>
+    <li><code>atualizar_periodo(novo_periodo)</code>: troca o valor e notifica somente quando houver mudança.</li>
+    <li><code>adicionar_listener(listener)</code>: registra uma função de reação.</li>
+    <li><code>remover_listener(listener)</code>: evita referências a telas destruídas.</li>
+  </ul>
+
+  <h2>4. Roadmap de execução</h2>
+  <h3>Fase 0 — Preparação e contrato</h3>
+  <ol>
+    <li>Registrar o estado atual em branch/commit ou preservar claramente as alterações locais.</li>
+    <li>Definir a convenção de nomes: <code>obter_periodo</code> ou <code>obter</code>;
+      <code>atualizar_periodo</code> ou <code>definir</code>; nomes da formatação para o banco.</li>
+    <li>Confirmar que o formato exigido pelo Firebird continua sendo <code>dd.mm.yyyy</code>.
+      Não misturar esse formato com o formato visual <code>dd/mm/yyyy</code>.</li>
+    <li>Mapear cada consumidor legado de <code>data_banco_inicial</code> e
+      <code>data_banco_final</code>. A busca atual encontrou Dashboard, Consultas e Comandos.</li>
+  </ol>
+  <div class="status done"><b>Critério de conclusão:</b> contrato documentado e lista de consumidores fechada.</div>
+
+  <h3>Fase 1 — Consolidar o modelo de dados</h3>
+  <ol>
+    <li>Escolher o módulo definitivo para <code>PeriodoInventario</code> e <code>PeriodoManager</code>.
+      A implementação atual usa <code>Data_Manager/</code>; manter essa decisão ou mover ambos para
+      <code>Outros/</code>, evitando duas fontes de verdade.</li>
+    <li>Adicionar anotações de retorno e parâmetros apenas nos novos métodos, seguindo a convenção já adotada.</li>
+    <li>Padronizar a conversão para banco em um único local.</li>
+    <li>Validar entradas nulas, tipos inválidos e período invertido com erros explícitos.</li>
+    <li>Adicionar testes unitários para igualdade, imutabilidade, período invertido e formatação.</li>
+  </ol>
+  <div class="status pending"><b>Não concluído:</b> ainda não há testes específicos para as duas novas classes.</div>
+
+  <h3>Fase 2 — Integrar o manager à inicialização</h3>
+  <ol>
+    <li>Criar o período padrão uma única vez no construtor de <code>Inventario</code>.</li>
+    <li>Salvar o manager em <code>self.periodo_manager</code>, não em variável local, porque ele será
+      fornecido às ações que abrem outras telas.</li>
+    <li>Remover imports de cálculo/formatação que só existiam para as propriedades legadas.</li>
+    <li>Não criar managers adicionais em Dashboard, Consultas ou Comandos.</li>
+  </ol>
+  <div class="status pending"><b>Bloqueio atual:</b> a implementação encontrada cria <code>periodo_manager</code>
+    como variável local, portanto o Top Frame recebe o objeto, mas a aplicação não mantém uma referência central explícita.</div>
+
+  <h3>Fase 3 — Finalizar o Top Frame sem <code>app_self</code></h3>
+  <ol>
+    <li>Corrigir a assinatura para receber somente dependências reais:
+      <code>root</code>, <code>master</code>, <code>entry_list</code> e <code>periodo_manager</code>.</li>
+    <li>Manter <code>data_setada</code>, comboboxes e <code>DateEntry</code> como variáveis internas do módulo/função.</li>
+    <li>Implementar <code>obter_periodo_dos_controles()</code> para converter a seleção visual em
+      <code>PeriodoInventario</code> (ou em datas que serão encapsuladas imediatamente).</li>
+    <li>Implementar <code>atualizar_periodo()</code>, que chama
+      <code>periodo_manager.atualizar_periodo(...)</code>.</li>
+    <li>Conectar a atualização aos radio buttons, comboboxes e eventos confiáveis do <code>DateEntry</code>.</li>
+    <li>Executar a atualização inicial depois que os valores padrão dos controles forem definidos.</li>
+    <li>Preservar os atalhos F1/F2/F3/B usando <code>root</code>, sem acessar <code>app_self.root</code>.</li>
+    <li>Corrigir a ordem de criação dos botões: callbacks que referenciam <code>dashboard</code> não podem
+      ser executados antes de o botão existir.</li>
+  </ol>
+  <div class="status pending"><b>Validação:</b> selecionar ano, mês e período personalizado deve produzir
+    exatamente um período válido e atualizar o manager sem depender da classe <code>Inventario</code>.</div>
+
+  <h3>Fase 4 — Separar as ações dos botões</h3>
+  <ol>
+    <li>Criar callbacks explícitos para abrir Consultas, Comandos, Banco, Dashboard, Configurações e Tutorial.</li>
+    <li>O Top Frame deve chamar callbacks, não construir telas conhecendo seus detalhes internos.</li>
+    <li>Para o Dashboard, o callback deve passar <code>periodo_manager</code>.</li>
+    <li>Para cada outra tela, passar somente as dependências que ela realmente usa.</li>
+    <li>Se a quantidade de callbacks ficar grande, criar uma estrutura imutável
+      <code>TopFrameActions</code> com funções nomeadas.</li>
+  </ol>
+
+  <h3>Fase 5 — Migrar o Dashboard</h3>
+  <ol>
+    <li>Alterar <code>Dashboard_Screen</code> para receber <code>parent</code>, botão e
+      <code>periodo_manager</code>, sem <code>app_self</code>.</li>
+    <li>Alterar <code>_recarregar_tendencia</code> para receber um snapshot
+      <code>PeriodoInventario</code>.</li>
+    <li>Ao abrir, capturar <code>periodo_manager.obter_periodo()</code> e carregar o estado atual.</li>
+    <li>Registrar um listener que inicie novo carregamento quando o período mudar.</li>
+    <li>Remover o listener em todos os caminhos de fechamento da janela.</li>
+    <li>Manter a proteção contra respostas antigas usando o contador de sequência existente.</li>
+    <li>Garantir que cada thread receba seu próprio snapshot, nunca consultando o manager no meio da execução.</li>
+  </ol>
+
+  <h3>Fase 6 — Migrar Consultas e Comandos</h3>
+  <ol>
+    <li>Para telas abertas sob demanda, obter um snapshot no momento do clique; não é obrigatório listener.</li>
+    <li>Alterar funções que usam <code>self.data_banco_inicial/final</code> para receber
+      <code>PeriodoInventario</code> ou as strings já formatadas, preferencialmente o objeto.</li>
+    <li>Atualizar parâmetros das consultas de Valor de Vendas, Valor de Entradas, Controla Estoque e
+      Quantidade Exorbitante.</li>
+    <li>Atualizar Comandos Gerais, incluindo o comando que usa apenas a data inicial.</li>
+    <li>Preservar o padrão existente de <code>thread_execução()</code> e de propagação de erros.</li>
+    <li>Atualizar testes que usam objetos fake com <code>data_banco_inicial</code>.</li>
+  </ol>
+
+  <h3>Fase 7 — Remover compatibilidade legada</h3>
+  <ol>
+    <li>Executar busca global e confirmar zero usos de <code>app_self.data_banco_inicial</code> e
+      <code>app_self.data_banco_final</code>.</li>
+    <li>Remover <code>_periodo_selecionado</code> e as propriedades antigas de <code>Inventario</code>.</li>
+    <li>Remover imports mortos de <code>formatar_banco</code>, <code>calcular_periodo</code> e
+      <code>MESES_REVERSO</code> onde não forem mais necessários.</li>
+    <li>Confirmar que nenhuma tela recebe a classe inteira <code>Inventario</code> apenas para acessar período.</li>
+  </ol>
+
+  <h3>Fase 8 — Testes, regressão e documentação</h3>
+  <ol>
+    <li>Testar o cálculo anual, mensal (incluindo janeiro) e personalizado.</li>
+    <li>Testar que período igual não notifica listeners.</li>
+    <li>Testar registro duplicado, remoção e notificação em cópia da lista de listeners.</li>
+    <li>Testar abertura/fechamento do Dashboard sem callbacks para janela destruída.</li>
+    <li>Executar a suíte existente e a verificação de sintaxe.</li>
+    <li>Testar manualmente a aplicação com troca de período durante uma consulta assíncrona.</li>
+    <li>Atualizar <code>docs/Status_Refatoracao.md</code> após cada fase concluída.</li>
+  </ol>
+
+  <div class="pagebreak"></div>
+  <h2>5. Matriz de migração por arquivo</h2>
+  <table>
+    <tr><th>Área</th><th>Situação atual</th><th>Ação</th><th>Resultado esperado</th></tr>
+    <tr>
+      <td><code>Inventario.py</code></td>
+      <td>Calcula o período em propriedades e cria manager local.</td>
+      <td>Guardar <code>self.periodo_manager</code>; remover propriedades ao final.</td>
+      <td>Orquestração sem ser fonte duplicada das datas.</td>
+    </tr>
+    <tr>
+      <td><code>Inv_Top_Frame.py</code></td>
+      <td>Já não grava widgets em <code>app_self</code>, mas integração está incompleta.</td>
+      <td>Conectar eventos e atualização do manager; separar ações.</td>
+      <td>Top Frame sem dependência da classe principal.</td>
+    </tr>
+    <tr>
+      <td><code>Dashboard/Dashboard_Screen.py</code></td>
+      <td>Usa <code>app_self.data_banco_*</code>.</td>
+      <td>Receber manager; usar snapshot; registrar/remover listener.</td>
+      <td>Dashboard reage a períodos novos com segurança.</td>
+    </tr>
+    <tr>
+      <td><code>Dashboard/Dashboard_Func.py</code></td>
+      <td>Recebe datas como argumentos.</td>
+      <td>Decidir contrato uniforme: objeto ou strings formatadas.</td>
+      <td>Operações recebem período consistente.</td>
+    </tr>
+    <tr>
+      <td>Consultas/*</td>
+      <td>Vários módulos acessam atributos de <code>self</code>.</td>
+      <td>Passar snapshot no ponto de execução.</td>
+      <td>Consultas independentes da UI principal.</td>
+    </tr>
+    <tr>
+      <td><code>Comandos/Comandos_Gerais</code></td>
+      <td>Usa <code>self.data_banco_inicial</code>.</td>
+      <td>Receber período ou data inicial explicitamente.</td>
+      <td>Comandos com dependências declaradas.</td>
+    </tr>
+    <tr>
+      <td><code>tests/</code></td>
+      <td>Há testes para cálculo antigo e fakes legados.</td>
+      <td>Adicionar testes do manager e ajustar fakes gradualmente.</td>
+      <td>Regressão protegida durante a migração.</td>
+    </tr>
+  </table>
+
+  <h2>6. Regras de implementação</h2>
+  <ul>
+    <li>O manager é único por instância da aplicação.</li>
+    <li>O Top Frame é a origem das alterações feitas pelo usuário.</li>
+    <li>O manager não conhece Tkinter e não executa consultas.</li>
+    <li>Listeners devem ser removidos quando a janela correspondente for destruída.</li>
+    <li>Threads recebem snapshots imutáveis; nunca consultam o manager posteriormente.</li>
+    <li>Datas internas usam <code>datetime.date</code>; formatação para o banco acontece apenas na fronteira necessária.</li>
+    <li>Não manter duas fontes de verdade: widgets e manager não devem ser usados como estados independentes.</li>
+    <li>Erros de período inválido devem ser explícitos; não usar fallback silencioso.</li>
+    <li>Alterações não relacionadas à migração devem ficar fora do escopo.</li>
+  </ul>
+
+  <h2>7. Critérios de aceite</h2>
+  <ol>
+    <li>O aplicativo inicia com o período padrão correto.</li>
+    <li>A seleção anual atualiza o manager com 1º de janeiro a 31 de dezembro do ano escolhido.</li>
+    <li>A seleção mensal respeita o mês escolhido e o comportamento existente de janeiro.</li>
+    <li>O período personalizado normaliza ou rejeita datas invertidas conforme a regra escolhida,
+      sem produzir estado inválido.</li>
+    <li>O Dashboard recarrega ao mudar o período e não atualiza widgets destruídos.</li>
+    <li>Consultas e comandos usam o período capturado no momento da execução.</li>
+    <li>Não existem consumidores de <code>data_banco_inicial</code>/<code>data_banco_final</code> fora da
+      compatibilidade temporária, que deverá ser removida.</li>
+    <li>O Top Frame não recebe nem acessa <code>app_self</code>.</li>
+    <li>Os testes existentes continuam passando e novos testes cobrem o manager.</li>
+  </ol>
+
+  <h2>8. Próximas ações imediatas</h2>
+  <ol>
+    <li>Escolher e padronizar os nomes da API do manager e das propriedades de formatação.</li>
+    <li>Corrigir a criação em <code>Inventario.py</code> para usar <code>self.periodo_manager</code>.</li>
+    <li>Corrigir a chamada de <code>_create_command_buttons</code> para passar <code>root</code> corretamente.</li>
+    <li>Implementar <code>atualizar_periodo()</code> no Top Frame e conectá-la aos controles.</li>
+    <li>Adicionar testes unitários para <code>PeriodoInventario</code> e <code>PeriodoManager</code>.</li>
+    <li>Migrar primeiro o Dashboard, que é o consumidor reativo mais claro.</li>
+    <li>Migrar Consultas e Comandos por snapshot.</li>
+    <li>Executar busca final de referências legadas e remover o código antigo.</li>
+  </ol>
+
+  <p class="small">Documento de roadmap gerado a partir do estado observado no working tree em 15/10/2026.
+  O documento descreve o plano; ele não marca como concluída uma etapa apenas porque existe código parcial.</p>
+</body>
+</html>

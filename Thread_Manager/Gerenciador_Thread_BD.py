@@ -2,6 +2,7 @@ import os
 import threading
 import time
 from queue import Queue, Empty
+from Outros.Logger.Get_Logger import get_logger
 
 
 class GerenciadorThreadBD:
@@ -10,53 +11,147 @@ class GerenciadorThreadBD:
         self.__tamanho = self._calcular_tamanho(minimo, maximo)
         self.__pool = Queue()
         self._lock = threading.Lock()
+        self._operacoes_condicao = threading.Condition(self._lock)
+        self._operacoes_ativas = 0
+        self._fechando = False
+        self.logger = get_logger(__name__)
 
-        for _ in range(self.__tamanho):
-            self.__pool.put(self.__conexao_banco())
-
-        print(
-            f"GerenciadorThreadBD inicializado com pool de conexões de tamanho: {self.__tamanho}"
-            f"Número de núcleos da CPU: {os.cpu_count()}")
+        self._preencher_pool()
 
     def _calcular_tamanho(self, minimo, maximo):
         nucleos = os.cpu_count() or 1
         return min(max(nucleos * 2, minimo), maximo)
 
+    def _preencher_pool(self):
+        for _ in range(self.__tamanho):
+            self.__pool.put(self.__conexao_banco())
+
+    def _conexao_valida(self, conexao):
+        if conexao is None:
+            return False
+
+        try:
+            if getattr(conexao, 'closed', False):
+                return False
+            cursor = conexao.cursor()
+            try:
+                cursor.execute('SELECT 1 FROM RDB$DATABASE')
+            finally:
+                cursor.close()
+        except Exception:
+            return False
+        finally:
+            try:
+                conexao.rollback()
+            except Exception:
+                pass
+
+        return True
+
+    def _fechar_conexao(self, conexao):
+        try:
+            conexao.close()
+        except Exception:
+            pass
+
+    def _criar_conexao_valida(self):
+        conexao = self.__conexao_banco()
+        if self._conexao_valida(conexao):
+            return conexao
+        self._fechar_conexao(conexao)
+        raise ConnectionError('A nova conexão falhou no health-check.')
+
     def _pegar_conexao(self, timeout=5, tentativas=3):
+        if getattr(self, '_fechando', False):
+            raise RuntimeError('O gerenciador de conexões está sendo fechado.')
         for tentativa_conexao in range(tentativas + 1):
             try:
-                return self.__pool.get(timeout=timeout)
+                conexao = self.__pool.get(timeout=timeout)
             except Empty:
                 if tentativa_conexao == tentativas:
                     raise TimeoutError(
                         "Não foi possível obter uma conexão do pool após várias tentativas.")
-                time.sleep(0.01)  # Espera um pouco antes de tentar novamente
+                time.sleep(0.01)
+                continue
+
+            if not self._conexao_valida(conexao):
+                self._fechar_conexao(conexao)
+                if getattr(self, '_fechando', False):
+                    raise RuntimeError('O gerenciador de conexões está sendo fechado.')
+                try:
+                    return self._criar_conexao_valida()
+                except Exception:
+                    if tentativa_conexao == tentativas:
+                        raise TimeoutError(
+                            'Conexão inválida ou fechada foi descartada do pool.')
+                    time.sleep(0.02)
+                    continue
+
+            return conexao
+
+        raise TimeoutError(
+            "Não foi possível obter uma conexão válida do pool.")
 
     def _devolver_conexao(self, conexao):
+        if self._fechando:
+            self._fechar_conexao(conexao)
+            return
+
+        if not self._conexao_valida(conexao):
+            self._fechar_conexao(conexao)
+            try:
+                self.__pool.put(self._criar_conexao_valida())
+            except Exception:
+                self.logger.exception(
+                    'Não foi possível repor conexão inválida no pool.')
+            return
+
         try:
             self.__pool.put(conexao)
-        except Exception as e:
-            # Tenta criar uma nova conexão se a devolução falhar
-            self.__pool.put(self.__conexao_banco())
+        except Exception:
+            self._fechar_conexao(conexao)
 
     def executar(self, funcao, *args, **kwargs):
-        conexao = self._pegar_conexao()
+        with self._operacoes_condicao:
+            if getattr(self, '_fechando', False):
+                raise RuntimeError(
+                    'O gerenciador de conexões está sendo fechado.')
+            self._operacoes_ativas += 1
+
+        conexao = None
         try:
+            conexao = self._pegar_conexao()
             return funcao(conexao, *args, **kwargs)
+        except Exception:
+            raise
         finally:
-            self._devolver_conexao(conexao)
+            if conexao is not None:
+                try:
+                    self._devolver_conexao(conexao)
+                except Exception:
+                    self.logger.debug('Falha ao devolver conexão ao pool.', exc_info=True)
+            with self._operacoes_condicao:
+                try:
+                    self._operacoes_ativas -= 1
+                    if self._operacoes_ativas == 0:
+                        self._operacoes_condicao.notify_all()
+                except Exception:
+                    pass
+
+    def aguardar_operacoes(self):
+        """Aguarda as operações em andamento antes de uma manutenção."""
+        with self._operacoes_condicao:
+            while self._operacoes_ativas:
+                self._operacoes_condicao.wait()
 
     def fechar(self):
-        while not self.__pool.empty():
-            try:
-                self.__pool.get_nowait().close()
-            except Exception as e:
-                pass
-
-    def trocar_bd(self, nova_conexao_banco):
         with self._lock:
-            self.fechar()
-            self.__conexao_banco = nova_conexao_banco
-            for _ in range(self.__tamanho):
-                self.__pool.put(self.__conexao_banco())
-        return self
+            self._fechando = True
+        self.aguardar_operacoes()
+        with self._lock:
+            while True:
+                try:
+                    conexao = self.__pool.get_nowait()
+                except Empty:
+                    break
+                self._fechar_conexao(conexao)

@@ -45,10 +45,20 @@ def calcular_periodo(tipo, *, ano=None, mes=None, ini=None, fim=None):
     if tipo == TIPO_PERSONALIZADO:
         if ini and fim and fim < ini:
             ini, fim = fim, ini
-        return ini, fim
+        return datetime.date(ini.year, ini.month, ini.day), datetime.date(fim.year, fim.month, fim.day)
 
     return periodo_padrao()
 
 
 def formatar_banco(data):
     return data.strftime('%d.%m.%Y')
+
+
+def periodo_tendencia_ultimos_5_anos(fim):
+    """
+    Janela do gráfico de tendência: do dia 01.01 do ano 5 anos anterior
+    ao ano de `fim` até o próprio `fim` (ano-calendário).
+    Retorna (ini_grafico, fim) formatados para o banco.
+    """
+    ini_grafico = datetime.date(fim.year - 5, 1, 1)
+    return formatar_banco(ini_grafico), formatar_banco(fim)

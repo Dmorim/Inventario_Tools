@@ -1,37 +1,53 @@
-def prod_get(query_input: str):
-    # Importa as funções para executar a query no banco de dados
-    from Thread_Manager.Query_Operations import query_selector, query_executor
+import pyperclip
 
-    # Retorna o valor obtido
-    return query_executor(query_selector, query_input)[0][0]
+from Outros.Logger.Get_Logger import get_logger
+from Thread_Manager.Query_Operations import query_selector, query_executor, _nome_query
+
+logger = get_logger(__name__)
 
 
-def copy_val(val_ven_text):
-    # Mesmo funcionamento explicado em Consultas/Consultas_Val_Ven_Func.py
-    import pyperclip
+def prod_get(query: str = None, params=None):
+    nome_query = _nome_query(query)
+    logger.info('Consultando valor genérico. query=%s | params=%s',
+                nome_query, params)
+    try:
+        result = query_executor(query_selector, query, params)
+        valor = result[0][0] if result else None
+        return valor
+    except Exception:
+        logger.exception(
+            'Erro ao consultar valor genérico. query=%s | params=%s', nome_query, params)
+        raise
+
+
+def copy_val(val_ven_text, prefix: str = None):
     copy_text = val_ven_text.cget('text')
-    pyperclip.copy(copy_text)
+    logger.info('Copiando valor para a área de transferência. prefix=%s | valor=%s',
+                prefix, copy_text)
+    texto_final = f"{prefix}{copy_text}" if prefix else copy_text
+    pyperclip.copy(texto_final)
 
 
 def event_invoke_button(event, button):
-    # Função que simula um click no botão de consulta
-    # Args:
-    # self: Instância da classe que chama a função
-    # event: Evento que chama a função
-    # button: Botão que chama a função
-
     if button.cget('state') != 'disabled':
+        nome_botao = getattr(button, 'cget', lambda *_: 'button')('text')
+        logger.info('Invocando botão: %s', nome_botao)
         button.invoke()
 
 
 def event_screen_close(screen, event, button, container_manager):
-    # Função que simula o fechamento da tela
-    # Args:
-    # screen: Instância da tela que chama a função
-    # event: Evento que chama a função
-    # button: Botão que chama a função
-    # container_manager: Gerenciador de containers
-
+    nome_tela = getattr(screen, 'title', lambda: screen)()
+    logger.info('Fechando container de consulta: %s', nome_tela)
     button.configure(state='normal')
     container_manager.remover_container(screen)
     screen.destroy()
+
+
+def banco_codigo_valueform(val):
+    val = "{:,.2f}".format(val)
+    prs = val.split('.')
+    pri = prs[0]
+    prd = prs[1]
+    pri = pri.replace(",", ".")
+    val = pri + ',' + prd
+    return val

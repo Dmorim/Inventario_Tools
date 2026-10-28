@@ -1,7 +1,21 @@
+import customtkinter as ctk
+from tkinter import messagebox
+
 from Interface_Tools.Container_Screen_Managment.Container_Manager import ContainerManager
+from Queries.Consulta_Queries import QUERY_DISTORCAO_SALDO
+from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
+from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
+from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_List import List_Treeview_Screen
+from Thread_Manager.Thread_Executor import thread_execução
+from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
+from Thread_Manager.Query_Operations import query_selector, query_executor
+from Outros.Logger.Get_Logger import get_logger
+from Distorcao_Manager.DistorcaoInventario import DistorcaoInventario
+
+logger = get_logger(__name__)
 
 
-def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager: ContainerManager):
+def dist_saldo_screen(Consulta_Screen, consulta_button, container_manager: ContainerManager, distorcao):
     def centraliza_tela():
         # Calcula a posição central da tela para o progress bar
         screen_width = Consulta_Screen.winfo_screenwidth()
@@ -10,15 +24,6 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager:
         progress_y = (screen_height // 2) - \
             (Consulta_Screen.winfo_height() // 2)
         return progress_x, progress_y
-
-    import customtkinter as ctk
-
-    # Importa as funções que vão ser usadas na tela dos arquivos Consultas/Consultas_Val_Screen, Consutlas/Gen_Funcs_Consulta e Consultas/Consultas_Dist_Saldo_List
-    from Consultas.Consultas_Val_Screen import Consultas_Val_Screen
-    from Consultas.Generics_Functions.Gen_Funcs_Consulta import copy_val
-    from Consultas.Distorcao_de_Saldo.Consultas_Dist_Saldo_List import List_Treeview_Screen
-    from Thread_Manager.Thread_Executor import thread_execução
-    from Interface_Tools.Tk_Progress_Bar import ProgressBarHandler
 
     # Desabilita o botão de consulta para evitar múltiplas execuções simultâneas
     consulta_button.configure(state='disabled')
@@ -41,7 +46,7 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager:
     val_ven_button = ctk.CTkButton(
         hub, text='Copiar Valor', width=15, height=20, command=lambda: copy_val(val_ven_text), state='disabled')
     listagem_button = ctk.CTkButton(hub, text='Listar Produtos', width=15,
-                                    height=20, command=lambda: List_Treeview_Screen(self, hub), state='disabled')
+                                    height=20, command=lambda: List_Treeview_Screen(hub, distorcao), state='disabled')
 
     # Posiciona os labels e botões na tela
     val_ven_label.place(relx=0.5, y=15, anchor='center')
@@ -52,90 +57,46 @@ def dist_saldo_screen(self, Consulta_Screen, consulta_button, container_manager:
     progress_bar.create_screen()
     progress_bar.atualizar_status("Consultando distorções de saldo...")
 
-    def on_query_complete(empty):
+    def on_query_complete(_):
+        logger.info("Finalizando consulta de distorção de saldo.")
         progress_bar.finalizar()
-        val_ven_text.configure(text=len(self.dist_saldo_list))
+        val_ven_text.configure(
+            text=str(distorcao.obter_distorcao().tamanho)
+        )
         val_ven_button.configure(state='normal')
         listagem_button.configure(state='normal')
 
     def on_query_error(error):
+        logger.error(f"Erro na consulta de distorção de saldo: {error}")
         progress_bar.finalizar()
         val_ven_text.configure(text="Erro ao gerar consulta")
-        print(f"Erro ao executar consulta: {error}")
+        consulta_button.configure(state='normal')
+        listagem_button.configure(state='disabled')
+        messagebox.showerror(
+            "Erro", f"Ocorreu um erro ao gerar a consulta: {error}", parent=hub)
 
-    def execute_query(self):
-        from Thread_Manager.Query_Operations import query_selector, query_executor
-
-        query = """
-            EXECUTE BLOCK
-            RETURNS (
-                cdpro VARCHAR(50),
-                nmpro VARCHAR(255),
-                saldo_lan NUMERIC(15,4),
-                saldo_pro NUMERIC(15,4)
-            )
-            AS
-            DECLARE VARIABLE formatosaldo INTEGER;
-            BEGIN
-
-                SELECT CAST(
-                        CHAR_LENGTH(
-                            SUBSTRING(valor FROM POSITION('.' IN valor) + 1)
-                        ) AS INTEGER
-                    )
-                FROM si01gp
-                WHERE ident = 'FORMATOSALDO'
-                INTO :formatosaldo;
-
-                FOR
-                    SELECT
-                        x.cdpro,
-                        x.nmpro,
-                        x.saldo_lan,
-                        x.saldo_pro
-                    FROM (
-                        SELECT
-                            p.cdpro,
-                            p.nmpro,
-                            SUM(IIF(l.tpmov = 'S', l.quant, -l.quant)) AS saldo_lan,
-                            p.saldo AS saldo_pro
-                        FROM in01lan l
-                        LEFT JOIN in01pro p
-                            ON l.cdpro = p.cdpro
-                        LEFT JOIN in01com c
-                            ON c.notfi = l.notfi
-                        AND c.cdfrn = l.cdfrn
-                        AND c.serie = l.serie
-                        WHERE
-                            COALESCE(l.controlaestoque, 'S') = 'S'
-                            AND COALESCE(l.cance, 'N') = 'N'
-                            AND classificacao_produto IN ('00', '01', '02', '04', '05', '06')
-                            AND l.venda <> 'R'
-                            AND (COALESCE(c.alterarsaldo, 'S') = 'S' OR l.venda <> 'J')
-                        GROUP BY
-                            p.cdpro,
-                            p.nmpro,
-                            p.saldo
-                    ) x
-                    WHERE
-                        ROUND(x.saldo_lan, :formatosaldo) <>
-                        ROUND(x.saldo_pro, :formatosaldo)
-                    INTO
-                        :cdpro,
-                        :nmpro,
-                        :saldo_lan,
-                        :saldo_pro
-                DO
-                    SUSPEND;
-            END
-        """
+    def execute_query():
+        query = QUERY_DISTORCAO_SALDO
 
         rows = query_executor(query_selector, query)
 
-        self.dist_saldo_list = [
-            [cdpro, nmpro, saldo_lan, saldo_pro]
-            for cdpro, nmpro, saldo_lan, saldo_pro in rows
-        ]
+        cdpro = []
+        nmpro = []
+        saldo_lan = []
+        saldo_pro = []
+
+        for row in rows:
+            cdpro.append(row[0])
+            nmpro.append(row[1])
+            saldo_lan.append(float(row[2]))
+            saldo_pro.append(float(row[3]))
+
+        distorcao.atualizar_distorcao(DistorcaoInventario(
+            cdpro=cdpro,
+            nmpro=nmpro,
+            saldo_lan=saldo_lan,
+            saldo_pro=saldo_pro
+        ))
 
     thread_execução(hub, execute_query, on_query_complete,
-                    on_query_error, self)
+                    on_query_error)
