@@ -18,9 +18,11 @@ testes mockam `Dashboard_Func._hoje` (helper existia e não era usado); corrigid
 `test_instancias_sao_independentes` e `test_nova_instancia_nao_altera_a_anterior`.
 **Baseline final: 212 passed** em 15 arquivos; `compileall` OK. **Nenhum commit foi feito**
 (regra de ouro).
-**Pendências restantes:** só a **Fase 6 (PyInstaller)** — validar `Inventario_3.5.0.spec`
-(`--add-data` de `config.ini`, `Recursos/Firebird/fbclient.dll`, backend do matplotlib) e
-versionar a receita — e os **testes manuais** (troca de período + reabertura das telas).
+**Pendências restantes:** a **validação manual do executável** (conexão no Firebird com a `fbclient`
+embutida, `Bin\config.ini`, Consultas e Dashboard) e os **testes manuais** de troca de período +
+reabertura das telas. A **Fase 6 (PyInstaller) está executada** (28/10/2026): `Inv Tools 3.5.0.spec`
+gera `dist\Inv Tools 3.5.0\` com **162,5 MB** (exe + `Bin\`, sem `config.ini`, 11 arquivos do
+Firebird, 167 locales, sem `_avif`) e o `.exe` inicia criando `Bin\logs\` — detalhes no Item 14.
 **B1 implementado (27/10/2026):** `_previa_inventario` agora rola a partir do saldo corrente (`hoje`) via
 `QUERY_MOVIMENTO_ESTOQUE_CUSTO` (`fim < hoje` → `inv_corrente - movimento(fim+1..hoje)`, 
 `fim >= hoje` → `inv_corrente + movimento(hoje+1..fim)`), com tratamento explícito de falha 
@@ -196,17 +198,19 @@ encerrado sem código em 26/10/2026 (ganho de décimos). Os **itens 1 e 4** das 
 dos helpers do Dashboard + logging nos `except` de UI) e o **B3** foram aplicados em 26/10/2026
 (ver **Item 11**).
 **Pendências restantes:** **testes manuais** (troca de período + reabertura das telas, exigem a app
-com banco real) e **Fase 6 — PyInstaller**: existem `Inv Tools 3.0.0.spec` e
-`Inventario_3.5.0.spec` na raiz (não versionados), mas **nenhum build foi validado**; falta
-`--add-data` de `config.ini`/`Recursos/Firebird/fbclient.dll`, coleta de `matplotlib`/`numpy`/`scipy`
-e remover `*.spec` do `.gitignore` ao versionar.
-**Branch:** `refatoracao_v3.5` · **HEAD:** `caf23b7` · **baseline:** **212 passed** em 15 arquivos
+com banco real) e **Fase 6 — PyInstaller**: a receita nova `Inv Tools 3.5.0.spec` (28/10/2026) já
+resolve caminhos via `SPECPATH`, embute só o **cliente Firebird mínimo** (11 arquivos, 11,63 MB) em
+`datas`, **não** embute `config.ini` e delega `customtkinter`/`tkcalendar`/`babel` aos hooks, com
+`babel` limitado a pt/en/es; **nenhum build foi executado**. Falta rodar
+`python -m PyInstaller "Inv Tools 3.5.0.spec" --noconfirm`, validar em máquina limpa e então
+versionar a receita (removendo `*.spec` do `.gitignore`). A antiga `Inv Tools 3.0.0.spec` continua
+obsoleta (máquina `C:\Users\Sup-12\...`).
+**Branch:** `refatoracao_v3.5` · **HEAD:** `7d1b05a` ("Restore test baseline and close refactor
+scope" — commit do usuário em 28/10/2026) · **baseline:** **212 passed** em 15 arquivos
 (`compileall` OK)
-**Working tree (nada commitado — regra de ouro):** nesta sessão (28/10/2026) há **2 arquivos
-alterados**: `Dashboard/Dashboard_Func.py` (`_previa_inventario` passa a usar `_hoje()`) e
-`tests/test_distorcao.py` (testes do `DistorcaoManager` alinhados à injeção por parâmetro). Os docs
-(`AGENTS.md`, `AGENTS_SESSAO.md`, `docs/Plano_*.md`, `docs/Status_Refatoracao.md`) foram
-sincronizados.
+**Working tree (nada commitado — regra de ouro):** nesta sessão (28/10/2026) foram alterados
+`Dashboard/Dashboard_Func.py` e `tests/test_distorcao.py`, **commitados pelo usuário em `7d1b05a`**
+junto com a sincronia de docs.
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
 ---
@@ -1212,9 +1216,119 @@ A varredura de abertura encontrou **208 passed, 4 failed** em `caf23b7` (a basel
   `test_gerenciador_thread_bd` 10, `test_validacao` 10, `test_create_views` 5, `test_copy_val` 4,
   `test_formatacao` 4, `test_queries` 3).
 - **`compileall`:** OK.
-- **Arquivos alterados (não commitados):** `Dashboard/Dashboard_Func.py`, `tests/test_distorcao.py`.
+- **Arquivos alterados:** `Dashboard/Dashboard_Func.py`, `tests/test_distorcao.py` — **commitados
+  pelo usuário em `7d1b05a`** ("Restore test baseline and close refactor scope") junto com a
+  sincronia de docs; working tree **limpo** depois disso.
 - **Docs sincronizados:** `AGENTS.md`, `AGENTS_SESSAO.md`,
   `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (v5.5) e `docs/Status_Refatoracao.md`.
-- **Fila:** só **Fase 6 (PyInstaller)** — validar `Inventario_3.5.0.spec` e versionar a receita — e
-  os **testes manuais** (troca de período + reabertura das telas).
+- **Fila:** só **Fase 6 (PyInstaller)** — receita **`Inv Tools 3.5.0.spec`** criada em 28/10/2026
+  (portável via `SPECPATH`, `Recursos` completa em `datas`, sem `config.ini`, hooks para
+  `customtkinter`/`tkcalendar`/`babel`, `hooksconfig` com `Agg`+`TkAgg`, `contents_directory='Bin'`);
+  falta **executar o build** e validar em máquina limpa — e os **testes manuais** (troca de período +
+  reabertura das telas).
+
+---
+
+## 14. SESSÃO 28/10/2026 (2ª parte) — RECEITA PyInstaller 3.5.0
+
+**Arquivo criado:** `Inv Tools 3.5.0.spec` (raiz; `.gitignore` ignora `*.spec`, então **não** é
+versionado). A `Inv Tools 3.0.0.spec` (máquina `C:\Users\Sup-12\...`) foi mantida como referência
+histórica e **não** deve ser usada.
+
+**Decisões do usuário:** **não** embutir `config.ini` (criado por máquina), manter
+`contents_directory='Bin'` (layout da 3.0.0: `exe` + `Bin\`) e, na revisão final, entregar a versão
+**enxuta** (a primeira tentativa embutia `Recursos` completa, 46,2 MB).
+
+**Como a receita resolveu os caminhos do código (verificado nos fontes):**
+
+| Código | Caminho congelado | Como fica |
+|---|---|---|
+| `Banco_de_Dados_Func.py:23` | `Path(__file__).parents[2]/Recursos/Firebird/fbclient.dll` | `Bin\Recursos\Firebird\fbclient.dll` (via `datas`) |
+| `Config_Manager.py:10` | `Path(__file__).parents[1]/config.ini` | `Bin\config.ini` (criado no 1º salvamento) |
+| `Get_Logger.py:15` | `Path(__file__).parents[2]/logs` | `Bin\logs\AAAAMM\` |
+| `Dashboard_Screen.py:29` | `~/.inventario_tools_dashboard.json` | inalterado (perfil do usuário) |
+
+**Enxugamento aplicado (medido no `dist/` real, build de 28/10/2026):**
+
+| Item | Antes | Depois | Ganho |
+|---|---|---|---|
+| `Recursos` | pasta inteira, 46,2 MB | **11 arquivos** do cliente Firebird (`fbclient`, `ib_util`, `icu*`, `msvcp100`, `msvcr100`, `zlib1`, `firebird.msg`, `firebird.conf`), 11,63 MB | −34,6 MB |
+| `babel/locale-data` | 1084 arquivos, 28,94 MB | 167 arquivos (`pt*`, `en*`, `es*`, `root`); pasta `babel` = 1,57 MB | −27,4 MB |
+| `matplotlib/mpl-data` | tudo, 13,91 MB | sem `fonts/afm`, `fonts/pdfcorefonts`, `sample_data`, `plot_directive` → 12,11 MB | −1,80 MB |
+| `PIL` | 10,73 MB (com `_avif`) | 3,20 MB, sem `PIL.AvifImagePlugin`/`_avif` | −7,53 MB |
+| **`dist/` total** | **199,2 MB** (1ª build, filtro inerte) | **162,5 MB** | **−36,7 MB** |
+
+Filtro de `babel`/`matplotlib` é feito reescrevendo `a.datas` logo após o `Analysis` (os dados vêm do
+hook, então não dá para pedir filtrado ao `datas=`).
+
+⚠️ **Pegadinha do PyInstaller 6 no Windows (custou uma build):** os nomes de destino em `a.datas`
+usam `\` — `matplotlib\mpl-data\...`, `babel\locale-data\...` — e **não** `/`. Um filtro com
+`entrada[0].startswith("babel/locale-data/")` compila, roda, o build termina com `Build complete!` e
+**não remove nada** (a 1ª build saiu com 199,2 MB e as 1084 locales). Por isso o predicado
+`descartar_data()` compara `Path(nome).parts`, que é independente de separador:
+`partes[:len(prefixo)] == prefixo` para as pastas do `mpl-data` e
+`partes[:2] == ("babel", "locale-data")` + `Path(partes[-1]).stem.split("_")[0]`. Conferir sempre
+pelos **nomes reais** (`build\<nome>\Analysis-00.toc` ou contagem de arquivos no `dist/`), nunca pela
+mensagem de sucesso do build.
+
+**Por que 11 arquivos bastam:** o cliente Firebird mínimo é `fbclient.dll` + deps ICU/MSVC/zlib +
+`firebird.msg`. `plugins/` (`engine12`, `srp`, `legacy_auth`, `udr`) e `intl/` são **do servidor /
+embedded**; a app **nunca** usa embedded porque `Banco_de_Dados_Func.py:241` exige todos os campos
+preenchidos — o `host` nunca é vazio e `fdb.connect(host=..., port=...)` sempre usa o provider
+`Remote`. `UDF/`, `WOW64/` (DLLs 32 bits), `doc/`, `examples/`, `include/`, `help/`, `misc/`,
+`security3.fdb*`, `unins000.dat`, `fbtrace.conf*` e as licenças também ficaram fora.
+⚠️ Se algum dia a app passar a aceitar `host` vazio (Firebird embarcado), é preciso voltar a incluir
+`plugins/` + `intl/` + `security3.fdb` em `datas`.
+
+**Escolhas de eficiência (por que a receita é menor/simples que a 3.0.0):**
+
+1. Sem cópia manual de pacotes: `hook-customtkinter.py` (hooks-contrib) e `hook-babel.py`
+   (PyInstaller) já coletam `assets/` do customtkinter e `global.dat`/`locale-data` do babel.
+   A 3.0.0 duplicava `customtkinter` no root e copiava `tkcalendar` à mão.
+2. `hooksconfig={"matplotlib": {"backends": ["Agg", "TkAgg"]}}` — evita a sondagem automática de
+   backend no build e garante exatamente os dois usados (`matplotlib.use('Agg')` + `FigureCanvasTkAgg`).
+3. `pathex`/`Analysis`/`icon` derivados de `SPECPATH` — receita portável, sem caminho absoluto.
+4. `hiddenimports` só com nomes dinâmicos (`fdb`, `pyperclip`, `darkdetect`,
+   `matplotlib.backends.backend_tkagg`) — `customtkinter`, `fdb`, `pyperclip` não têm import dinâmico
+   (verificado nos fontes dos pacotes) e `babel.*` já vem pelo `hook-babel.py`.
+5. `noarchive=False` (PYZ único) e `optimize=0` (mesmo comportamento do dev).
+6. `upx=True` mantido, mas **UPX não está no PATH** desta máquina → inerte; se alguém compilar com UPX
+   instalado, o tamanho cai e há risco de falso positivo de antivírus.
+7. `excludes=["pytest", "_pytest", "PIL.AvifImagePlugin", "_avif"]` — `pytest` é guarda (não é
+   alcançável a partir de `Inventario.py`) e o `hook-PIL.Image.py` coleta **todos** os plugins de
+   imagem; a app só abre PNG, então AVIF (`_avif.cp312-win_amd64.pyd`, 7,53 MB) ficou fora.
+8. `binaries=[]` — a `fbclient` vai em `datas`, que é onde o código procura; colocá-la em `binaries`
+   duplicaria o arquivo no root do `Bin`.
+
+**Build executada (28/10/2026):** `.\\.venv\\Scripts\\python.exe -m PyInstaller "Inv Tools 3.5.0.spec" --noconfirm --clean`
+→ `Build complete!` em ~90 s (PyInstaller 6.22.3 + hooks-contrib 2026.9, Python 3.12.5). Conferência
+do `dist\Inv Tools 3.5.0\`:
+
+| Conferência | Resultado |
+|---|---|
+| `Inv Tools 3.5.0.exe` + `Bin\` | OK (onedir) |
+| `Bin\Recursos\Firebird\` | **11 arquivos** (11,63 MB) |
+| `Bin\babel\locale-data` | **167 arquivos** (`babel` = 1,57 MB) |
+| `mpl-data\{fonts\afm,fonts\pdfcorefonts,sample_data,plot_directive}` | ausentes |
+| `Bin\PIL\_avif*.pyd` | ausente (`PIL` = 3,20 MB) |
+| `config.ini` embutido | não existe |
+| **Tamanho total** | **162,5 MB** |
+| `backends` do matplotlib | `['Agg', 'TkAgg']` |
+| `.exe` inicia | OK (~86 MB de RSS após 10 s; cria `Bin\logs\AAAAMM\`) |
+
+Avisos do `warn-Inv Tools 3.5.0.txt`: só os esperados/benignos — `pycparser.lextab`/`yacctab`,
+`tzdata`, `importlib_resources.trees`, `scipy.special._cdflib`, `AppKit.framework` (darkdetect/
+pyperclip no macOS) e os fallbacks Python 2 do `tkcalendar`/`fdb` (`Tkinter`, `tkFont`, `ttk`,
+`Queue`, `_winreg`). Nenhum módulo do projeto nem dependência obrigatória faltando.
+
+**Pendente:** validação manual em máquina limpa — abrir o exe, conferir o campo **fbclient**
+pré-preenchido com `...\Bin\Recursos\Firebird\fbclient.dll`, conectar no Firebird, ver a criação de
+`Bin\config.ini`, reabrir lendo o ini e abrir **Consultas** (tkcalendar/babel) e **Dashboard**
+(matplotlib/scipy). Só depois faz sentido versionar a receita (tirar `*.spec` do `.gitignore`).
+
+**Risco assumido no `babel`:** se uma máquina cliente rodar com locale fora de `pt`/`en`/`es`
+(ex.: `LANG=fr_FR`), o `tkcalendar` pode levantar `UnknownLocaleError` ao montar os campos de data.
+No Windows o normal é `babel.default_locale()` devolver `None` → cai em `en_US_POSIX` (coberto).
+Para reverter: apagar a condição `partes[:2] == ("babel", "locale-data")` de `descartar_data()`.
+Para reverter a exclusão do AVIF: tirar `PIL.AvifImagePlugin`/`_avif` do `excludes`.
 

@@ -271,23 +271,53 @@ públicos exatos + conteúdo não vazio) e garante que `EXPR_VALOR_ENTRADA` é a
 
 ---
 
-### Fase 6 — Compatibilidade com PyInstaller — 🔄 EM ANDAMENTO (receita existe, não validada)
+### Fase 6 — Compatibilidade com PyInstaller — ✅ BUILD EXECUTADA (162,5 MB; validação manual pendente)
 
-O repositório **agora tem receitas**: `Inv Tools 3.0.0.spec` e `Inventario_3.5.0.spec` na raiz.
-**Nenhuma delas foi validada** (não existe `build/` nem `dist/`; o `.gitignore` ignora `*.spec`,
-`build/`, `dist/` e `*.exe`, então as receitas não estão versionadas). O antigo
-`Outros/Auto_py_to_exe config.json` continua **obsoleto**:
+A raiz tem **duas** receitas: `Inv Tools 3.0.0.spec` (obsoleta, da máquina antiga) e
+**`Inv Tools 3.5.0.spec`** (criada em 28/10/2026, **a única a usar**). O `.gitignore` ignora `*.spec`,
+`build/`, `dist/` e `*.exe`, então **nenhuma está versionada**. O build foi executado em 28/10/2026
+(`--noconfirm --clean`, PyInstaller 6.22.3, Python 3.12.5) e gerou `dist\Inv Tools 3.5.0\` com
+**162,5 MB**; o `.exe` inicia e cria `Bin\logs\`.
 
-- caminhos absolutos da máquina antiga (`C:/Users/Sup-12/...`);
-- não inclui os pacotes novos (`Dashboard/`, `Queries/`, `Thread_Manager/`, `Data_Manager/`,
-  `Distorcao_Manager/`, `Inv_Screen/`, `Interface_Tools/`) nem `Recursos/Firebird/fbclient.dll`;
-- não embute `config.ini` (falta `--add-data`) e não coleta `matplotlib`/`numpy`/`scipy`;
-- usa `collect_all` em módulos da stdlib (`base64`, `io`, `datetime`, `ctypes`), o que não faz
-  sentido e pode falhar no build.
+A receita nova (`Inv Tools 3.5.0.spec`) é portável e enxuta:
 
-Para concluir: partir do `.spec` mais recente (`Inventario_3.5.0.spec`), garantir `--add-data` de
-`config.ini`, `Recursos/Firebird/fbclient.dll` e do backend do matplotlib, gerar o executável em
-máquina limpa e só então versionar a receita (removendo `*.spec` do `.gitignore`).
+- caminhos derivados de `SPECPATH` (sem `C:\Users\Sup-12\...`); `pathex` = raiz do projeto;
+- `datas` com apenas os **11 arquivos do cliente Firebird** (`fbclient.dll`, `ib_util.dll`, `icu*.dll`,
+  `icudt52l.dat`, `msvcp100.dll`, `msvcr100.dll`, `zlib1.dll`, `firebird.msg`, `firebird.conf`) em
+  `Recursos/Firebird` — **11,63 MB** em vez dos 46,2 MB da pasta inteira, e o caminho padrão da
+  `fbclient.dll` (`Banco_de_Dados_Func.py:23`, `parents[2]/Recursos/Firebird/`) continua existindo;
+  `plugins/`, `intl/`, `UDF/`, `WOW64/`, `doc/`, `examples/`, `include/`, `help/`, `misc/`,
+  `security3.fdb*`, `unins000.dat` e `fbtrace.conf*` ficam fora (são do servidor/embedded — a app
+  sempre usa o provider `Remote`, porque `host` nunca é vazio);
+- **`config.ini` não é embutido** por decisão do usuário (criado por máquina em `Bin\config.ini` na
+  primeira configuração, pois `Config_Manager.py:10` resolve `parents[1]/config.ini`);
+- `customtkinter`/`tkcalendar`/`babel` vêm por **hook** (`hook-customtkinter.py`,
+  `hook-babel.py`) — a cópia manual de pacotes da receita antiga foi removida;
+- `a.datas` filtrado por `descartar_data()` após o `Analysis`: `babel/locale-data` só
+  `pt*`/`en*`/`es*`/`root` (167 arquivos, `babel` = 1,57 MB de 28,94 MB) e sem
+  `matplotlib/mpl-data/{fonts/afm,fonts/pdfcorefonts,sample_data,plot_directive}` (−1,80 MB).
+  ⚠️ O filtro compara `Path(nome).parts`, não `startswith('/')`: no Windows os nomes de `a.datas` usam
+  `\`, e a versão com `/` foi silenciosamente inerte (build de 199,2 MB);
+- `excludes` também remove `PIL.AvifImagePlugin`/`_avif` (o hook do PIL coleta todos os plugins; a app
+  só usa PNG) — `PIL` caiu de 10,73 MB para 3,20 MB;
+- `hooksconfig={"matplotlib": {"backends": ["Agg", "TkAgg"]}}` — só os dois backends usados
+  (`matplotlib.use('Agg')` em `Dashboard_Charts.py` + `FigureCanvasTkAgg`);
+- `hiddenimports` reduzido ao que é dinâmico (`fdb`, `pyperclip`, `darkdetect`,
+  `matplotlib.backends.backend_tkagg`); `binaries=[]`;
+- `contents_directory='Bin'` mantido (layout da 3.0.0: `exe` + `Bin\` com `Recursos`, `logs` e `config.ini`);
+- nome/versão `Inv Tools 3.5.0`; **`dist/` real: 162,5 MB** (a 1ª build, com filtro inerte, deu 199,2 MB).
+
+**Falta:** validação manual em máquina limpa (fbclient pré-preenchida, conexão Firebird,
+`Bin\config.ini`, Consultas e Dashboard) e, depois dela, versionar a receita (tirar `*.spec` do
+`.gitignore`).
+
+O antigo `Outros/Auto_py_to_exe config.json` continua **obsoleto** (mesma origem `C:/Users/Sup-12`,
+`collect_all` em módulos da stdlib, sem `Dashboard/`/`Queries/`/`Thread_Manager/`/`Data_Manager/`/
+`Distorcao_Manager/`/`Inv_Screen/`/`Interface_Tools/`).
+
+Para concluir: validar o executável em máquina limpa (campo fbclient pré-preenchido, conexão no
+Firebird com a `fbclient` embutida, `Bin\config.ini`, Consultas e Dashboard) e então versionar a
+receita (removendo `*.spec` do `.gitignore`).
 
 ---
 
@@ -427,7 +457,7 @@ O diretório `Validacao/` não existe no repositório e **não deve ser criado**
 
 | Passo | Item | Objetivo | Tempo Est. |
 |---|---|---|---|
-| 1 | **Fase 6** — PyInstaller: validar `Inventario_3.5.0.spec` (add-data de `config.ini`, `fbclient.dll`, matplotlib), versionar a receita | Validar executável | 1 h |
+| 1 | **Fase 6** — PyInstaller: receita **`Inv Tools 3.5.0.spec`** ✅ **build executada** (`dist\` com 162,5 MB: cliente Firebird mínimo, `babel` restrito a pt/en/es, AVIF fora, sem `config.ini`); falta **validar em máquina limpa** e versionar a receita | Validação manual | 30 min |
 | 2 | **Testes manuais** — troca de período + reabertura das telas (exigem a app aberta com banco real) | Homologação | 30 min |
 
 **Fora do código / já resolvidos:**

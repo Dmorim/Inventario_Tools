@@ -65,7 +65,7 @@ def _create_command_buttons(periodo_manager, distorcao, master, root, entrys_lis
         TelaInicial.help_image_tela_inicial, size=(14, 14))
 
     consulta = CTkButton(master, text='Consultas (F1)', width=80, height=48,
-                         command=lambda: abrir_tela(Consulta_Total_Screen, distorcao, root), state='normal')
+                         command=lambda: abrir_tela(Consulta_Total_Screen, distorcao, root), state='disabled')
     comando = CTkButton(master, text='Comandos (F2)', width=60, height=48,
                         command=lambda: abrir_tela(Comandos_Screen, distorcao, root), state='disabled')
     database = CTkButton(master, text='Selecione o Banco de Dados', width=100,
