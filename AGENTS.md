@@ -43,6 +43,14 @@ Ambiente virtual: `.venv` (Windows, PowerShell). Use o executável da venv expli
   .\.venv\Scripts\python.exe -m compileall -q . -x "\.venv"
   ```
 
+- **Gerar o executável** (PyInstaller, receita `Inv Tools 3.5.0.spec`):
+  ```powershell
+  .\.venv\Scripts\python.exe -m PyInstaller "Inv Tools 3.5.0.spec" --noconfirm --clean
+  ```
+  Resultado em `dist\Inv Tools 3.5.0\` (~162 MB: `exe` + `Bin\`). Conferir: **11** arquivos em
+  `Bin\Recursos\Firebird`, **167** em `Bin\babel\locale-data` e nenhum `Bin\config.ini` (criado na
+  1ª conexão). A receita antiga `Inv Tools 3.0.0.spec` (máquina `C:\Users\Sup-12\...`) foi removida.
+
 - **Instalar dependências**:
   ```powershell
   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
@@ -62,7 +70,7 @@ Data_Manager/      Período (PeriodoManager, PeriodoInventario)
 Distorcao_Manager/ Correção de distorção (DistorcaoManager)
 Interface_Tools/   Componentes de UI reutilizáveis (ToolTip, ProgressBar, ContainerManager)
 Inv_Screen/        Tela principal (Top/Bot frames)
-Outros/            Recursos auxiliares (imagens base64, cálculo de período, Logger)
+Outros/            Recursos auxiliares (imagens base64, cálculo de período, Logger, Version_Info.txt)
 Queries/           SQL centralizado (Consulta_Queries, Comando_Queries, Create_Views)
 Recursos/          Firebird (fbclient.dll e bibliotecas)
 Thread_Manager/    Concorrência e pool de conexões

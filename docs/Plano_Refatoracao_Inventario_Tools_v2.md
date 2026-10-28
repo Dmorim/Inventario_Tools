@@ -273,11 +273,12 @@ públicos exatos + conteúdo não vazio) e garante que `EXPR_VALOR_ENTRADA` é a
 
 ### Fase 6 — Compatibilidade com PyInstaller — ✅ BUILD EXECUTADA (162,5 MB; validação manual pendente)
 
-A raiz tem **duas** receitas: `Inv Tools 3.0.0.spec` (obsoleta, da máquina antiga) e
-**`Inv Tools 3.5.0.spec`** (criada em 28/10/2026, **a única a usar**). O `.gitignore` ignora `*.spec`,
-`build/`, `dist/` e `*.exe`, então **nenhuma está versionada**. O build foi executado em 28/10/2026
-(`--noconfirm --clean`, PyInstaller 6.22.3, Python 3.12.5) e gerou `dist\Inv Tools 3.5.0\` com
-**162,5 MB**; o `.exe` inicia e cria `Bin\logs\`.
+A raiz tem **uma** receita: **`Inv Tools 3.5.0.spec`** (criada em 28/10/2026), **versionada** por
+exceção no `.gitignore` (`!Inv Tools 3.5.0.spec`) — a regra `*.spec` continua valendo para rascunhos,
+e `build/`, `dist/` e `*.exe` seguem ignorados. A antiga `Inv Tools 3.0.0.spec` (máquina antiga) e o
+`Outros/Auto_py_to_exe config.json` foram **removidos** em 28/10/2026. O build foi executado em
+28/10/2026 (`--noconfirm --clean`, PyInstaller 6.22.3, Python 3.12.5) e gerou `dist\Inv Tools 3.5.0\`
+com **162,5 MB**; o `.exe` inicia e cria `Bin\logs\`.
 
 A receita nova (`Inv Tools 3.5.0.spec`) é portável e enxuta:
 
@@ -305,19 +306,21 @@ A receita nova (`Inv Tools 3.5.0.spec`) é portável e enxuta:
 - `hiddenimports` reduzido ao que é dinâmico (`fdb`, `pyperclip`, `darkdetect`,
   `matplotlib.backends.backend_tkagg`); `binaries=[]`;
 - `contents_directory='Bin'` mantido (layout da 3.0.0: `exe` + `Bin\` com `Recursos`, `logs` e `config.ini`);
+- `version=str(RAIZ / "Outros" / "Version_Info.txt")` no `EXE` — metadados de versão (pt-BR,
+  `041604B0`): `FileVersion 3.5.0.0`, `ProductName Inv Tools`, `FileDescription`; aparecem em
+  *Propriedades → Detalhes* do `.exe`, o que ajuda no suporte;
 - nome/versão `Inv Tools 3.5.0`; **`dist/` real: 162,5 MB** (a 1ª build, com filtro inerte, deu 199,2 MB).
 
 **Falta:** validação manual em máquina limpa (fbclient pré-preenchida, conexão Firebird,
-`Bin\config.ini`, Consultas e Dashboard) e, depois dela, versionar a receita (tirar `*.spec` do
-`.gitignore`).
+`Bin\config.ini`, Consultas e Dashboard).
 
-O antigo `Outros/Auto_py_to_exe config.json` continua **obsoleto** (mesma origem `C:/Users/Sup-12`,
-`collect_all` em módulos da stdlib, sem `Dashboard/`/`Queries/`/`Thread_Manager/`/`Data_Manager/`/
-`Distorcao_Manager/`/`Inv_Screen/`/`Interface_Tools/`).
+O antigo `Outros/Auto_py_to_exe config.json` e a `Inv Tools 3.0.0.spec` foram **removidos** em
+28/10/2026 (a receita apontava para `C:/Users/Sup-12` e o json usava `collect_all` em módulos da
+stdlib, sem `Dashboard/`/`Queries/`/`Thread_Manager/`/`Data_Manager/`/`Distorcao_Manager/`/
+`Inv_Screen/`/`Interface_Tools/`). `pyinstaller>=6.22` entrou no `requirements-dev.txt`.
 
 Para concluir: validar o executável em máquina limpa (campo fbclient pré-preenchido, conexão no
-Firebird com a `fbclient` embutida, `Bin\config.ini`, Consultas e Dashboard) e então versionar a
-receita (removendo `*.spec` do `.gitignore`).
+Firebird com a `fbclient` embutida, `Bin\config.ini`, Consultas e Dashboard).
 
 ---
 
@@ -457,7 +460,7 @@ O diretório `Validacao/` não existe no repositório e **não deve ser criado**
 
 | Passo | Item | Objetivo | Tempo Est. |
 |---|---|---|---|
-| 1 | **Fase 6** — PyInstaller: receita **`Inv Tools 3.5.0.spec`** ✅ **build executada** (`dist\` com 162,5 MB: cliente Firebird mínimo, `babel` restrito a pt/en/es, AVIF fora, sem `config.ini`); falta **validar em máquina limpa** e versionar a receita | Validação manual | 30 min |
+| 1 | **Fase 6** — PyInstaller: receita **`Inv Tools 3.5.0.spec`** ✅ **build executada e versionada** (`dist\` com 162,5 MB: cliente Firebird mínimo, `babel` restrito a pt/en/es, AVIF fora, sem `config.ini`, metadados de versão no exe); falta **validar em máquina limpa** | Validação manual | 30 min |
 | 2 | **Testes manuais** — troca de período + reabertura das telas (exigem a app aberta com banco real) | Homologação | 30 min |
 
 **Fora do código / já resolvidos:**

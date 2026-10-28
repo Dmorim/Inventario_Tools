@@ -198,16 +198,14 @@ encerrado sem código em 26/10/2026 (ganho de décimos). Os **itens 1 e 4** das 
 dos helpers do Dashboard + logging nos `except` de UI) e o **B3** foram aplicados em 26/10/2026
 (ver **Item 11**).
 **Pendências restantes:** **testes manuais** (troca de período + reabertura das telas, exigem a app
-com banco real) e **Fase 6 — PyInstaller**: a receita nova `Inv Tools 3.5.0.spec` (28/10/2026) já
-resolve caminhos via `SPECPATH`, embute só o **cliente Firebird mínimo** (11 arquivos, 11,63 MB) em
-`datas`, **não** embute `config.ini` e delega `customtkinter`/`tkcalendar`/`babel` aos hooks, com
-`babel` limitado a pt/en/es; **nenhum build foi executado**. Falta rodar
-`python -m PyInstaller "Inv Tools 3.5.0.spec" --noconfirm`, validar em máquina limpa e então
-versionar a receita (removendo `*.spec` do `.gitignore`). A antiga `Inv Tools 3.0.0.spec` continua
-obsoleta (máquina `C:\Users\Sup-12\...`).
-**Branch:** `refatoracao_v3.5` · **HEAD:** `7d1b05a` ("Restore test baseline and close refactor
-scope" — commit do usuário em 28/10/2026) · **baseline:** **212 passed** em 15 arquivos
-(`compileall` OK)
+com banco real) e a **validação do executável em máquina limpa**. A **Fase 6 — PyInstaller foi
+executada em 28/10/2026**: `Inv Tools 3.5.0.spec` (única receita, agora versionada) gera
+`dist\Inv Tools 3.5.0\` com **~162 MB**, cliente Firebird mínimo (11 arquivos) em `datas`, sem
+`config.ini`, `babel` só pt/en/es, AVIF fora e metadados de versão no `.exe`. A antiga
+`Inv Tools 3.0.0.spec` (máquina `C:\Users\Sup-12\...`) e o `Outros/Auto_py_to_exe config.json` foram
+**removidos** em 28/10/2026.
+**Branch:** `refatoracao_v3.5` · **HEAD:** `dd15a9e` ("Document PyInstaller build status" — commit do
+usuário em 28/10/2026) · **baseline:** **212 passed** em 15 arquivos (`compileall` OK)
 **Working tree (nada commitado — regra de ouro):** nesta sessão (28/10/2026) foram alterados
 `Dashboard/Dashboard_Func.py` e `tests/test_distorcao.py`, **commitados pelo usuário em `7d1b05a`**
 junto com a sincronia de docs.
@@ -1231,9 +1229,10 @@ A varredura de abertura encontrou **208 passed, 4 failed** em `caf23b7` (a basel
 
 ## 14. SESSÃO 28/10/2026 (2ª parte) — RECEITA PyInstaller 3.5.0
 
-**Arquivo criado:** `Inv Tools 3.5.0.spec` (raiz; `.gitignore` ignora `*.spec`, então **não** é
-versionado). A `Inv Tools 3.0.0.spec` (máquina `C:\Users\Sup-12\...`) foi mantida como referência
-histórica e **não** deve ser usada.
+**Arquivo criado:** `Inv Tools 3.5.0.spec` (raiz) — **versionado** desde 28/10/2026 via exceção
+`!Inv Tools 3.5.0.spec` no `.gitignore` (a regra `*.spec` continua valendo para receitas de rascunho).
+A antiga `Inv Tools 3.0.0.spec` (máquina `C:\Users\Sup-12\...`) e o `Outros/Auto_py_to_exe config.json`
+foram **removidos** em 28/10/2026 para ninguém buildar com a receita errada.
 
 **Decisões do usuário:** **não** embutir `config.ini` (criado por máquina), manter
 `contents_directory='Bin'` (layout da 3.0.0: `exe` + `Bin\`) e, na revisão final, entregar a versão
@@ -1309,22 +1308,29 @@ do `dist\Inv Tools 3.5.0\`:
 | `Inv Tools 3.5.0.exe` + `Bin\` | OK (onedir) |
 | `Bin\Recursos\Firebird\` | **11 arquivos** (11,63 MB) |
 | `Bin\babel\locale-data` | **167 arquivos** (`babel` = 1,57 MB) |
-| `mpl-data\{fonts\afm,fonts\pdfcorefonts,sample_data,plot_directive}` | ausentes |
+| `mpl-data\{fonts\afm,fonts/pdfcorefonts,sample_data,plot_directive}` | ausentes |
 | `Bin\PIL\_avif*.pyd` | ausente (`PIL` = 3,20 MB) |
 | `config.ini` embutido | não existe |
 | **Tamanho total** | **162,5 MB** |
 | `backends` do matplotlib | `['Agg', 'TkAgg']` |
 | `.exe` inicia | OK (~86 MB de RSS após 10 s; cria `Bin\logs\AAAAMM\`) |
+| Metadados do `.exe` | `Outros/Version_Info.txt` via `version=` → `FileVersion 3.5.0.0`, `ProductName Inv Tools` (pt-BR, `041604B0`) |
 
 Avisos do `warn-Inv Tools 3.5.0.txt`: só os esperados/benignos — `pycparser.lextab`/`yacctab`,
 `tzdata`, `importlib_resources.trees`, `scipy.special._cdflib`, `AppKit.framework` (darkdetect/
 pyperclip no macOS) e os fallbacks Python 2 do `tkcalendar`/`fdb` (`Tkinter`, `tkFont`, `ttk`,
 `Queue`, `_winreg`). Nenhum módulo do projeto nem dependência obrigatória faltando.
 
+**Fechamento da Fase 6 (28/10/2026):** a receita passou a ser **versionada** (exceção
+`!Inv Tools 3.5.0.spec` no `.gitignore`), `pyinstaller>=6.22` entrou no `requirements-dev.txt`, o
+comando de build foi documentado em `AGENTS.md` (`## Comandos`) e os obsoletos
+(`Inv Tools 3.0.0.spec`, `Outros/Auto_py_to_exe config.json`) foram removidos. O comando de build é
+o mesmo de cima; ao mexer no `Version_Info.txt`, refazer a build para os metadados valerem.
+
 **Pendente:** validação manual em máquina limpa — abrir o exe, conferir o campo **fbclient**
 pré-preenchido com `...\Bin\Recursos\Firebird\fbclient.dll`, conectar no Firebird, ver a criação de
 `Bin\config.ini`, reabrir lendo o ini e abrir **Consultas** (tkcalendar/babel) e **Dashboard**
-(matplotlib/scipy). Só depois faz sentido versionar a receita (tirar `*.spec` do `.gitignore`).
+(matplotlib/scipy).
 
 **Risco assumido no `babel`:** se uma máquina cliente rodar com locale fora de `pt`/`en`/`es`
 (ex.: `LANG=fr_FR`), o `tkcalendar` pode levantar `UnknownLocaleError` ao montar os campos de data.
