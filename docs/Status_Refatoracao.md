@@ -1,18 +1,19 @@
 # Status da Refatoração — Inventario_Tools
 
-**Documento atualizado em:** 26/10/2026  
+**Documento atualizado em:** 28/10/2026  
 **Branch de trabalho:** `refatoracao_v3.5`  
-**Base do plano:** `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (v5.4)  
-**Últimos commits:** `228787b` ("Expose dashboard forecast query failures"), `56093b1` ("Harden dashboard KPIs and test coverage"), `3d7d9ef` ("Harden dashboard and thread workflows"), `02afd20` ("Harden dashboard and thread lifecycle"), `0c43604` ("Harden view cleanup and chart rendering")  
-**Working tree:** **limpo** (verificado na varredura de abertura de 26/10/2026). Todo o trabalho das
-sessões anteriores está **commitado pelo usuário**: `228787b` (B2 — falha da previsão visível como
-`Erro` no card, +6 casos) e `56093b1` (itens 1/4, B3 e a nova versão do KPI de previsão) e
-`3d7d9ef` (23/10/2026). `config.ini` **desrastreado** em `a503daa` + `.gitignore` limpo (duplicatas
-removidas).
+**Base do plano:** `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (v5.5)  
+**Últimos commits:** `caf23b7` ("Add KPI clipboard copy and fix screen wiring"), `c7ad6a1` ("Fix inventory preview and distortion state sharing"), `a48c808` ("Sync refactoring docs after B2 commit"), `228787b` ("Expose dashboard forecast query failures"), `56093b1` ("Harden dashboard KPIs and test coverage")  
+**Working tree:** alterações **locais não commitadas** desta sessão (28/10/2026):
+`Dashboard/Dashboard_Func.py` (`_previa_inventario` passa a usar `_hoje()`, permitindo mock nos
+testes) e `tests/test_distorcao.py` (testes do `DistorcaoManager` alinhados à injeção por
+parâmetro, sem singleton). Suíte: **212 passed** em 15 arquivos; `compileall` OK.
 
-> **Decisões registradas (fora de escopo da refatoração):**
-> - **SQL Livre (`com_ger`)** — ficará em total responsabilidade do operador. **Não** será aplicada whitelist nem qualquer validação programática. Apenas confirmação com aviso de risco.
-> - **Type Hints (Fase 4 / `py.typed`)** — a refatoração **não** cobrirá mais o uso de type hints.
+> **Decisões registradas (fora de escopo da refatoração) — encerradas em 28/10/2026:**
+> - **SQL Livre (`com_ger`)** — ficará em total responsabilidade do operador. **Não** será aplicada whitelist nem qualquer validação programática. Apenas confirmação com aviso de risco. **Política atual confirmada como definitiva.**
+> - **Type Hints (Fase 4 / `py.typed`)** — **descartada**; a refatoração não cobrirá type hints.
+> - **Feature 2 — Validação Pré-Inventário** — **descartada**; não será implementada.
+> - **`DROP VIEW`** de `V_LAN_COM`/`V_DIFF_ENTRADA_SAIDA_MES` e **rotação da senha do banco** — **concluídos**.
 
 > Este documento verifica o que já foi realizado e lista o que ainda falta, item a item, conforme o plano de refatoração. Legenda: ✅ concluído · 🔄 em andamento/parcial · ⬜ pendente.
 
@@ -23,10 +24,10 @@ removidas).
 - **Fase 0 (Preparação)** — ✅ concluída.
 - **Fase 1 (Segurança e Configuração)** — ✅ concluída (queries parametrizadas, credenciais em config, AppConfig centralizada).
 - **Fase 2 (Eliminar Código Duplicado)** — ✅ concluída (funções unificadas, factories de tela e listagem).
-- **Fase 3 (Arquitetura e Organização)** — ✅ concluída (imports no topo, hardening de threads, logging estruturado — diretiva revisada em 23/10/2026: log único no início da função, sem par entrada/saída).
-- **Fase 4 (Type Hints)** — ❌ fora de escopo (decisão do usuário).
-- **Fase 5 (Testes Unitários)** — ✅ **209 testes passando** em 15 arquivos: `test_comandos_func` 12, `test_copy_val` 4, `test_create_views` 5, `test_dashboard_charts` 31, `test_dashboard_func` **33**, `test_dashboard_screen_helpers` **17**, `test_distorcao` 10, `test_formatacao` 4, `test_gerenciador_thread_bd` 10, `test_periodo` 16, `test_periodo_manager` 16, `test_queries` 3, `test_query_operations` 12, `test_thread_executor` 10, `test_validacao` 10. Queries centralizadas cobertas por contrato nominal; pool de BD adicionado aos testes. Desde 26/10/2026 `test_dashboard_func` também cobre `_executar_consulta` e o caminho de falha da previsão (`Erro` no card, B2).
-- **Fase 6 (PyInstaller)** — ⬜ **sem receita de build válida**: não existe `*.spec`, `build/` nem `dist/` no repositório (o `.gitignore` ignora `*.spec`, `build/`, `dist/`, `*.exe`), então o empacotamento nunca foi validado. Existe `Outros/Auto_py_to_exe config.json`, mas ele está **obsoleto**: caminhos absolutos de outra máquina (`C:/Users/Sup-12/...`), não inclui `Dashboard/`, `Queries/`, `Thread_Manager/`, `Data_Manager/`, `Distorcao_Manager/`, `Inv_Screen/`, `Interface_Tools/`, nem `config.ini`/`Recursos/Firebird/fbclient.dll`, e usa `collect_all` em módulos da stdlib (`base64`, `io`, `datetime`, `ctypes`).
+- **Fase 3 (Arquitetura e Organização)** — ✅ concluída (imports no topo, hardening de threads, logging estruturado — diretiva revisada em 23/10/2026: log único no início da função, sem par entrada/saída; `except: pass` residuais zerados em 28/10/2026).
+- **Fase 4 (Type Hints)** — ❌ **descartada** (decisão do usuário, 28/10/2026 — o projeto não adotará type hints; `py.typed` não será criado).
+- **Fase 5 (Testes Unitários)** — ✅ **212 testes passando** em 15 arquivos: `test_comandos_func` 12, `test_copy_val` 4, `test_create_views` 5, `test_dashboard_charts` 31, `test_dashboard_func` **36**, `test_dashboard_screen_helpers` **33**, `test_distorcao` 10, `test_formatacao` 4, `test_gerenciador_thread_bd` 10, `test_periodo` 16, `test_periodo_manager` 16, `test_queries` 3, `test_query_operations` 12, `test_thread_executor` 10, `test_validacao` 10. Queries centralizadas cobertas por contrato nominal; pool de BD adicionado aos testes. `test_dashboard_func` cobre `_executar_consulta`, o caminho de falha da previsão (`Erro` no card, B2) e a rolagem a partir do saldo corrente (B1). `test_distorcao` reflete a **injeção por parâmetro** do `DistorcaoManager` (o singleton foi removido).
+- **Fase 6 (PyInstaller)** — 🔄 **receitas existem, não validadas**: `Inv Tools 3.0.0.spec` e `Inventario_3.5.0.spec` na raiz (o `.gitignore` ignora `*.spec`/`build/`/`dist/`/`*.exe`, então não estão versionadas). O `Outros/Auto_py_to_exe config.json` continua **obsoleto**: caminhos absolutos de outra máquina (`C:/Users/Sup-12/...`), não inclui `Dashboard/`, `Queries/`, `Thread_Manager/`, `Data_Manager/`, `Distorcao_Manager/`, `Inv_Screen/`, `Interface_Tools/`, nem `config.ini`/`Recursos/Firebird/fbclient.dll`, e usa `collect_all` em módulos da stdlib (`base64`, `io`, `datetime`, `ctypes`).
 - **N1–N9 (Novos Problemas)** — ✅ 9/9 corrigidos (inclui N4 com health-check).
 - **Refatoração de Datas (PeriodoManager)** — ✅ **concluída**: modelo (`PeriodoInventario/PeriodoManager`) pronto e com testes (`tests/test_periodo_manager.py`), Top Frame integrado ao manager, telas de consulta/Comandos/Dashboard migradas para snapshot de período; legado `data_banco_*` removido de `Inventario.py`. Gráfico de tendência do Dashboard com janela fixa de 5 anos-calendário.
 
@@ -39,9 +40,9 @@ Conforme `docs/Mapeamento_Refatoracao_Datas.md` (Item 5), execução em andament
 - [x] **Migrar 6 grupos pendentes**: Classificação, Preço Custo Compra Zerado, Preço Custo Maior PV, Preço Custo Zerado, Produtos Não Zerados, Valor Inventário *(analisados — sem uso de dt_ini/dt_fim; verificação estrutural realizada; migração controlada por padrão já aplicado)*.
 - [x] **Revisar parciais**: Valor Entradas/Vendas/`Consultas_Screen` — confirmado consumo via `periodo` (snapshot) e passagem correta para telas migradas.
 - [x] **Padronizar prefetch** — Avaliado: Lists pendentes existem para alguns grupos; padrão prefetch já aplicado nos migrados. Aplicação pontual não necessária neste momento (sem resíduos detectados).
-- [x] **Testes**: Verificado `tests/test_periodo.py` cobre o período de tendência (4 casos novos na sessão de 26/10/2026); a suíte completa está em **209 passed** (ver Fase 5). `compileall` sem erros.
+- [x] **Testes**: Verificado `tests/test_periodo.py` cobre o período de tendência (4 casos novos na sessão de 26/10/2026); a suíte completa está em **212 passed** (ver Fase 5). `compileall` sem erros.
 - [x] **Sincronizar docs**: `docs/Status_Refatoracao.md` atualizado com checklist executado.
-- **Features** — ✅ Dashboard Visual implementado; ⬜ Validação Pré-Inventário pendente.
+- **Features** — ✅ Dashboard Visual implementado; ❌ Validação Pré-Inventário **descartada** (decisão do usuário, 28/10/2026).
 
 ---
 
@@ -125,7 +126,7 @@ Baseado em `docs/roadmap/roadmap_refatoracao_datas.html` (15/10/2026).
 ## Próximos passos (recomendados)
 
 **✅ Refatoração de datas CONCLUÍDA (19/10/2026):** E5, E6a, E6b, E7, E1a e E8 concluídos.
-Suíte completa: **209 passed** em 15 arquivos (detalhamento na Fase 5), `compileall` sem erros.
+Suíte completa: **212 passed** em 15 arquivos (detalhamento na Fase 5), `compileall` sem erros.
 
 | Etapa | Ação | Status |
 |---|---|---|
@@ -137,7 +138,7 @@ Suíte completa: **209 passed** em 15 arquivos (detalhamento na Fase 5), `compil
 
 **Restam apenas testes manuais** (troca de período + reabertura das telas), que exigem execução da aplicação com banco de dados real — fora do escopo automatizado.
 
-**Otimização de desempenho do Dashboard (20/10/2026):** identificado que a abertura do Dashboard somava ~31 s (KPIs) + ~8,5 s (tendência). Causa: as views `V_LAN_COM` (LEFT JOIN) e `V_DIFF_ENTRADA_SAIDA_MES` forçavam varredura completa de `in01lan` (1,03 M linhas). Corrigido com joins diretos `in01lan`→`in01com` em `Queries/Consulta_Queries.py` (`QUERY_ENTRADAS`, usada também na tela Valor de Entradas) e em `Dashboard/Dashboard_Func.py` (tendência de entradas, mês/ano), mantendo os parâmetros posicionais. A `QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL` passou a empurrar o filtro de ano para dentro do CTE de entradas (`l.dtpro BETWEEN ? AND ?`), com `_previa_inventario` enviando o intervalo dos 2 anos. Valores conferidos no banco: idênticos aos originais. **Views órfãs removidas:** `V_LAN_COM` e `V_DIFF_ENTRADA_SAIDA_MES` saíram de `Queries/View_Queries.py` e de `Queries/Create_Views.py` (0 referências no código; `V_FAT_VALOR_SAIDA` permanece em uso). As views **físicas** seguem no banco até um `DROP` explícito. Suíte: **85 passed**, `compileall` limpo.
+**Otimização de desempenho do Dashboard (20/10/2026):** identificado que a abertura do Dashboard somava ~31 s (KPIs) + ~8,5 s (tendência). Causa: as views `V_LAN_COM` (LEFT JOIN) e `V_DIFF_ENTRADA_SAIDA_MES` forçavam varredura completa de `in01lan` (1,03 M linhas). Corrigido com joins diretos `in01lan`→`in01com` em `Queries/Consulta_Queries.py` (`QUERY_ENTRADAS`, usada também na tela Valor de Entradas) e em `Dashboard/Dashboard_Func.py` (tendência de entradas, mês/ano), mantendo os parâmetros posicionais. A `QUERY_DIFERENCA_ANO_ANTERIOR_ATUAL` passou a empurrar o filtro de ano para dentro do CTE de entradas (`l.dtpro BETWEEN ? AND ?`), com `_previa_inventario` enviando o intervalo dos 2 anos. Valores conferidos no banco: idênticos aos originais. **Views órfãs removidas:** `V_LAN_COM` e `V_DIFF_ENTRADA_SAIDA_MES` saíram de `Queries/View_Queries.py` e de `Queries/Create_Views.py` (0 referências no código; `V_FAT_VALOR_SAIDA` permanece em uso). As views **físicas** foram **dropadas nas bases cliente** (concluído em 28/10/2026). Suíte: **85 passed** na época, `compileall` limpo.
 
 **Visual do gráfico de tendência (21/10/2026):** o commit `d81b381` já entregou parte do item — figura responsiva ao widget hospedeiro (`_dimensoes_figura` em `Dashboard/Dashboard_Charts.py`), paleta/ordenação das séries, vendas representadas como valor negativo e `tight_layout`. O commit `9100308` do usuário fechou o restante (eixo Y compacto pt-BR, valores nas barras, rareamento do X, cores por tema, `set_layout_engine('tight')` e correção de contraste WCAG). **Nada de código pendente nessa frente.**
 
@@ -173,6 +174,32 @@ passou a incluir `'03'`, então os dois universos são agora **idênticos** (`'0
 
 **B2 aplicado e B1 registrado (26/10/2026, commitado em `228787b`):** verificação do KPI "Previsão de Inventário" do `56093b1` achou **(1)** uma **falha silenciosa** — se `QUERY_MOVIMENTO_ESTOQUE_CUSTO` falhasse, o card repetia o valor do inventário; corrigida com `_executar_consulta(..., padrao_em_erro=None)` + `'Erro'` no card (2 arquivos, +6 testes, **209 passed**); e **(2)** que a premissa "inventário normalizado para o ano base" **não vale** nesta base (`in01pro.saldo` é o **saldo corrente**), então o modelo atual conta o movimento **duas vezes** e erra **−21,1%** (2024), **−8,7%** (2025) e **−7,7%** (2026 jan–set). O modelo alternativo (rolar o saldo a partir de `hoje`; 1 consulta) tem resíduo **≈ +0,03%** e ficou registrado como **Item 10.2 (B1)** para sessão dedicada, com os testes de `TestPreviaInventario` a reescrever. Limitação conhecida: se `QUERY_INVENTARIO` falhar, a previsão vira só o movimento (card de inventário mostra `0,00`).
 
-**Segurança (Item 6.10):** o `config.ini` foi **desrastreado e commitado** pelo usuário (`git rm --cached config.ini` + commit `a503daa`; arquivo mantido localmente, agora respeitando o `.gitignore`), com o `.gitignore` limpo de duplicatas. **Rotação da senha do banco segue pendente** — as credenciais continuam no histórico do repositório.
+**Segurança (Item 6.10):** o `config.ini` foi **desrastreado e commitado** pelo usuário (`git rm --cached config.ini` + commit `a503daa`; arquivo mantido localmente, agora respeitando o `.gitignore`), com o `.gitignore` limpo de duplicatas. **Rotação da senha do banco concluída** (28/10/2026) — as credenciais antigas que permanecem no histórico do repositório estão **invalidadas**.
 
-**Aviso:** as sessões anteriores foram commitadas **pelo usuário** na branch `refatoracao_v3.5` (**HEAD atual `228787b`**; working tree **limpo** na varredura de abertura de 26/10/2026). O agente da sessão **não commita** (regra de ouro) — **não há código pendente no working tree**; só a sincronia de status em `AGENTS.md`, `AGENTS_SESSAO.md` e neste documento. O único item de código em aberto na fila é o **Item 10.2 (B1)** de `AGENTS_SESSAO.md`, que exige sessão dedicada.
+**Aviso:** o agente da sessão **não commita** (regra de ouro). Working tree desta sessão
+(28/10/2026): `Dashboard/Dashboard_Func.py` e `tests/test_distorcao.py` — **2 arquivos, 2
+alterações de teste/código** — aguardando revisão e commit do usuário. Suíte **212 passed**;
+`compileall` OK. **Não há item de código aberto na fila** além da validação do `.spec` do
+PyInstaller (Fase 6) e dos testes manuais de período/telas.
+
+---
+
+## Sessão de 28/10/2026 — encerramento de escopo + restauração da baseline
+
+**Decisões do usuário (encerram itens do plano):**
+
+| Item | Decisão |
+|---|---|
+| Fase 4.1 / 4.2 (type hints + `py.typed`) | ❌ **Descartadas** — o projeto não adotará type hints |
+| Feature 2 (Validação Pré-Inventário) | ❌ **Descartada** — não será implementada |
+| Fase 1.1 remanescente (`com_ger`, SQL livre) | ✅ **Política atual é a definitiva** (aviso + confirmação, sem whitelist) |
+| Fase 3.3 (logging em `except`) | ✅ **Concluída** — varredura do app: **0** `except: pass` |
+| `DROP VIEW` (`V_LAN_COM`, `V_DIFF_ENTRADA_SAIDA_MES`) | ✅ **Concluído** |
+| Rotação da senha do banco (Item 6.10) | ✅ **Concluído** |
+
+**Regressões corrigidas nos testes (responsabilidade do agente NEXO):**
+
+1. `tests/test_dashboard_func.py::TestPreviaInventario` — **3 falhas** (`test_envia_periodo_de_rolagem_quando_fim_no_passado`, `..._futuro`, `test_fim_igual_a_hoje_sem_movimento_futuro`). **Causa:** a implementação de `_previa_inventario` usava `hoje = date.today()` direto, enquanto os testes mockam `Dashboard_Func._hoje` (helper que existia mas **não era usado**). Com a data real (28/10/2026) o deslocamento de 1 dia mudava o período consultado. **Correção:** `hoje = _hoje()` em `Dashboard/Dashboard_Func.py` (1 linha). **Efeito:** os 12 casos de `TestPreviaInventario` passam, sem mudança de comportamento em produção (`_hoje()` devolve `date.today()`).
+2. `tests/test_distorcao.py::TestDistorcaoManager` — **1 falha** (`test_singleton_reutiliza_instancia`). **Causa:** o `DistorcaoManager` deixou de ser singleton em `c7ad6a1` (passou a ser injetado por parâmetro em telas/comandos). Os testes ainda afirmavam a semântica antiga. **Correção:** o fixture `_resetar_singleton` (que mexia em `DistorcaoManager._instancia`) foi removido e os dois casos foram reescritos para a arquitetura atual — `test_instancias_sao_independentes` e `test_nova_instancia_nao_altera_a_anterior`.
+
+**Baseline final:** **212 passed** em 15 arquivos; `compileall` limpo.

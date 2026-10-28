@@ -83,13 +83,13 @@ tests/             Testes unitários (pytest)
   positivo** — o desenho usa os valores como chegam (sem negação). A fonte dos
   rótulos de valor é adaptada à densidade (`_fonte_rotulos_valor`): com as três
   séries no mesmo hemisfério, rótulos de meses vizinhos podem se encostar.
-- **Capa de dados do Dashboard (desde 26/10/2026):** `tests/test_dashboard_func.py` (33 casos)
+- **Capa de dados do Dashboard (desde 26/10/2026):** `tests/test_dashboard_func.py` (**36 casos**)
   cobre `_extrair_series`, `_previa_inventario`, `_calcular_kpis`, `carregar_kpis`,
   `carregar_dados_tendencia` e `_executar_consulta` (incluindo o `padrao_em_erro` do B2) com
   `monkeypatch` em `_executar_select`/`_executar_consulta`/`_previa_inventario`/`_calcular_kpis`/
   `query_executor` — **nenhum acesso ao Firebird**. Os helpers de UI
   `_periodo_anterior`/`_formatar_variacao` ficam em `tests/test_dashboard_screen_helpers.py`
-  (17 casos); importar `Dashboard.Dashboard_Screen` **não** abre janela (só define funções).
+  (**33 casos**); importar `Dashboard.Dashboard_Screen` **não** abre janela (só define funções).
   Ao mexer nessas funções, rode
   `pytest tests/test_dashboard_func.py tests/test_dashboard_screen_helpers.py`.
 - **KPI "Previsão de Inventário" (B1 concluído em 27/10/2026):** é uma **estimativa do inventário
@@ -115,8 +115,9 @@ tests/             Testes unitários (pytest)
   `logs/AAAAMM/DDMMAAAA_log.txt`. Não deixe `except ...: pass` silencioso em código novo: registre
   `logger.debug('<o que falhou>', exc_info=True)` para limpezas de melhor esforço (UI/`destroy`) e
   `logger.exception(...)` para erros que o usuário precisa ver. No Dashboard (26/10/2026) foram
-  convertidos 24 pontos em `Dashboard_Screen.py` e 10 em `Dashboard_Charts.py`; ainda restam 17
-  `except: pass` em outros módulos (ver `docs/Plano_Refatoracao_Inventario_Tools_v2.md` §3.3).
+  convertidos 24 pontos em `Dashboard_Screen.py` e 10 em `Dashboard_Charts.py`. **Fase 3.3
+  concluída em 28/10/2026:** varredura do app confirma **0 `except: pass`** — os pontos restantes
+  foram convertidos ou tratados com `logger.debug`.
 - **Dependências do gráfico (desde o commit `3d7d9ef`, 23/10/2026):** `Dashboard_Charts.py`
   importa `numpy` e `scipy` diretamente (`_curva_suave` usa `make_interp_spline` para
   suavizar o modo Linhas). Ambos estão declarados no `requirements.txt` desde 26/10/2026 —
@@ -146,8 +147,23 @@ tests/             Testes unitários (pytest)
   **Atualização (22/10/2026):** o `config.ini` foi **desrastreado e commitado** pelo usuário
   (`git rm --cached config.ini` + commit `a503daa` — arquivo mantido localmente, agora
   respeitando o `.gitignore`).
-  **Continua pendente a rotação da senha do banco**, pois as credenciais antigas seguem no
-  histórico do repositório. Ver `AGENTS_SESSAO.md` Item 6.10.
+  **Rotação da senha do banco CONCLUÍDA em 28/10/2026** — as credenciais antigas que restam no
+  histórico do git estão invalidadas. Ver `AGENTS_SESSAO.md` Item 6.10.
+- **Escopo encerrado por decisão do usuário (28/10/2026):**
+  - **Type hints / `py.typed` (Fase 4)** — **descartados**. O projeto **não** adota type hints;
+    não criar `py.typed` nem anotar funções novas por obrigação. Hints já existentes ficam como estão.
+  - **Feature 2 (Validação Pré-Inventário)** — **descartada**; o diretório `Validacao/` **não**
+    deve ser criado. `tests/test_validacao.py` é outra coisa (validações de entrada) e permanece.
+  - **SQL livre (`com_ger`)** — a política atual (aviso de risco + confirmação, sem whitelist)
+    é **definitiva**. Não propor sanitização/lista de permissão.
+  - **`DROP VIEW`** de `V_LAN_COM`/`V_DIFF_ENTRADA_SAIDA_MES` — **concluído**.
+- **`_hoje()` em `Dashboard/Dashboard_Func.py`:** a função `_previa_inventario` **deve** usar
+  `hoje = _hoje()` (e não `date.today()` direto) — é o ponto de mock dos testes. Usar
+  `date.today()` quebra `tests/test_dashboard_func.py::TestPreviaInventario` quando a data real
+  não coincide com a data fixada nos testes.
+- **`DistorcaoManager` não é mais singleton (desde `c7ad6a1`):** é criado em `Inventario.py` e
+  **injetado por parâmetro** nas telas/comandos. `tests/test_distorcao.py` verifica instâncias
+  independentes — não reintroduzir `_instancia`/singleton sem decisão explícita.
 - **`docs/Plano_Refatoracao_Inventario_Tools_v2.md` é versionado** (não está no `.gitignore`, ao
   contrário do que este arquivo afirmava até 26/10/2026) — alterações nele aparecem no
   `git status` como modificação normal.

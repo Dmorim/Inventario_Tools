@@ -47,22 +47,16 @@ class TestDistorcaoInventario:
 
 
 class TestDistorcaoManager:
-    @pytest.fixture(autouse=True)
-    def _resetar_singleton(self):
-        DistorcaoManager._instancia = None
-        yield
-        DistorcaoManager._instancia = None
-
-    def test_singleton_reutiliza_instancia(self):
+    def test_instancias_sao_independentes(self):
         gerenciador_1 = DistorcaoManager(_distorcao_exemplo())
         gerenciador_2 = DistorcaoManager(DistorcaoInventario([], [], [], []))
-        assert gerenciador_1 is gerenciador_2
+        assert gerenciador_1 is not gerenciador_2
 
-    def test_primeira_instancia_guarda_dados(self):
+    def test_instancia_guarda_dados_injetados(self):
         gerenciador = DistorcaoManager(_distorcao_exemplo())
         assert gerenciador.obter_distorcao().tamanho == 2
 
-    def test_reconstrucao_nao_reseta_dados(self):
+    def test_nova_instancia_nao_altera_a_anterior(self):
         gerenciador = DistorcaoManager(_distorcao_exemplo())
         DistorcaoManager(DistorcaoInventario([], [], [], []))
         assert gerenciador.obter_distorcao().tamanho == 2

@@ -117,7 +117,7 @@ def _previa_inventario(valor_inventario, ini, fim):
     de exibir o inventário como se fosse uma estimativa válida.
     """
 
-    hoje = date.today()
+    hoje = _hoje()
     try:
         fim_data = date.fromisoformat(str(fim))
     except Exception:

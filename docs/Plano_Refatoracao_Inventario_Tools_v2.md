@@ -3,12 +3,14 @@
 **Versão do sistema:** 2.0.0 (em evolução)
 **Autor:** Daniel Amorim (com colaboração de Cícero Romão nas consultas SQL)
 **Licença:** CC0 1.0 Universal (domínio público)
-**Documento atualizado em:** 26/10/2026
-**Versão do documento:** 5.4 (atualizado — reflete o estado atual do código na branch
-`refatoracao_v3.5`, HEAD `228787b`: Dashboard completo com KPI comparativo, curvas suavizadas,
-toolbar e tooltip; KPI "Previsão de Inventário" redefinido como estimativa do fim do período
-(falha da consulta visível como `Erro` no card — B2, commitado em `228787b`); pool endurecido;
-**209 testes** passando em 15 arquivos)
+**Documento atualizado em:** 28/10/2026
+**Versão do documento:** 5.5 (atualizado — reflete o estado atual do código na branch
+`refatoracao_v3.5`, HEAD `caf23b7`: Dashboard completo com KPI comparativo, curvas suavizadas,
+toolbar, tooltip e cópia do valor do KPI por clique; KPI "Previsão de Inventário" rolado a partir
+do saldo corrente (B1, `c7ad6a1`); pool endurecido; **212 testes** passando em 15 arquivos.
+**Escopo encerrado por decisão do usuário (28/10/2026):** Fase 4 (type hints/`py.typed`) e
+Feature 2 (Validação Pré-Inventário) **descartadas**; política atual de `com_ger` (SQL livre)
+**definitiva**; Fase 3.3 concluída; `DROP VIEW` das órfãs e rotação da senha do banco **concluídos**)
 
 > Este documento atualiza o plano original (`Plano_Refatoracao_Inventario_Tools.pdf`) e as revisões
 > 1.x/2.0/3.0. Ele incorpora as **modificações já feitas no projeto** (branch `QoL` integrada ao
@@ -162,9 +164,12 @@ Todas as mudanças abaixo já estão no código (a maioria na branch `refatoraca
 | `help_base64_image` sem vírgula inválida (`Banco_Images.py`) | N7/§5.6 | ✅ Feito |
 | `Listagem_Treeview` — `grab_set()` + `WM_DELETE_WINDOW` (via `toplevel.protocol`) | N7/§5.6 | ✅ Feito |
 | `executa_comandos` — feedback de status via `atualizar_ui_main` (sem `after()` na thread) | N3/§5.3 | ✅ Feito |
-| Suíte ampliada para **209 testes** em 15 arquivos (`pytest` → 209 passed; 203 em `56093b1` + 6 do B2, commitado em `228787b`) | Fase 5 | ✅ Feito |
-| **Feature 1 — Dashboard** (`Dashboard/`): KPIs + KPI comparativo, gráfico de tendência (Barras/Linhas × Mês/Ano), toolbar, tooltip e persistência de filtros | Feature 1 | ✅ Feito |
+| Suíte ampliada para **212 testes** em 15 arquivos (`pytest` → 212 passed; baseline anterior em `caf23b7` era 208 passed + 4 falhas de teste, corrigidas em 28/10/2026) | Fase 5 | ✅ Feito |
+| **Feature 1 — Dashboard** (`Dashboard/`): KPIs + KPI comparativo, gráfico de tendência (Barras/Linhas × Mês/Ano), toolbar, tooltip, cópia do KPI por clique e persistência de filtros | Feature 1 | ✅ Feito |
 | **Logging** nos `except` de UI do Dashboard (24 em `Dashboard_Screen.py`, 10 em `Dashboard_Charts.py`) e remoção do cálculo morto do tooltip | Fase 3.3 / §5.8 | ✅ Feito (26/10/2026) |
+| **Fase 3.3 remanescente** — `except: pass` silenciosos fora do Dashboard | Fase 3.3 | ✅ Feito (28/10/2026 — varredura: **0** `except: pass` no app) |
+| **`DROP VIEW`** de `V_LAN_COM` e `V_DIFF_ENTRADA_SAIDA_MES` nas bases cliente | §5.8 | ✅ Concluído (28/10/2026 — operação no banco, fora do código) |
+| **Rotação da senha do banco** (credenciais antigas no histórico do git) | Item 6.10 | ✅ Concluído (28/10/2026 — operação de infraestrutura) |
 
 > **Nota sobre branches:** As modificações de UI foram consolidadas no `main` via PR #14
 > (merge `48e7fe3`). A refatoração estrutural é conduzida na branch `refatoracao_v3.5`, hoje
@@ -186,12 +191,13 @@ Status atual: implementado. As credenciais são lidas de `[Credenciais]` via `Ap
 (`user_db`/`pass_db` com padrão SYSDBA/masterkey), validadas por `validar_credenciais()`;
 `config.ini` segue no `.gitignore`. **Nunca commitar credenciais reais.**
 
-#### 1.1 (remanescente) — SQL livre `com_ger`
+#### 1.1 (remanescente) — SQL livre `com_ger` — ✅ DEFINITIVO (mantido)
 
 `Comandos_Func.py:37` executa `QUERY_COMANDO_GERAL.format(comando=self.com_ger)` com SQL digitado
-pelo usuário, sem sanitização (apenas aviso + confirmação). Decisão documentada: manter com
-**validação por lista de permissão** ou exigir confirmação explícita com aviso de risco.
-A confirmação já existe; avaliar bloqueio de comandos destrutivos (ex.: `DROP`, `DELETE` sem WHERE).
+pelo usuário, sem sanitização (apenas aviso + confirmação). **Decisão do usuário em 28/10/2026: a
+política atual é a definitiva** — o SQL livre fica sob total responsabilidade do operador, com
+aviso de risco + confirmação explícita. **Não** haverá whitelist, lista de permissão nem bloqueio
+programático de comandos destrutivos.
 
 #### 1.4 Corrigir inconsistência de `com_ger` ser executado em thread (ver N3)
 
@@ -212,40 +218,33 @@ dentro de funções (`Banco_de_Dados_Screen.py`, `Comandos_Screen.py`, `Config_S
 `Consultas_Dist_Saldo_Screen.py`) já têm os imports no topo; não foi necessário injetar
 dependências para quebrar circulares.
 
-#### 3.3 (remanescente) — robustez de erros
+#### 3.3 (remanescente) — robustez de erros — ✅ CONCLUÍDO
 
 - ✅ `Inventario_Conn.py` — porta agora `int | None`, validada por `isdigit()` antes de usar.
-- 🔄 `logging` no tratamento de erros: o **Dashboard** foi concluído em 26/10/2026
+- ✅ `logging` no tratamento de erros: o **Dashboard** foi concluído em 26/10/2026
   (`Dashboard_Screen.py`: 24 pontos; `Dashboard_Charts.py`: 10 pontos) — todos os `except` de UI
   registram `logger.debug(..., exc_info=True)`, visível apenas com `INVENTARIO_LOG_LEVEL=DEBUG`.
-  **Ainda restam 17 `except ...: pass` silenciosos** em `Comandos_Func.py` (3),
-  `Banco_de_Dados_Func.py` (1), `Consultas_Val_Screen.py` (1),
-  `Consultas_Val_Inv_Screen.py` (2), `Tk_Progress_Bar.py` (3), `Tk_Status_Animator.py` (2),
-  `Gerenciador_Thread_BD.py` (3) e `Thread_Executor.py` (2); parte deles é limpeza intencional
-  (`destroy`/`close` de melhor esforço) e deve ser avaliada caso a caso.
+- ✅ **Remanescentes concluídos em 28/10/2026:** a varredura do app (excluindo `tests/`) encontrou
+  **0 `except: pass`** — os pontos antes listados (`Comandos_Func.py`, `Banco_de_Dados_Func.py`,
+  `Consultas_Val_Screen.py`, `Consultas_Val_Inv_Screen.py`, `Tk_Progress_Bar.py`,
+  `Tk_Status_Animator.py`, `Gerenciador_Thread_BD.py`, `Thread_Executor.py`) já estão convertidos
+  ou tratados com `logger.debug`. Nada pendente nesta fase.
 
 ---
 
-### Fase 4 — Type Hints e Assinaturas — ⬜ PENDENTE
+### Fase 4 — Type Hints e Assinaturas — ❌ DESCARTADA (decisão do usuário, 28/10/2026)
 
-#### 4.1 Adicionar type hints
-
-Estado medido em 26/10/2026 (AST, sem contar `tests/`): **22 funções com anotação de retorno**
-em 11 arquivos (`Config_Manager.py` 4; `DistorcaoManager.py` 3; `Comandos_Func.py` 3;
-`Get_Logger.py` 3; `PeriodoInventario.py` 2; `DistorcaoInventario.py` 2; `PeriodoManager.py`,
-`Tk_Progress_Bar.py`, `Container_Manager.py`, `Listagem_Treeview.py` e `Consultas_Val_Ven_Func.py`
-1 cada) e **51 parâmetros anotados em 255 funções**. A maioria dos módulos (telas, listagens, funcs
-de consulta) segue sem anotação de retorno e de parâmetros.
-
-#### 4.2 Criar `py.typed`
-
-O marker `py.typed` não existe. Criar na raiz para indicar suporte a type checking.
+O projeto **não adotará type hints**. Os itens 4.1 (anotações de retorno/parâmetros) e 4.2
+(`py.typed`) estão **fora de escopo** e **não serão executados**. O `py.typed` **não existe** na
+raiz e **não deve ser criado**. Os hints já presentes em módulos isolados (`Config_Manager`,
+`DistorcaoManager`, `Get_Logger`, `PeriodoInventario`, `PeriodoManager`, etc.) permanecem como
+estão — não há trabalho de remoção nem de expansão.
 
 ---
 
 ### Fase 5 — Testes Unitários (restante)
 
-#### 5.2 Testar funções puras — ✅ COMPLETO (209 testes na suíte, 15 arquivos)
+#### 5.2 Testar funções puras — ✅ COMPLETO (212 testes na suíte, 15 arquivos)
 
 Principais grupos (a suíte completa está detalhada em `docs/Status_Refatoracao.md`, Fase 5):
 
@@ -258,8 +257,8 @@ Principais grupos (a suíte completa está detalhada em `docs/Status_Refatoracao
 | `_montar_operacoes()` / `comandos_true()` | Comandos_Func.py | ✅ coberto (`test_comandos_func.py`, 12) |
 | `query_updater` / `_safe_schedule_ui` / validações UI | Thread_Manager / Configuracoes | ✅ coberto (`test_query_operations.py` 12, `test_validacao.py` 10) |
 | `PeriodoManager` | Data_Manager/PeriodoManager.py | ✅ coberto (`test_periodo_manager.py`, 16) |
-| `_extrair_series()` / `_previa_inventario()` / `_calcular_kpis()` / `carregar_kpis()` / `carregar_dados_tendencia()` | Dashboard/Dashboard_Func.py | ✅ coberto (`test_dashboard_func.py`, 33 — banco mockado) |
-| `_periodo_anterior()` / `_formatar_variacao()` | Dashboard/Dashboard_Screen.py | ✅ coberto (`test_dashboard_screen_helpers.py`, 17) |
+| `_extrair_series()` / `_previa_inventario()` / `_calcular_kpis()` / `carregar_kpis()` / `carregar_dados_tendencia()` | Dashboard/Dashboard_Func.py | ✅ coberto (`test_dashboard_func.py`, 36 — banco mockado) |
+| `_periodo_anterior()` / `_formatar_variacao()` | Dashboard/Dashboard_Screen.py | ✅ coberto (`test_dashboard_screen_helpers.py`, 33) |
 | `_desenhar_series()` (render Agg, sem display) | Dashboard/Dashboard_Charts.py | ✅ coberto (`test_dashboard_charts.py`, 31) |
 
 #### 5.3 Testar queries isoladamente — ✅ COMPLETO
@@ -272,22 +271,23 @@ públicos exatos + conteúdo não vazio) e garante que `EXPR_VALOR_ENTRADA` é a
 
 ---
 
-### Fase 6 — Compatibilidade com PyInstaller — ⬜ PENDENTE (config obsoleto)
+### Fase 6 — Compatibilidade com PyInstaller — 🔄 EM ANDAMENTO (receita existe, não validada)
 
-Não existe `*.spec`, `build/` nem `dist/` no repositório (o `.gitignore` ignora `*.spec`,
-`build/`, `dist/` e `*.exe`), então **o empacotamento nunca foi validado**. Existe
-`Outros/Auto_py_to_exe config.json`, mas ele está **desatualizado**:
+O repositório **agora tem receitas**: `Inv Tools 3.0.0.spec` e `Inventario_3.5.0.spec` na raiz.
+**Nenhuma delas foi validada** (não existe `build/` nem `dist/`; o `.gitignore` ignora `*.spec`,
+`build/`, `dist/` e `*.exe`, então as receitas não estão versionadas). O antigo
+`Outros/Auto_py_to_exe config.json` continua **obsoleto**:
 
 - caminhos absolutos da máquina antiga (`C:/Users/Sup-12/...`);
 - não inclui os pacotes novos (`Dashboard/`, `Queries/`, `Thread_Manager/`, `Data_Manager/`,
   `Distorcao_Manager/`, `Inv_Screen/`, `Interface_Tools/`) nem `Recursos/Firebird/fbclient.dll`;
 - não embute `config.ini` (falta `--add-data`) e não coleta `matplotlib`/`numpy`/`scipy`;
 - usa `collect_all` em módulos da stdlib (`base64`, `io`, `datetime`, `ctypes`), o que não faz
-  sentido e pode falhar no build;
-- nome do executável `Inv Tools 2.0.1` (o sistema está em 2.0.0).
+  sentido e pode falhar no build.
 
-Para retomar: gerar um `*.spec` versionado (ou parar de ignorar `*.spec`), com `--add-data` de
-`config.ini`, `Recursos/Firebird/fbclient.dll` e o backend `Agg` do matplotlib.
+Para concluir: partir do `.spec` mais recente (`Inventario_3.5.0.spec`), garantir `--add-data` de
+`config.ini`, `Recursos/Firebird/fbclient.dll` e do backend do matplotlib, gerar o executável em
+máquina limpa e só então versionar a receita (removendo `*.spec` do `.gitignore`).
 
 ---
 
@@ -378,16 +378,16 @@ eliminando a duplicação e o ciclo de `after` não cancelado.
 - ✅ `Gerenciador_Thread_BD.trocar_bd()` — **removido** (não existe mais no código; ver §5.4).
 - ✅ `Dashboard/Dashboard_Charts.py` — cálculo morto do tooltip (`px`, `py`, `dist` via
   `np.hypot`) removido em 26/10/2026, sem mudança de comportamento.
-- 🔄 Views físicas `V_LAN_COM` e `V_DIFF_ENTRADA_SAIDA_MES` — já removidas de
-  `Queries/View_Queries.py` e `Queries/Create_Views.py` (0 referências no código), mas **seguem
-  existindo no banco** de cada cliente até um `DROP VIEW` explícito. Pendente (fora do código).
+- ✅ Views físicas `V_LAN_COM` e `V_DIFF_ENTRADA_SAIDA_MES` — removidas de
+  `Queries/View_Queries.py` e `Queries/Create_Views.py` (0 referências no código) e **dropadas
+  nas bases cliente** (concluído em 28/10/2026).
 
 ---
 
 ## 6. Novas Features
 
-> **Feature 1 concluída**; a **Feature 2** segue pendente e depende apenas do que já está pronto
-> (queries centralizadas, funções unificadas, `Config_Manager`).
+> **Feature 1 concluída.** A **Feature 2 foi descartada por decisão do usuário em 28/10/2026** e
+> não será implementada.
 
 ### Feature 1 — Dashboard Visual — ✅ IMPLEMENTADO
 
@@ -395,29 +395,29 @@ Módulo `Dashboard/` (`Dashboard_Screen.py`, `Dashboard_Func.py`, `Dashboard_Cha
 em produção: cards de KPI (**Valor do Inventário**, **Total de Vendas**, **Total de Entradas**,
 **Vendas 1.3** e **Previsão de Inventário**), gráfico
 de tendência dos últimos 5 anos (Barras/Linhas × Mês/Ano, curvas suavizadas com
-`scipy.make_interp_spline`, valores nas barras, toolbar e tooltip), filtros persistidos em
-`~/.inventario_tools_dashboard.json` e carregamento em thread (KPIs e tendência separados).
+`scipy.make_interp_spline`, valores nas barras, toolbar e tooltip), cópia do valor do card por
+clique, filtros persistidos em `~/.inventario_tools_dashboard.json` e carregamento em thread
+(KPIs e tendência separados).
 Os quatro primeiros cards mostram variação percentual vs período anterior; a **Previsão de
-Inventário** (redefinida em 26/10/2026) é uma **estimativa do fim do período** — inventário base +
-movimento líquido do período a custo atual (`tpmov`/`precu`) — e exibe o subtexto fixo
-"estimativa do período", sem comparativo. **Ressalvas medidas em 26/10/2026:** (a) falha da consulta
-da previsão agora exibe `Erro` no card (B2, aplicado); (b) a premissa de inventário "normalizado para
-o ano base" **não se confirmou** nesta base (o saldo é o corrente, então o movimento é contado duas
-vezes e o erro chega a −21,1% em 2024) — a correção (rolar o saldo a partir de `hoje`) é o
-**Item 10.2 (B1)**, para sessão dedicada.
+Inventário** é uma **estimativa do fim do período** rolada a partir do **saldo corrente**
+(`hoje`): `fim < hoje` → `inv_corrente − movimento(fim+1..hoje)`; `fim >= hoje` →
+`inv_corrente + movimento(hoje+1..fim)`, sempre a custo atual (`tpmov`/`precu`) e no mesmo
+universo de `QUERY_INVENTARIO`. Exibe o subtexto fixo "estimativa do período", sem comparativo.
+Falha da consulta aparece como `Erro` no card (B2). O **B1** (contagem dupla do modelo anterior,
+erro até −21,1% em 2024) foi **concluído em 27/10/2026** (`c7ad6a1`).
 
 **Não implementado da proposta original:** o indicador de *saúde do banco*
 (`saude = 100 - (total_problemas / total_produtos * 100)` com faixas verde/amarelo/vermelho)
 **não** existe no Dashboard atual — o gráfico mostra vendas/entradas/diferença, não problemas de
 cadastro. Se for retomado, deve virar item próprio.
 
-### Feature 2 — Validação Pré-Inventário
+### Feature 2 — Validação Pré-Inventário — ❌ DESCARTADA (decisão do usuário, 28/10/2026)
 
-Checklist que roda todas as verificações simultaneamente e apresenta o status de cada uma, com
-contagem e ação corretiva, no módulo `Validacao/` (`Validacao_Screen.py`, `Validacao_Func.py`,
-`Validacao_Itens.py`). Checklist interativo com drill-down, correção em lote, exportação TXT/CSV.
-**Status:** ⬜ o diretório `Validacao/` **não existe** no repositório (só
-`tests/test_validacao.py`, que cobre validações de entrada — não é esta feature).
+O checklist automático de validação pré-inventário (módulo `Validacao/` com
+`Validacao_Screen.py`, `Validacao_Func.py`, `Validacao_Itens.py`) **não será implementado**.
+O diretório `Validacao/` não existe no repositório e **não deve ser criado**.
+`tests/test_validacao.py` **não** pertence a esta feature — cobre as validações de entrada
+(`precu_porcent_entry_validate` e afins) e **permanece**.
 
 ---
 
@@ -427,15 +427,21 @@ contagem e ação corretiva, no módulo `Validacao/` (`Validacao_Screen.py`, `Va
 
 | Passo | Item | Objetivo | Tempo Est. |
 |---|---|---|---|
-| 1 | **Fase 1.1 remanescente** — política para `com_ger` (SQL livre) | Segurança | 1 h |
-| 2 | **Fase 3.3 remanescente** — `logging` nos 17 `except: pass` ainda silenciosos | Rastreabilidade | 30 min |
-| 3 | **`DROP VIEW`** de `V_LAN_COM` e `V_DIFF_ENTRADA_SAIDA_MES` nas bases cliente | Limpeza no banco | 30 min |
-| 4 | **Fase 4** — type hints + `py.typed` | Legibilidade | 2 h |
-| 5 | **Fase 6** — PyInstaller (regerar `*.spec` a partir do `Auto_py_to_exe config.json` obsoleto) | Validar executável | 1 h |
-| 6 | Feature: Validação Pré-Inventário | Checklist automático | 4 h |
-| 7 | **Item 10.1** — paralelizar as consultas *dentro* de `_calcular_kpis` — **medido em 26/10/2026**: série 0,17–0,24 s × paralelo 0,10–0,14 s (ganho de décimos) — ⏹️ **encerrado sem código por decisão do usuário** | Desempenho | 0 h |
-| 8 | **Item 10.2 (B1)** — previsão de inventário: rolar o saldo corrente a partir de `hoje` em vez de `saldo + movimento do período` (erro atual até −21,1%; alternativa ≈ +0,03%, 1 consulta; reescrever `TestPreviaInventario`) | Correção de KPI | 1–2 h |
-| 9 | **Item 6.10** — rotação da senha do banco (credenciais antigas no histórico do git) | Segurança | 30 min |
+| 1 | **Fase 6** — PyInstaller: validar `Inventario_3.5.0.spec` (add-data de `config.ini`, `fbclient.dll`, matplotlib), versionar a receita | Validar executável | 1 h |
+| 2 | **Testes manuais** — troca de período + reabertura das telas (exigem a app aberta com banco real) | Homologação | 30 min |
+
+**Fora do código / já resolvidos:**
+
+| Item | Situação em 28/10/2026 |
+|---|---|
+| **Fase 1.1 remanescente** — política para `com_ger` (SQL livre) | ✅ **Definitiva como está** — aviso + confirmação; sem whitelist (decisão do usuário) |
+| **Fase 3.3 remanescente** — `logging` nos `except: pass` | ✅ **Concluída** — 0 `except: pass` no app |
+| **`DROP VIEW`** de `V_LAN_COM` e `V_DIFF_ENTRADA_SAIDA_MES` | ✅ **Concluído** |
+| **Fase 4** — type hints + `py.typed` | ❌ **Descartada** (decisão do usuário) |
+| **Feature 2** — Validação Pré-Inventário | ❌ **Descartada** (decisão do usuário) |
+| **Item 10.1** — paralelizar consultas dentro de `_calcular_kpis` | ⏹️ **Encerrado sem código** (ganho de décimos; decisão do usuário) |
+| **Item 10.2 (B1)** — previsão rolada a partir do saldo corrente | ✅ **Concluído** em 27/10/2026 (`c7ad6a1`) |
+| **Item 6.10** — rotação da senha do banco | ✅ **Concluído** |
 
 Já concluídos desde a revisão anterior: **Fase 1.2** (credenciais em `[Credenciais]`), **N4**
 (pool), **Fase 3.1** (imports no topo), **Fase 5.2/5.3** (testes puros e de queries) e
@@ -445,19 +451,18 @@ Já concluídos desde a revisão anterior: **Fase 1.2** (credenciais em `[Creden
 
 | Categoria | Horas Estimadas |
 |---|---|
-| Refatoração (Fases 1.1, 3.3, 4, 6 + `DROP VIEW`) | 5,0 h |
-| Feature: Validação Pré-Inventário | 4–5 h |
-| Itens operacionais (senha do banco) | 0,5 h |
-| **TOTAL** | **9,5–10,5 h** |
+| Refatoração (Fase 6 — PyInstaller) | 1,0 h |
+| Homologação manual (período + telas) | 0,5 h |
+| **TOTAL** | **1,5 h** |
 
 ### 7.3 Ganho Esperado
 
-- Eliminação do risco residual do SQL livre não validado (`com_ger`)
 - Bugs estruturais já corrigidos: N1–N9 e o pool de conexões (N4)
-- Código tipado, testável e com queries centralizadas (base pronta; faltam type hints)
-- Suíte de testes ampliada: **209 testes** cobrindo funções puras, Dashboard, threads e contrato
+- Queries centralizadas e parametrizadas, com contrato coberto por teste
+- Suíte de testes ampliada: **212 testes** cobrindo funções puras, Dashboard, threads e contrato
   das queries
-- Dashboard entregue; falta apenas a Validação automática antes de fechar inventário
+- Dashboard entregue e com KPI de previsão reconciliado com o saldo corrente
+- SQL livre (`com_ger`) mantido **por decisão do usuário** — risco aceito e documentado
 
 ---
 

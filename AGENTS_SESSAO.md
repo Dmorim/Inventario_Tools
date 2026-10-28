@@ -1,17 +1,34 @@
 # AGENTS_SESSAO.md — Instruções para Próximas Sessões
 
 **Agente responsável:** **NEXO** (sessão de refatoração de datas / Inventario_Tools)
-**Última sessão:** 27/10/2026 — **sincronização de documentação (B1)**. HEAD `c7ad6a1`
-("Fix inventory preview and distortion state sharing"). O working tree estava **limpo**. 
-**B1 implementado:** `_previa_inventario` agora rola a partir do saldo corrente (`hoje`) via
+**Última sessão:** 28/10/2026 — **encerramento de escopo + restauração da baseline de testes**.
+HEAD `caf23b7` ("Add KPI clipboard copy and fix screen wiring"); working tree com **2 arquivos
+alterados** nesta sessão (`Dashboard/Dashboard_Func.py`, `tests/test_distorcao.py`).
+**Decisões do usuário (encerram itens do plano):** **Fase 4 (type hints/`py.typed`) DESCARTADA**
+(o projeto não adotará type hints), **Feature 2 (Validação Pré-Inventário) DESCARTADA**, **política
+atual de `com_ger` (SQL livre) DEFINITIVA** (aviso + confirmação, sem whitelist), **Fase 3.3
+CONCLUÍDA** (varredura: **0** `except: pass` no app), **`DROP VIEW` das órfãs CONCLUÍDO** e
+**rotação da senha do banco CONCLUÍDA**.
+**Testes (responsabilidade do NEXO) — 4 falhas corrigidas:** (1) **3 casos de
+`TestPreviaInventario`** — `_previa_inventario` usava `hoje = date.today()` direto enquanto os
+testes mockam `Dashboard_Func._hoje` (helper existia e não era usado); corrigido para
+`hoje = _hoje()`, sem mudança de comportamento em produção. (2) **`test_singleton_reutiliza_instancia`**
+(`tests/test_distorcao.py`) — o `DistorcaoManager` deixou de ser singleton em `c7ad6a1`; o fixture
+`_resetar_singleton` e a semântica antiga foram substituídos por
+`test_instancias_sao_independentes` e `test_nova_instancia_nao_altera_a_anterior`.
+**Baseline final: 212 passed** em 15 arquivos; `compileall` OK. **Nenhum commit foi feito**
+(regra de ouro).
+**Pendências restantes:** só a **Fase 6 (PyInstaller)** — validar `Inventario_3.5.0.spec`
+(`--add-data` de `config.ini`, `Recursos/Firebird/fbclient.dll`, backend do matplotlib) e
+versionar a receita — e os **testes manuais** (troca de período + reabertura das telas).
+**B1 implementado (27/10/2026):** `_previa_inventario` agora rola a partir do saldo corrente (`hoje`) via
 `QUERY_MOVIMENTO_ESTOQUE_CUSTO` (`fim < hoje` → `inv_corrente - movimento(fim+1..hoje)`, 
 `fim >= hoje` → `inv_corrente + movimento(hoje+1..fim)`), com tratamento explícito de falha 
 (retorna `None` → card "Erro") e testes atualizados em `tests/test_dashboard_func.py`. 
 **Mudança arquitetural:** `DistorcaoManager` passou a ser injetado por parâmetro em telas/comandos 
-(Comandos/Distorcao_Saldo, Consultas/Distorcao_de_Saldo) ao invés de singleton — teste 
-`tests/test_distorcao.py::test_singleton_reutiliza_instancia` alterado **intencionalmente**.
-Apurado: HEAD `c7ad6a1`, **211 passed, 1 failed** (singleton do DistorcaoManager — intencional),
-`compileall` OK. **Nenhuma linha de código foi alterada nesta sessão (apenas documentação).**
+(Comandos/Distorcao_Saldo, Consultas/Distorcao_de_Saldo) ao invés de singleton — o teste
+`tests/test_distorcao.py::test_singleton_reutiliza_instancia` foi **reescrito** em 28/10/2026 para a
+arquitetura de injeção (`test_instancias_sao_independentes`). Commitado em `c7ad6a1`.
 **Sessão anterior (mesma data):** 26/10/2026 — **varredura de abertura + restauração da baseline**
 (plano aprovado pelo usuário). O working tree estava **limpo** e o trabalho de 23/10/2026 já havia
 sido **commitado pelo usuário** em `3d7d9ef` ("Harden dashboard and thread workflows"). A varredura
@@ -105,7 +122,8 @@ gráfico (rótulo "278 mil") usavam **fórmulas SQL diferentes** — o gráfico 
 **Correção APLICADA, validada no banco e commitada pelo usuário** em `a503daa`
 ("Unify dashboard entry value calculations"): a expressão virou `EXPR_VALOR_ENTRADA`
 (fonte única de verdade) — KPI e gráfico coincidem em 2024/2025/2026 (Item 9.2). O mesmo
-commit **desrastreou o `config.ini`** (Item 6.10 — feito; **rotação da senha ainda pendente**).
+commit **desrastreou o `config.ini`** (Item 6.10 — feito; **rotação da senha concluída em
+28/10/2026**).
 **Fechamento da sessão (22/10/2026):** varredura de abertura + sincronia de docs/AGENTS
 (`docs/Status_Refatoracao.md`, `docs/Mapeamento_Refatoracao_Datas.md`, `AGENTS.md`).
 
@@ -170,26 +188,25 @@ e/ou compactar o `.fdb` (`gbak`/`gfix`). Decisão do usuário, não da sessão.
 **Não remedir:** o que foi apurado aqui está consolidado no Item 6.7.
 Sessão anterior (20/10/2026): otimização de desempenho (views `V_LAN_COM`/`V_DIFF_ENTRADA_SAIDA_MES`
 removidas → entradas 22 s→0,04 s, diferença 41 s→1,3 s). Sessão de 19/10/2026: refatoração de datas concluída.
-**Próximo passo (neste momento):** nenhuma etapa de código aberta no working tree. **B1**
-concluído em 27/10/2026 (`c7ad6a1`). O **Item 9.7 foi descartado pelo usuário** em 23/10/2026
-(considerado solucionado; em 26/10/2026 o usuário aplicou `'03'` na distorção, deixando os dois
-universos idênticos); a correção da legenda/rótulos do modo Linhas foi aplicada no Item 8.8; os
-**itens 1 e 4** das pendências (testes dos helpers do Dashboard + logging nos `except` de UI) e o
-**B3** foram aplicados em 26/10/2026 (ver **Item 11**). **Fila de ideias para sessões futuras:
-Item 10** — o **Item 10.1** (paralelizar as consultas do Dashboard em threads separadas) foi
-**medido** em 26/10/2026: KPIs e tendência já rodam em threads distintas e o ganho do
-paralelismo intra-bloco é de **décimos de segundo** (§10.1) — **ENCERRADO em 26/10/2026 sem código,
-por decisão do usuário**. **Item 10.2 (B1)** — **CONCLUÍDO em 27/10/2026** (§10.2).
-**Pendências herdadas:** testes manuais (troca de período + reabertura das telas);
-`V_DIFF_ENTRADA_SAIDA_MES` e `V_LAN_COM` **já apagadas manualmente** pelo usuário no banco (Item 6.8 concluído);
-**rotação da senha do banco** (`config.ini` já desrastreado **e commitado** — Item 6.10);
-**`except: pass`** — verificados fora do Dashboard nos arquivos listados anteriormente: **0 encontrados** nesta verificação (a menção a 17 era do estado em 26/10/2026; pode estar desatualizada);
-**PyInstaller** sem receita válida (`Outros/Auto_py_to_exe config.json` obsoleto).
-**Branch:** `refatoracao_v3.5` · **HEAD:** `c7ad6a1` · **baseline:** **211 passed, 1 failed** (falha intencional em `tests/test_distorcao.py::TestDistorcaoManager::test_singleton_reutiliza_instancia` devido à mudança arquitetural de `DistorcaoManager` para injeção por parâmetro)
-**Working tree (nada commitado — regra de ouro):** **limpo** no início desta sessão (27/10/2026). 
-`c7ad6a1` implementou **B1** (previsão rolada a partir do saldo corrente) e a refatoração do 
-`DistorcaoManager` para injeção por parâmetro. Nesta sessão há apenas a **sincronia de status** em 
-`AGENTS_SESSAO.md` — **nenhum `.py` foi tocado**.
+**Próximo passo (neste momento):** a fila de código está **fechada**. **Fase 4** (type hints) e
+**Feature 2** (Validação Pré-Inventário) foram **descartadas**; `com_ger` mantido como está
+(política definitiva); **Fase 3.3 concluída**; **`DROP VIEW`** e **rotação da senha** concluídos
+(decisões do usuário em 28/10/2026). **B1** concluído em 27/10/2026 (`c7ad6a1`). **Item 10.1**
+encerrado sem código em 26/10/2026 (ganho de décimos). Os **itens 1 e 4** das pendências (testes
+dos helpers do Dashboard + logging nos `except` de UI) e o **B3** foram aplicados em 26/10/2026
+(ver **Item 11**).
+**Pendências restantes:** **testes manuais** (troca de período + reabertura das telas, exigem a app
+com banco real) e **Fase 6 — PyInstaller**: existem `Inv Tools 3.0.0.spec` e
+`Inventario_3.5.0.spec` na raiz (não versionados), mas **nenhum build foi validado**; falta
+`--add-data` de `config.ini`/`Recursos/Firebird/fbclient.dll`, coleta de `matplotlib`/`numpy`/`scipy`
+e remover `*.spec` do `.gitignore` ao versionar.
+**Branch:** `refatoracao_v3.5` · **HEAD:** `caf23b7` · **baseline:** **212 passed** em 15 arquivos
+(`compileall` OK)
+**Working tree (nada commitado — regra de ouro):** nesta sessão (28/10/2026) há **2 arquivos
+alterados**: `Dashboard/Dashboard_Func.py` (`_previa_inventario` passa a usar `_hoje()`) e
+`tests/test_distorcao.py` (testes do `DistorcaoManager` alinhados à injeção por parâmetro). Os docs
+(`AGENTS.md`, `AGENTS_SESSAO.md`, `docs/Plano_*.md`, `docs/Status_Refatoracao.md`) foram
+sincronizados.
 **Arquivo complementar ao:** `AGENTS.md` (leia os dois antes de iniciar).
 
 ---
@@ -256,7 +273,7 @@ permissão, mas qualquer **escrita** exige plano + prévia + confirmação.
 .\.venv\Scripts\python.exe -m pytest tests -v
 ```
 
-Estado de referência saudável: **209 passed** em 15 arquivos, `compileall` sem erros (exige
+Estado de referência saudável: **212 passed** em 15 arquivos, `compileall` sem erros (exige
 `requirements.txt` instalado — `matplotlib`/`numpy`/`scipy` são importados por
 `Dashboard/Dashboard_Charts.py`).
 Se testes falharem após mudança, o plano foi executado incorretamente — informar o usuário.
@@ -444,10 +461,9 @@ O app não cria nem recria essas views (`Queries/Create_Views.py` só gerencia
   agora respeitando o `.gitignore`. O `.gitignore` também foi limpo das linhas duplicadas
   (`config.ini`/`*.ini` apareciam 3×). **Commitado em `a503daa`** ("Unify dashboard entry value
   calculations") — `git ls-files config.ini` **não retorna mais nada**.
-- **AINDA PENDENTE:** **rotacionar a senha do banco** — o histórico do repositório continua
-  contendo as credenciais antigas. Limpar o histórico exigiria reescrita — **não fazer sem
-  decisão explícita**.
-- O agente **não** executa comandos de git que alterem índice/histórico sem aprovação.
+- **CONCLUÍDO em 28/10/2026:** **senha do banco rotacionada** — as credenciais antigas que
+  restam no histórico do repositório estão **invalidadas**. Não é mais necessário reescrever o
+  histórico. O agente **não** executa comandos de git que alterem índice/histórico sem aprovação.
 
 ### 6.11 Encerramento do app — `-607` ao fechar e robustez do `finally` (22/10/2026)
 
@@ -1143,4 +1159,62 @@ consulta **da previsão**; sinalizar a falha do inventário nos dois cards é de
 
 **Commitado pelo usuário em `228787b`** ("Expose dashboard forecast query failures", 26/10/2026).
 O agente não executa comandos de git.
+
+---
+
+## 13. SESSÃO 28/10/2026 — ENCERRAMENTO DE ESCOPO + RESTAURAÇÃO DA BASELINE
+
+### 13.1 Decisões do usuário (encerram itens do plano)
+
+| Item | Decisão |
+|---|---|
+| **Fase 4.1 / 4.2** — type hints + `py.typed` | ❌ **Descartadas** — o projeto **não** adotará type hints; `py.typed` não será criado. Hints existentes em módulos isolados ficam como estão. |
+| **Feature 2** — Validação Pré-Inventário | ❌ **Descartada** — o diretório `Validacao/` não será criado. `tests/test_validacao.py` é outra coisa (validações de entrada) e permanece. |
+| **Fase 1.1 remanescente** — `com_ger` (SQL livre) | ✅ **Política atual é a definitiva** — aviso de risco + confirmação; **sem** whitelist/lista de permissão/bloqueio de comandos destrutivos. |
+| **Fase 3.3** — logging em `except` | ✅ **Concluída** — varredura do app (fora de `tests/`): **0** `except: pass`. |
+| **`DROP VIEW`** de `V_LAN_COM` / `V_DIFF_ENTRADA_SAIDA_MES` | ✅ **Concluído**. |
+| **Rotação da senha do banco** (Item 6.10) | ✅ **Concluído**. |
+
+### 13.2 Regressões de teste corrigidas (responsabilidade do NEXO)
+
+A varredura de abertura encontrou **208 passed, 4 failed** em `caf23b7` (a baseline documentada era
+**211 passed, 1 failed** em `c7ad6a1`). Diagnóstico e correção:
+
+1. **`tests/test_dashboard_func.py::TestPreviaInventario` — 3 falhas**
+   (`test_envia_periodo_de_rolagem_quando_fim_no_passado`, `..._quando_fim_no_futuro`,
+   `test_fim_igual_a_hoje_sem_movimento_futuro`).
+   **Causa:** `_previa_inventario` (`Dashboard/Dashboard_Func.py`) usava `hoje = date.today()`
+   direto, mas os testes mockam o helper `Dashboard_Func._hoje` — que **existia e não era usado**.
+   Como a data real da execução (28/10/2026) diferia da data fixada nos testes (27/10/2026), o
+   período consultado deslocava em 1 dia: `params` saía `('2026-01-01','2026-10-28')` em vez de
+   `('2026-01-01','2026-10-27')`, e o caso `fim == hoje` caía no ramo de rolagem para trás (o mock
+   não cobria a consulta → `IndexError` → `None`).
+   **Correção:** `hoje = _hoje()` (1 linha). Em produção o comportamento é idêntico (o helper
+   devolve `date.today()`); nos testes, o mock volta a valer. **Os 12 casos da classe passam.**
+   ⚠️ **Regra para o futuro:** nunca trocar `_hoje()` por `date.today()` dentro de
+   `_previa_inventario` — é o ponto de injeção de data dos testes.
+
+2. **`tests/test_distorcao.py::TestDistorcaoManager::test_singleton_reutiliza_instancia` — 1 falha**
+   **Causa:** o `DistorcaoManager` deixou de ser singleton em `c7ad6a1` (passou a ser **injetado por
+   parâmetro** em `Comandos/Distorcao_Saldo` e `Consultas/Distorcao_de_Saldo`). O teste ainda
+   afirmava `gerenciador_1 is gerenciador_2`, e o fixture `_resetar_singleton` mexia em
+   `DistorcaoManager._instancia` (atributo que não existe mais).
+   **Correção:** fixture removido; os dois casos de semântica antiga foram substituídos por
+   `test_instancias_sao_independentes` (`is not`) e `test_nova_instancia_nao_altera_a_anterior`
+   (uma nova instância não altera o estado da anterior). `test_primeira_instancia_guarda_dados`
+   virou `test_instancia_guarda_dados_injetados`.
+
+### 13.3 Estado final
+
+- **Suíte:** **212 passed** em 15 arquivos (`test_dashboard_func` 36, `test_dashboard_screen_helpers`
+  33, `test_dashboard_charts` 31, `test_distorcao` 10, `test_periodo` 16, `test_periodo_manager` 16,
+  `test_comandos_func` 12, `test_query_operations` 12, `test_thread_executor` 10,
+  `test_gerenciador_thread_bd` 10, `test_validacao` 10, `test_create_views` 5, `test_copy_val` 4,
+  `test_formatacao` 4, `test_queries` 3).
+- **`compileall`:** OK.
+- **Arquivos alterados (não commitados):** `Dashboard/Dashboard_Func.py`, `tests/test_distorcao.py`.
+- **Docs sincronizados:** `AGENTS.md`, `AGENTS_SESSAO.md`,
+  `docs/Plano_Refatoracao_Inventario_Tools_v2.md` (v5.5) e `docs/Status_Refatoracao.md`.
+- **Fila:** só **Fase 6 (PyInstaller)** — validar `Inventario_3.5.0.spec` e versionar a receita — e
+  os **testes manuais** (troca de período + reabertura das telas).
 
